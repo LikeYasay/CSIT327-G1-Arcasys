@@ -1,0 +1,149 @@
+{% extends "ArcasysApp/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'ArcasysApp/css/events.css' %}" />
+{% endblock %}
+
+{% block content %}
+<section class="events-container">
+  <h1 class="page-title">Search for Events</h1>
+
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" placeholder="Search events, departments, tags..." />
+  </div>
+
+  <div class="filters">
+    <div class="filter">
+      <label for="department">Department</label>
+      <select id="department">
+        <option>All Departments</option>
+        <option>CCS</option>
+        <option>Marketing</option>
+        <option>CNAHS</option>
+      </select>
+    </div>
+
+    <div class="filter">
+      <label for="platform">Platform</label>
+      <select id="platform">
+        <option>All Platforms</option>
+        <option>Zoom</option>
+        <option>Teams</option>
+        <option>Onsite</option>
+      </select>
+    </div>
+
+    <div class="filter">
+      <label for="fromYear">From Year</label>
+      <select id="fromYear">
+        <option>2020</option>
+        <option>2021</option>
+        <option>2022</option>
+        <option>2023</option>
+      </select>
+    </div>
+
+    <div class="filter">
+      <label for="toYear">To Year</label>
+      <select id="toYear">
+        <option>2020</option>
+        <option>2021</option>
+        <option>2022</option>
+        <option>2023</option>
+      </select>
+    </div>
+
+    <div class="filter-buttons">
+      <button class="btn apply">Apply Filters</button>
+      <button class="btn clear">Clear All</button>
+      <button class="btn export">Export to CSV</button>
+    </div>
+  </div>
+
+  <div class="results-wrapper">
+
+    <aside class="sidebar">
+      <h3 class="sidebar-title">Recent Events</h3>
+      <ul class="event-list">
+        <li><a href="#">Forum on Anti–Corruption…</a></li>
+        <li><a href="#">Student Organizations …</a></li>
+        <li><a href="#">#CITUEEvents: Honoring…</a></li>
+        <li><a href="#">CIT University particip…</a></li>
+        <li><a href="#">College of Computer …</a></li>
+        <li><a href="#">MarketED Talks: Shap…</a></li>
+        <li><a href="#">Campus Bazaar: Mark…</a></li>
+        <li><a href="#">Pitch Masters: Academ…</a></li>
+        <li><a href="#">The Strategy Sessions…</a></li>
+      </ul>
+    </aside>
+
+    <div class="results-content">
+      <div class="results-header">
+        <h2>Event Results</h2>
+        <span class="results-date">2025 | September</span>
+      </div>
+      <p class="results-meta">Showing 10 of 197 events (Page 1 of 20)</p>
+
+      <div class="event-card">
+        <div class="event-card-header">
+          <h3 class="event-title">
+            Student Organizations Accreditation Ceremony
+          </h3>
+          <span class="event-date">📅 September 5, 2025</span>
+        </div>
+        <p class="event-department">Students Success Office</p>
+        <div class="tags">
+          <span class="tag green">SSO</span>
+          <span class="tag green">LeadTheFuture</span>
+          <span class="tag green">Organizations</span>
+        </div>
+        <p class="event-desc">
+          Because we <strong>#LeadTheFuture</strong>, WATCH the Wildcat leadership SHINE
+          as our student leaders from the different CIT–U accredited student organizations
+          receive their accreditation confirmation in a symbolic ceremony. Go, Wildcats!
+        </p>
+        <div class="platforms">
+          <span class="platform">Facebook</span>
+          <span class="platform">Instagram</span>
+          <span class="platform">Tiktok</span>
+          <span class="platform">YouTube</span>
+        </div>
+      </div>
+
+      <div class="event-card">
+        <div class="event-card-header">
+          <h3 class="event-title">
+            #CITUEvents: Honoring our athletes in the Wildcats' …
+          </h3>
+          <span class="event-date">📅 September 1, 2025</span>
+        </div>
+        <p class="event-department">PE Department</p>
+        <div class="tags">
+          <span class="tag green">LeadTheFuture</span>
+          <span class="tag green">redefinethetop</span>
+          <span class="tag green">CITTopsAgain</span>
+          <span class="tag green">CITforSDG</span>
+        </div>
+        <p class="event-desc">
+          Because we <strong>#LeadTheFuture</strong>, WATCH the Wildcat leadership SHINE
+          as our student leaders from the different CIT–U accredited student organizations
+          receive their accreditation confirmation in a symbolic ceremony. Go, Wildcats!
+        </p>
+        <div class="platforms">
+          <span class="platform">Facebook</span>
+          <span class="platform">Instagram</span>
+          <span class="platform">Tiktok</span>
+          <span class="platform">YouTube</span>
+        </div>
+      </div>
+
+      <div class="pagination">
+        <button class="btn prev">← Previous</button>
+        <button class="btn next">Next →</button>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

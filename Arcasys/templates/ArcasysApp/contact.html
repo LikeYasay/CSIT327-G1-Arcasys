@@ -1,0 +1,115 @@
+{% extends 'ArcasysApp/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'ArcasysApp/css/contact.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="contact-page">
+    <div class="page-header">
+        <h1>Get In Touch</h1>
+        <p>Connect with the CIT-U Marketing Archive team. We're here to support your event management journey and answer any questions you may have.</p>
+    </div>
+
+    <div class="contact-methods">
+        <div class="contact-card">
+            <div class="contact-icon">
+                <img src="{% static 'ArcasysApp/images/location-icon.png' %}" alt="Location" />
+            </div>
+            <h3>Visit Our Campus</h3>
+            <p>Come visit us at our main campus location for in-person assistance and support.</p>
+            <div class="contact-details">
+                <strong>CIT - University</strong><br>
+                N. Bacalso Ave, Cebu City<br>
+                Cebu, Philippines 6000
+            </div>
+        </div>
+
+        <div class="contact-card">
+            <div class="contact-icon">
+                <img src="{% static 'ArcasysApp/images/phone-icon.png' %}" alt="Phone" />
+            </div>
+            <h3>Call Us</h3>
+            <p>Reach out to us directly for immediate assistance with your inquiries.</p>
+            <div class="contact-details">
+                <strong>Contact Services:</strong><br>
+                <a href="tel:+63322617701">(032) 261-7701</a>
+            </div>
+        </div>
+
+        <div class="contact-card">
+            <div class="contact-icon">
+                <img src="{% static 'ArcasysApp/images/email-icon.png' %}" alt="Email" />
+            </div>
+            <h3>Email Us</h3>
+            <p>Send us an email and we'll get back to you within 24 hours.</p>
+            <div class="contact-details">
+                <strong>Contact Developer:</strong><br>
+                <a href="mailto:hemsworthliam925@gmail.com">hemsworthliam925@gmail.com</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="contact-bottom">
+        <div class="contact-form-section">
+            <h2>Send us a Message</h2>
+            <form class="contact-form" id="contactForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="full_name">Full Name</label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <input type="text" id="department" name="department" placeholder="Enter your department">
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject" placeholder="Enter message subject" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="6" placeholder="Enter your message" required></textarea>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn primary">Send Message</button>
+                    <button type="button" class="btn secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="office-hours-section">
+            <h2>Office Hours</h2>
+            <div class="office-hours">
+                <div class="hours-row">
+                    <span class="day">Monday - Friday</span>
+                    <span class="time">8:00 AM - 5:00 PM</span>
+                </div>
+                <div class="hours-row">
+                    <span class="day">Saturday</span>
+                    <span class="time">8:00 AM - 12:00 PM</span>
+                </div>
+                <div class="hours-row">
+                    <span class="day">Sunday</span>
+                    <span class="time">Closed</span>
+                </div>
+                <div class="hours-row">
+                    <span class="day">Holidays</span>
+                    <span class="time">Closed</span>
+                </div>
+            </div>
+
+            <div class="emergency-contact">
+                <h3>Emergency Contact</h3>
+                <p>For urgent matters outside office hours, please contact our emergency hotline at <a href="tel:+63322617777">(032) 261-7777</a> or email <a href="mailto:hemsworthliam925@gmail.com">hemsworthliam925@gmail.com</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

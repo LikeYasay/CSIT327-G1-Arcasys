@@ -12,3 +12,6 @@ def register_view(request):
 
 def events_view(request):
     return render(request, "ArcasysApp/events.html")
+
+def contact_view(request):
+    return render(request, 'ArcasysApp/contact.html')

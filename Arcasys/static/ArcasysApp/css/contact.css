@@ -189,18 +189,26 @@
     font-weight: bold;
     text-decoration: none;
     transition: 0.3s ease;
-    border: none;
+    border: none; 
     cursor: pointer;
     font-family: 'Kumbh Sans', sans-serif;
     font-size: 15px;
 }
 
-.form-buttons .btn.primary {
-    background: #FFCF01;
-    color: black;
+.btn.primary{
+    background: #8A252C;
+    color: white;
+    border: none;
 }
 
-.form-buttons .btn.secondary {
+.btn.secondary{
+    background: #F4F6F8;
+    color: black;
+    font-weight: bold;
+    border: 1px solid #D9D9D9; 
+}
+
+.form-buttons .btn.outline {
     border: 2px solid #8A252C;
     color: #8A252C;
     background: transparent;
@@ -301,20 +309,5 @@
 
     .form-buttons {
         flex-direction: column;
-    }
-}
-
-@media (max-width: 480px) {
-    .page-header h1 {
-        font-size: 40px;
-    }
-
-    .page-header p {
-        font-size: 16px;
-    }
-
-    .contact-card {
-        width: 100%;
-        max-width: 300px;
     }
 }

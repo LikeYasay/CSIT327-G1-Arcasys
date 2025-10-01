@@ -141,3 +141,18 @@ input {
 .btn-register:hover {
   opacity: 0.9;
 }
+
+
+.signup-text{
+  text-align: center;
+}
+
+.signup-text a {
+  color: #8A252C;  
+  text-decoration: none;  
+  font-weight: 600; 
+}
+
+.signup-text a:hover {
+    text-decoration: underline;
+}

@@ -16,3 +16,9 @@ This project centralizes event creation, management, and tracking with secure ac
 ```bash
 git clone https://github.com/YourUsername/MarketingArchive.git
 cd MarketingArchive
+
+# Create env (only once)
+python -m venv env  
+
+# Activate (every time before running project)
+.\env\Scripts\activate

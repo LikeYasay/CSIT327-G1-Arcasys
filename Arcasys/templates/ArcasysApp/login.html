@@ -6,26 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login | Marketing Archive</title>
   <link rel="stylesheet" href="{% static 'ArcasysApp/css/login.css' %}" />
-  <link
-      rel="icon"
-      type="image/png"
-      href="{% static 'ArcasysApp/images/CIT_LOGO.png' %}"
-  />
+  <link rel="icon" type="image/png" href="{% static 'ArcasysApp/images/CIT_LOGO.png' %}" />
 </head>
 <body>
   <div class="login-container">
-    
 
     <div class="login-left">
-
-   
       <header class="login-header">
         <div class="logo-section">
-          <img
-            src="{% static 'ArcasysApp/images/CIT_LOGO.png' %}"
-            alt="CIT Logo"
-            class="logo"
-          />
+          <img src="{% static 'ArcasysApp/images/CIT_LOGO.png' %}" alt="CIT Logo" class="logo" />
           <div class="logo-text">
             <h1>MARKETING ARCHIVE</h1>
             <p>Event Management System</p>
@@ -34,31 +23,42 @@
         <a href="{% url 'landing' %}" class="back-link">← Back</a>
       </header>
 
-
       <div class="login-card">
         <h1>Welcome Back</h1>
         <p class="description">Enter your details to proceed.</p>
 
-        <form>
+        <!-- Django messages -->
+        {% if messages %}
+          <ul class="messages">
+            {% for message in messages %}
+              <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        <!-- Login Form -->
+        <form method="POST">
+          {% csrf_token %}
           <label for="email">Email</label>
-          <input type="email" id="email" placeholder="Enter your email" required>
+          <input type="email" name="email" id="email" placeholder="Enter your email" required>
 
           <label for="password">Password</label>
-          <input type="password" id="password" placeholder="Enter your password" required>
+          <input type="password" name="password" id="password" placeholder="Enter your password" required>
 
           <div class="options">
-            <label><input type="checkbox">Remember me</label>
-            <a href="#" class="forgot-link">Forgot password?</a>
+            <label><input type="checkbox"> Remember me</label>
+            <a href="{% url 'password_reset' %}" class="forgot-link">Forgot password?</a>
           </div>
 
           <button type="submit" class="btn-login">Log in</button>
         </form>
 
         <p class="signup-text">
-          Don’t have an account? <a href="#">Signup</a>
+          Don’t have an account? <a href="{% url 'register' %}">Signup</a>
         </p>
       </div>
     </div>
+
     <div class="login-right">
       <img src="{% static 'ArcasysApp/images/Library.jpg' %}" alt="Campus Building">
     </div>

@@ -6,24 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Register | Marketing Archive</title>
   <link rel="stylesheet" href="{% static 'ArcasysApp/css/register.css' %}" />
-  <link
-      rel="icon"
-      type="image/png"
-      href="{% static 'ArcasysApp/images/CIT_LOGO.png' %}"
-  />
+  <link rel="icon" type="image/png" href="{% static 'ArcasysApp/images/CIT_LOGO.png' %}" />
 </head>
 <body>
   <div class="register-container">
 
     <div class="register-left">
-
       <header class="register-header">
         <div class="logo-section">
-          <img
-            src="{% static 'ArcasysApp/images/CIT_LOGO.png' %}"
-            alt="CIT Logo"
-            class="logo"
-          />
+          <img src="{% static 'ArcasysApp/images/CIT_LOGO.png' %}" alt="CIT Logo" class="logo" />
           <div class="logo-text">
             <h1>MARKETING ARCHIVE</h1>
             <p>Event Management System</p>
@@ -36,32 +27,47 @@
         <h1>Welcome</h1>
         <p class="description">Enter your details to create an account.</p>
 
-        <form>
+        <!-- Django messages -->
+        {% if messages %}
+          <ul class="messages">
+            {% for message in messages %}
+              <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        <!-- Register Form -->
+        <form method="POST">
+          {% csrf_token %}
           <div class="name-fields">
             <div class="field">
-              <label for="first-name">First Name</label>
-              <input type="text" id="first-name" placeholder="Enter your first name" required>
+              <label for="first_name">First Name</label>
+              <input type="text" name="first_name" id="first_name" placeholder="Enter your first name" required>
             </div>
             <div class="field">
-              <label for="last-name">Last Name</label>
-              <input type="text" id="last-name" placeholder="Enter your last name" required>
+              <label for="last_name">Last Name</label>
+              <input type="text" name="last_name" id="last_name" placeholder="Enter your last name" required>
             </div>
           </div>
 
           <label for="department">Department</label>
-          <input type="text" id="department" placeholder="Enter your department" required>
+          <input type="text" name="department" id="department" placeholder="Enter your department" required>
 
           <label for="email">Email</label>
-          <input type="email" id="email" placeholder="Enter your email" required>
+          <input type="email" name="email" id="email" placeholder="Enter your email" required>
 
           <label for="password">Password</label>
-          <input type="password" id="password" placeholder="Enter your password" required>
+          <input type="password" name="password" id="password" placeholder="Enter your password" required>
 
-          <label for="confirm-password">Confirm Password</label>
-          <input type="password" id="confirm-password" placeholder="Confirm your password" required>
+          <label for="confirm_password">Confirm Password</label>
+          <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm your password" required>
 
           <button type="submit" class="btn-register">Sign up</button>
         </form>
+
+        <p class="signup-text">
+          Already have an account? <a href="{% url 'login' %}">Login</a>
+        </p>
       </div>
     </div>
 

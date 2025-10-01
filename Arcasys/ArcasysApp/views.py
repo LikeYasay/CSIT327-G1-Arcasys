@@ -1,17 +1,76 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib import messages
 
-# Create your views here.
 def landing(request):
     return render(request, "ArcasysApp/landing.html")
 
 def login_view(request):
-    return render(request, 'ArcasysApp/login.html')
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        if not email or not password:
+            messages.error(request, "Email and password are required.")
+            return redirect("login")
+
+        try:
+            user_obj = User.objects.get(email=email)
+            user = authenticate(request, username=user_obj.username, password=password)
+        except User.DoesNotExist:
+            user = None
+
+        if user is not None:
+            login(request, user)
+            return redirect("events")   # both admin & user go to events.html
+        else:
+            messages.error(request, "Invalid credentials. Please try again.")
+            return redirect("login")
+
+    return render(request, "ArcasysApp/login.html")
+
 
 def register_view(request):
-    return render(request, 'ArcasysApp/register.html')
+    if request.method == "POST":
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        department = request.POST.get("department")
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect("register")
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered.")
+            return redirect("register")
+
+        user = User.objects.create_user(
+            username=email,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            password=password,
+        )
+        user.save()
+
+        messages.success(request, "Account created! Please log in.")
+        return redirect("login")
+
+    return render(request, "ArcasysApp/register.html")
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("login")
+
 
 def events_view(request):
     return render(request, "ArcasysApp/events.html")
 
+
 def contact_view(request):
-    return render(request, 'ArcasysApp/contact.html')
+    return render(request, "ArcasysApp/contact.html")

@@ -46,7 +46,7 @@ Examples:
 4. Stage & Commit Changes
 ```bash
 git add .
-git commit -m "feat(auth): add logout + password reset"
+git commit -m "feature: add logout + password reset"
 ```
 5. Push Branch to GitHub
 ```bash

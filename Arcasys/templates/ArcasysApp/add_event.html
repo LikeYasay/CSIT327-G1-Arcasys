@@ -1,0 +1,101 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'ArcasysApp/css/add_event.css' %}">
+<div class="container">
+    <div class="header-spacer">
+        <a href="{% url 'events' %}" class="back-link">← Back to Events</a>
+        <h1>Add New Event</h1>
+    </div>
+    <div class="add-event-card">
+        <div class="form-grid">
+            <div class="form-group span-2">
+                <label for="id_event_title">Event Title <span class="required">*</span></label>
+                <input type="text" id="id_event_title" name="event_title" placeholder="Enter event title" required>
+            </div>
+
+            <div class="form-group span-2 dropdown-container">
+                <label for="id_department">Department/Office <span class="required">*</span></label>
+                <select id="id_department" name="department" required>
+                    <option value="">Select department</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="president">Office of the President</option>
+                    <option value="ccs">College of Computer Studies</option>
+                    <option value="sso">Student Success Office</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="id_event_date">Event Date <span class="required">*</span></label>
+                <div class="input-with-icon">
+                    <input type="date" id="id_event_date" name="event_date" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_event_time">Event Time <span class="required">*</span></label>
+                <div class="input-with-icon">
+                    <input type="time" id="id_event_time" name="event_time" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_location">Location <span class="required">*</span></label>
+                <input type="text" id="id_location" name="location" placeholder="Event venue/location" required>
+            </div>
+        </div>
+
+        <div class="form-group description-group">
+            <label for="id_description">Event Description <span class="required">*</span></label>
+            <textarea id="id_description" name="description" rows="5" placeholder="Provide a detailed description of the event, including objectives, target audience, key activities, and any important information participants should know." required></textarea>
+        </div>
+
+        <div class="event-tags-section">
+            <label>Event Tags</label>
+            <div class="tags-list">
+                <span class="tag">SDG</span>
+                <span class="tag">Forum</span>
+                <span class="tag">LeadTheFuture</span>
+                <span class="tag">Academic</span>
+                <span class="tag">Workshop</span>
+                <span class="tag">Conference</span>
+                <span class="tag">Seminar</span>
+            </div>
+            <div class="custom-tag-input">
+                <input type="text" placeholder="Add custom tag">
+                <button type="button" class="add-tag-btn">Add Tag</button>
+            </div>
+        </div>
+
+        <div class="social-media-links">
+            <h2>Social Media Links</h2>
+            <div class="links-grid">
+                <div class="form-group link-group">
+                    <label for="id_facebook"><span class="social-icon">Facebook Link</span></label>
+                    <input type="url" id="id_facebook" name="facebook_link" placeholder="https://facebook.com/event-page">
+                </div>
+                <div class="form-group link-group">
+                    <label for="id_tiktok"><span class="social-icon">Tiktok</span></label>
+                    <input type="url" id="id_tiktok" name="tiktok_link" placeholder="https://twitter.com/event-post">
+                </div>
+                <div class="form-group link-group">
+                    <label for="id_youtube"><span class="social-icon">YouTube Link</span></label>
+                    <input type="url" id="id_youtube" name="youtube_link" placeholder="https://youtube.com/watch?v=...">
+                </div>
+                <div class="form-group link-group">
+                    <label for="id_website"><span class="social-icon">Website Link</span></label>
+                    <input type="url" id="id_website" name="website_link" placeholder="https://website.com/event-registration">
+                </div>
+                <div class="form-group link-group">
+                    <button type="button" id="more-links" class="add-more-button">
+                        Add More
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="cancel-btn">Cancel</button>
+            <button type="submit" class="create-event-btn">Create Event</button>
+        </div>
+
+    </div>
+</div>

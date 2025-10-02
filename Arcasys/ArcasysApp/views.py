@@ -1,7 +1,10 @@
+import django
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.core.validators import validate_email 
+from django.core.exceptions import ValidationError
 
 def landing(request):
     return render(request, "ArcasysApp/landing.html")
@@ -30,34 +33,59 @@ def login_view(request):
 
     return render(request, "ArcasysApp/login.html")
 
-
 def register_view(request):
     if request.method == "POST":
+        # Data retrieval
         first_name = request.POST.get("first_name")
         last_name = request.POST.get("last_name")
-        department = request.POST.get("department")
+        department = request.POST.get("department") 
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
+        
+        # Check for missing fields
+        required_fields = {
+            'First Name': first_name,
+            'Last Name': last_name,
+            'Department': department, 
+            'Email': email,
+            'Password': password,
+            'Confirm Password': confirm_password
+        }
+        
+        # Check if any required field is empty
+        for name, value in required_fields.items():
+            if not value:
+                messages.error(request, f"{name} is required.")
+                return redirect("register")
 
+        # Check for invalid email format
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, "Please enter a valid email address.")
+            return redirect("register")
+
+        # Check for Password Match
         if password != confirm_password:
             messages.error(request, "Passwords do not match.")
             return redirect("register")
 
+        # Check if email already exists
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already registered.")
             return redirect("register")
 
         user = User.objects.create_user(
-            username=email,
+            username=email, 
             first_name=first_name,
             last_name=last_name,
             email=email,
             password=password,
         )
         user.save()
-
-        messages.success(request, "Account created! Please log in.")
+        messages.success(request, "Account created!")
+        
         return redirect("login")
 
     return render(request, "ArcasysApp/register.html")

@@ -165,12 +165,6 @@
     box-sizing: border-box;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: #8A252C;
-}
-
 .form-group textarea {
     resize: vertical;
     min-height: 120px;
@@ -277,37 +271,4 @@
 
 .emergency-contact a:hover {
     text-decoration: underline;
-}
-
-@media (max-width: 768px) {
-    .contact-page {
-        padding: 20px;
-    }
-
-    .page-header h1 {
-        font-size: 50px;
-    }
-
-    .contact-methods {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .contact-bottom {
-        flex-direction: column;
-    }
-
-    .contact-form-section,
-    .office-hours-section {
-        min-width: auto;
-        width: 100%;
-    }
-
-    .form-row {
-        flex-direction: column;
-    }
-
-    .form-buttons {
-        flex-direction: column;
-    }
 }

@@ -24,14 +24,9 @@ Arcasys: Marketing Archive Manager is a Django Full Stack web application for **
    pip install -r requirements.txt
    ```
 
-4. **Set Up Environment Variables**  
-   Copy the provided `.env.example` file and rename it to `.env`:  
-   ```bash
-   cp .env.example .env    # macOS/Linux
-   copy .env.example .env  # Windows
-   ```
+4. **Create a `.env` File**  
+   In the `Arcasys` folder (same level as `manage.py`), create a file named `.env` and paste the following:  
 
-   The `.env` file is already preconfigured with the **shared Supabase database** and email settings:  
    ```env
    # Supabase PostgreSQL (Session Pooler)
    DATABASE_URL='postgresql://postgres.thpjejmmcfijbdaflpcf:Arc@sys02584569173@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require'
@@ -49,30 +44,29 @@ Arcasys: Marketing Archive Manager is a Django Full Stack web application for **
 
    > ⚠️ Everyone will connect to the same Supabase database. Please be careful when applying migrations or modifying data.  
 
-5. **Apply Database Migrations (First Time Only)**  
+5. **Apply Database Migrations**  
    ```bash
    python manage.py migrate
    ```
 
 ---
 
-## 🚀 Running the Project (Every Time)  
+## 🚀 Running the Project  
 
-1. Open VS Code terminal (`` Ctrl + ` ``).  
-2. Navigate to the project folder:  
-   ```bash
-   cd MarketingArchive/Arcasys
-   ```
-3. Activate your virtual environment:  
+Whenever you want to run the project:  
+
+1. Activate the virtual environment:  
    ```bash
    ..\env\Scripts\activate   # Windows
    source env/bin/activate   # macOS/Linux
    ```
-4. Start the development server:  
+
+2. Start the development server:  
    ```bash
    python manage.py runserver
    ```
-5. Open your browser at 👉 [http://127.0.0.1:8000/](http://127.0.0.1:8000/)  
+
+3. Open your browser at 👉 [http://127.0.0.1:8000/](http://127.0.0.1:8000/)  
 
 ---
 

@@ -6,37 +6,32 @@ urlpatterns = [
     path("", views.landing, name="landing"),
     path("login/", views.login_view, name="login"),
     path("register/", views.register_view, name="register"),
+    path("verify-email/", views.verify_email_view, name="verify_email"),
     path("logout/", views.logout_view, name="logout"),
     path("events/", views.events_view, name="events"),
     path("contact/", views.contact_view, name="contact"),
 
-    # Forgot password routes
+    # Password reset routes - using custom views from views.py
     path(
         "password_reset/",
-        auth_views.PasswordResetView.as_view(
-            template_name="ArcasysApp/password_reset.html"
-        ),
+        views.CustomPasswordResetView.as_view(),
         name="password_reset"
     ),
     path(
         "password_reset/done/",
-        auth_views.PasswordResetDoneView.as_view(
-            template_name="ArcasysApp/password_reset_done.html"
-        ),
+        views.CustomPasswordResetDoneView.as_view(),
         name="password_reset_done"
     ),
+    # FIXED: This URL must include uidb64 and token parameters
     path(
         "reset/<uidb64>/<token>/",
-        auth_views.PasswordResetConfirmView.as_view(
-            template_name="ArcasysApp/password_reset_confirm.html"
-        ),
+        views.CustomPasswordResetConfirmView.as_view(),
         name="password_reset_confirm"
     ),
+    # FIXED: Corrected the path
     path(
         "reset/done/",
-        auth_views.PasswordResetCompleteView.as_view(
-            template_name="ArcasysApp/password_reset_complete.html"
-        ),
+        views.CustomPasswordResetCompleteView.as_view(),
         name="password_reset_complete"
     ),
 ]

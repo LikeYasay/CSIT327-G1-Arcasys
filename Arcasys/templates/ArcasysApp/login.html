@@ -37,16 +37,27 @@
         {% endif %}
 
         <!-- Login Form -->
-        <form method="POST">
+        <form method="POST" autocomplete="off">
           {% csrf_token %}
+          <!-- Hidden fake fields -->
+          <input type="email" name="fake_email" style="display:none">
+          <input type="password" name="fake_password" style="display:none">
+          
           <label for="email">Email</label>
-          <input type="email" name="email" id="email" placeholder="Enter your email" required>
+          <input type="email" name="email" id="email" placeholder="Enter your email" required 
+                 autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"
+                 value="{{ request.COOKIES.remembered_email|default:'' }}">
 
           <label for="password">Password</label>
-          <input type="password" name="password" id="password" placeholder="Enter your password" required>
+          <input type="password" name="password" id="password" placeholder="Enter your password" required 
+                 autocomplete="off" readonly onfocus="this.removeAttribute('readonly')"
+                 value="{{ request.COOKIES.remembered_password|default:'' }}">
 
           <div class="options">
-            <label><input type="checkbox"> Remember me</label>
+            <label>
+              <input type="checkbox" name="remember_me" {% if request.COOKIES.remembered_email %}checked{% endif %}>
+              Remember me
+            </label>
             <a href="{% url 'password_reset' %}" class="forgot-link">Forgot password?</a>
           </div>
 
@@ -54,7 +65,7 @@
         </form>
 
         <p class="signup-text">
-          Don’t have an account? <a href="{% url 'register' %}">Signup</a>
+          Don't have an account? <a href="{% url 'register' %}">Signup</a>
         </p>
       </div>
     </div>

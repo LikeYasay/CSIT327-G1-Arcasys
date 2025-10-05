@@ -9,6 +9,8 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("events/", views.events_view, name="events"),
     path("contact/", views.contact_view, name="contact"),
+    path("add_event/", views.add_event_view, name="add_event"),
+    path("admin_dashboard/", views.admin_dashboard_view, name="admin_dashboard"),
 
     # Forgot password routes
     path(

@@ -36,8 +36,16 @@
         </nav>
 
         <div class="auth-buttons">
-          <a href="{% url 'register' %}" class="btn signup">Signup</a>
-          <a href="{% url 'login' %}" class="btn login">Login</a>
+          {% if user.is_authenticated and user.is_admin %}
+              <a href="{% url 'approve_accounts' %}" class="btn approve-accounts">Approve Accounts</a>
+              <a href="{% url 'logout' %}" class="btn logout">Log out</a>
+          {% elif user.is_authenticated %}
+              <span class="user-welcome">Welcome, {{ user.UserFullName }}</span>
+              <a href="{% url 'logout' %}" class="btn logout">Logout</a>
+          {% else %}
+              <a href="{% url 'register' %}" class="btn signup">Signup</a>
+              <a href="{% url 'login' %}" class="btn login">Login</a>
+          {% endif %}
         </div>
       </div>
     </header>

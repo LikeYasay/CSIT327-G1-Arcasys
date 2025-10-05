@@ -219,7 +219,8 @@ body {
 .tag {
   display: inline-block;
   padding: 5px 10px;
-  background: #2ecc71;
+  background: #34A853;
+  border: 1px solid #46BE66;
   color: #fff;
   border-radius: 20px;
   font-size: 12px;

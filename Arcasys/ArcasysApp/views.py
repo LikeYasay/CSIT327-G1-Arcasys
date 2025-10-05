@@ -102,3 +102,28 @@ def events_view(request):
 
 def contact_view(request):
     return render(request, "ArcasysApp/contact.html")
+
+def add_event_view(request):
+    if request.method == "POST":
+        # Retrieve form data
+        event_name = request.POST.get("event_name")
+        event_date = request.POST.get("event_date")
+        event_time = request.POST.get("event_time")
+        location = request.POST.get("location")
+        department = request.POST.get("department")
+        description = request.POST.get("description")
+
+        # Validate required fields
+        if not all([event_name, event_date, event_time, location, department, description]):
+            messages.error(request, "All fields are required.")
+            return redirect("add_event")
+
+        # Here you would typically save the event to the database
+        # For now, we'll just display a success message
+        messages.success(request, "Event added successfully!")
+        return redirect("events")
+
+    return render(request, "ArcasysApp/add_event.html")
+
+def admin_dashboard_view(request):
+    return render(request, "ArcasysApp/admin_dashboard.html")

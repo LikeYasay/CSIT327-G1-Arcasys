@@ -89,7 +89,7 @@ body {
     font-weight: bold;
 }
 
-.signup {
+.signup, .approve-accounts, .logout {
     background: #8A252C;
     color: white;
 }

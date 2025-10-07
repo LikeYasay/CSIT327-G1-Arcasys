@@ -102,3 +102,6 @@ def events_view(request):
 
 def contact_view(request):
     return render(request, "ArcasysApp/contact.html")
+
+def admin_dashboard_view(request):
+    return render(request, "ArcasysApp/admin_dashboard.html")

@@ -54,21 +54,12 @@ Follow the branch naming convention below:
 main task/module/short description
 ```
 Main Task Types:
-Task           Type 
-Technical      tech
-Feature        feature
-Bug Fix        fix
-Setup          setup
-
 | Task Type   | Prefix   | 
 |-------------|----------|
 | Technical   | tech     | 
 | Feature     | feature  | 
 | Bug Fix     | fix      | 
 | Setup       | setup    | 
-
-
-
 
 Examples:
 ```bash

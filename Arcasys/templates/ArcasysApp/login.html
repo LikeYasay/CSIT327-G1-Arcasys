@@ -7,6 +7,13 @@
   <title>Login | Marketing Archive</title>
   <link rel="stylesheet" href="{% static 'ArcasysApp/css/login.css' %}" />
   <link rel="icon" type="image/png" href="{% static 'ArcasysApp/images/CIT_LOGO.png' %}" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    integrity="sha512-…"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
 </head>
 <body>
   <div class="login-container">
@@ -43,7 +50,19 @@
           <input type="email" name="email" id="email" placeholder="Enter your email" required>
 
           <label for="password">Password</label>
-          <input type="password" name="password" id="password" placeholder="Enter your password" required>
+          <div class="password-wrapper">
+            <input
+              type="password"
+              name="password"
+              id="password"
+              placeholder="Enter your password"
+              required
+            />
+            <span class="toggle-password">
+              <i class="fas fa-eye" id="togglePasswordIcon"></i>
+            </span>
+          </div>
+
 
           <div class="options">
             <label><input type="checkbox"> Remember me</label>
@@ -60,8 +79,27 @@
     </div>
 
     <div class="login-right">
-      <img src="{% static 'ArcasysApp/images/Library.jpg' %}" alt="Campus Building">
+      <img src="{% static 'ArcasysApp/images/GLE-CIT.png' %}" alt="Campus Building">
     </div>
   </div>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toggleIcon = document.getElementById("togglePasswordIcon");
+      const passwordInput = document.getElementById("password");
+
+      if (toggleIcon && passwordInput) {
+        toggleIcon.addEventListener("click", function() {
+          const type =
+            passwordInput.getAttribute("type") === "password" ? "text" : "password";
+          passwordInput.setAttribute("type", type);
+          this.classList.toggle("fa-eye-slash");
+          this.classList.toggle("fa-eye");
+        });
+      }
+    });
+  </script>
+
 </body>
 </html>

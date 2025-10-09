@@ -15,6 +15,9 @@ body {
   flex: 1;
 }
 
+.login-left  a.back-link:hover {
+  color: #FFCF01;
+}
 .login-right {
   display: flex;
   align-items: center;
@@ -123,14 +126,25 @@ input {
 .options .forgot-link {
   color: gray;
   text-decoration: none;
+   margin-left: 20px; 
 }
 
+.options a.forgot-link:hover {
+  color: black;
+}
 
 .options label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 1px; 
+  gap: 5px;
+  margin-top: 0;       
+  margin: 0;            
+  cursor: pointer;     
+}
+
+.options label input[type="checkbox"] {
+  margin: 0;            
+  margin-left: 1px;
 }
 
 .btn-login {
@@ -144,11 +158,19 @@ input {
   margin-top: 10px;
   cursor: pointer;
   font-size:medium;
+  transition: 
+    background-color 0.3s ease, 
+    color 0.3s ease, 
+    transform 0.2s ease,
+    box-shadow 0.3s ease;
 }
 
 
 .btn-login:hover {
-  opacity: 0.9;
+  background-color: #FFCF01;
+  color: black;
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .signup-text {
@@ -164,4 +186,48 @@ input {
 
 .signup-text a:hover {
     text-decoration: underline;
+}
+
+/* Add these to your login.css */
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 36px;
+  box-sizing: border-box;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 55%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #888;
+}
+
+.toggle-password:hover {
+  color: #555;
+}
+
+.toggle-password i {
+  font-size: 1rem;
+}
+
+input:focus {
+  border: 1px solid #000;  /* thin black border */
+  outline: none;           /* remove thick default focus outline */
 }

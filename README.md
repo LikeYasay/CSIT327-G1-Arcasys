@@ -61,10 +61,12 @@ Bug Fix        fix
 Setup          setup
 
 Examples:
--git branch feature/login/create_login ui
--git branch tech/login/change library
--git branch fix/login/color of the button
--git branch setup/login/authentication library
+```bash
+git branch feature/login/create_login ui
+git branch tech/login/change library
+git branch fix/login/color of the button
+git branch setup/login/authentication library
+```
 
 4. Stage & Commit Changes
 ```bash
@@ -103,11 +105,6 @@ git pull origin main
 git branch -d feature/your-feature-name                  # delete locally
 git push origin --delete feature/your-feature-name       # delete on GitHub
 ```
-
-
-
-
-
 
 ## 👥 Team Members  
 

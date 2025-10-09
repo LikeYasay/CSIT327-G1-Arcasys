@@ -61,10 +61,10 @@ Bug Fix        fix
 Setup          setup
 
 Examples:
-git branch feature/login/create_login ui
-git branch tech/login/change library
-git branch fix/login/color of the button
-git branch setup/login/authentication library
+-git branch feature/login/create_login ui
+-git branch tech/login/change library
+-git branch fix/login/color of the button
+-git branch setup/login/authentication library
 
 4. Stage & Commit Changes
 ```bash

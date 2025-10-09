@@ -60,6 +60,16 @@ Feature        feature
 Bug Fix        fix
 Setup          setup
 
+| Task Type   | Prefix   | 
+|-------------|----------|
+| Technical   | tech     | 
+| Feature     | feature  | 
+| Bug Fix     | fix      | 
+| Setup       | setup    | 
+
+
+
+
 Examples:
 ```bash
 git branch feature/login/create_login ui

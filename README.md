@@ -78,12 +78,10 @@ Commit Using Proper Format
 main task(module): short description
 ```
 Examples:
-```bash
-git commit -m "feature(login): create login ui"
-git commit -m "tech(login): change library"
-git commit -m "fix(login): color of the button"
-git commit -m "setup(login): authentication library"
-```
+- git commit -m "feature(login): create login ui"
+- git commit -m "tech(login): change library"
+- git commit -m "fix(login): color of the button"
+- git commit -m "setup(login): authentication library"
 
 5. Push Branch to GitHub
 ```bash

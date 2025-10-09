@@ -38,7 +38,6 @@ def register_view(request):
         # Data retrieval
         first_name = request.POST.get("first_name")
         last_name = request.POST.get("last_name")
-        department = request.POST.get("department") 
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
@@ -47,7 +46,6 @@ def register_view(request):
         required_fields = {
             'First Name': first_name,
             'Last Name': last_name,
-            'Department': department, 
             'Email': email,
             'Password': password,
             'Confirm Password': confirm_password

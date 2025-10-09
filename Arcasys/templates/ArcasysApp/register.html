@@ -7,6 +7,14 @@
   <title>Register | Marketing Archive</title>
   <link rel="stylesheet" href="{% static 'ArcasysApp/css/register.css' %}" />
   <link rel="icon" type="image/png" href="{% static 'ArcasysApp/images/CIT_LOGO.png' %}" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+
 </head>
 <body>
   <div class="register-container">
@@ -25,7 +33,7 @@
 
       <div class="register-card">
         <h1>Welcome</h1>
-        <p class="description">Enter your details to create an account.</p>
+        <p class="description">Enter your details to create an account as staff.</p>
 
         <!-- Django messages -->
         {% if messages %}
@@ -50,17 +58,20 @@
             </div>
           </div>
 
-          <label for="department">Department</label>
-          <input type="text" name="department" id="department" placeholder="Enter your department" required>
-
           <label for="email">Email</label>
           <input type="email" name="email" id="email" placeholder="Enter your email" required>
 
           <label for="password">Password</label>
-          <input type="password" name="password" id="password" placeholder="Enter your password" required>
+          <div class="password-wrapper">
+            <input type="password" name="password" id="password" placeholder="Enter your password" required>
+            <span class="toggle-password"><i class="fas fa-eye" id="togglePasswordIcon"></i></span>
+          </div>
 
           <label for="confirm_password">Confirm Password</label>
-          <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm your password" required>
+          <div class="password-wrapper">
+            <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm your password" required>
+            <span class="toggle-password"><i class="fas fa-eye" id="toggleConfirmPasswordIcon"></i></span>
+          </div>
 
           <button type="submit" class="btn-register">Sign up</button>
         </form>
@@ -75,5 +86,32 @@
       <img src="{% static 'ArcasysApp/images/Library.jpg' %}" alt="Campus Building">
     </div>
   </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const togglePwd = document.getElementById("togglePasswordIcon");
+      const pwdInput = document.getElementById("password");
+      if (togglePwd && pwdInput) {
+        togglePwd.addEventListener("click", function() {
+          const type = pwdInput.getAttribute("type") === "password" ? "text" : "password";
+          pwdInput.setAttribute("type", type);
+          this.classList.toggle("fa-eye-slash");
+          this.classList.toggle("fa-eye");
+        });
+      }
+
+      const toggleConfirm = document.getElementById("toggleConfirmPasswordIcon");
+      const confirmInput = document.getElementById("confirm_password");
+      if (toggleConfirm && confirmInput) {
+        toggleConfirm.addEventListener("click", function() {
+          const type = confirmInput.getAttribute("type") === "password" ? "text" : "password";
+          confirmInput.setAttribute("type", type);
+          this.classList.toggle("fa-eye-slash");
+          this.classList.toggle("fa-eye");
+        });
+      }
+    });
+  </script>
+
 </body>
 </html>

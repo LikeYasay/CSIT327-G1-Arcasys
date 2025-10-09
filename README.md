@@ -4,7 +4,13 @@ Arcasys: Marketing Archive Manager is a Django Full Stack web application for **
 
 ---
 
-### 🚀 How to Run the Project (Every Time)  
+## 🛠 Tech Stack  
+- **Backend:** Python, Django  
+- **Frontend:** HTML, CSS  
+- **Database & Deployment:** Supabase, Render
+  
+
+### 🚀 Setup & run instructions
 
 When you open VS Code:  
 
@@ -43,11 +49,40 @@ Examples:
 - feature/ui-redesign
 - fix/logout-bug
 
+Follow the branch naming convention below:
+```bash
+main task/module/short description
+```
+Main Task Types:
+Task           Type 
+Technical      tech
+Feature        feature
+Bug Fix        fix
+Setup          setup
+
+Examples:
+git branch feature/login/create_login ui
+git branch tech/login/change library
+git branch fix/login/color of the button
+git branch setup/login/authentication library
+
 4. Stage & Commit Changes
 ```bash
 git add .
-git commit -m "feature(App-Name): add logout + password reset"
+git commit -m "feature(login): create login ui"
 ```
+Commit Using Proper Format
+```bash
+main task(module): short description
+```
+Examples:
+```bash
+git commit -m "feature(login): create login ui"
+git commit -m "tech(login): change library"
+git commit -m "fix(login): color of the button"
+git commit -m "setup(login): authentication library"
+```
+
 5. Push Branch to GitHub
 ```bash
 git push origin feature/your-feature-name
@@ -68,6 +103,22 @@ git pull origin main
 git branch -d feature/your-feature-name                  # delete locally
 git push origin --delete feature/your-feature-name       # delete on GitHub
 ```
+
+
+
+
+
+
+## 👥 Team Members  
+
+| Name                             | Role                | CIT-U Email                                |
+|----------------------------------|---------------------|--------------------------------------------|
+| Valmera, Harvey Rod Chirstian L. | Product Owner       | harveyrodchristian.valmera@cit.edu         |
+| Yungco, Riggy Maryl L.           | Business Analyst    | riggymaryl.yungco@cit.edu                  |
+| Vilocura, Justine C.             | Scrum Master        | justine.vilocura@cit.edu                   |
+| Uy, Emman Jay                    | Back-End Developer  | emmanjay.uy@cit.edu                        |
+| Ursulo, Lichael Yashua           | Front-End Developer | lichaelyashua.ursulo@cit.edu               |
+| Villadarez, Niña Nicole          | Assistant Developer | ninanicole.villadarez@cit.edu              |
 
 
 

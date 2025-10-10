@@ -159,7 +159,7 @@ git push origin --delete feature/your-feature-name       # delete on GitHub
 | Valmera, Harvey Rod Chirstian L. | Product Owner       | harveyrodchristian.valmera@cit.edu         |
 | Yungco, Riggy Maryl L.           | Business Analyst    | riggymaryl.yungco@cit.edu                  |
 | Vilocura, Justine C.             | Scrum Master        | justine.vilocura@cit.edu                   |
-| Villadarez, Niña Nicole          | Lead Developer      | ninanicole.villadarez@cit.edu              |
+| Villadarez, Niña Nicole          | Assistant Developer | ninanicole.villadarez@cit.edu              |
 | Uy, Emman Jay                    | Back-End Developer  | emmanjay.uy@cit.edu                        |
 | Ursulo, Lichael Yashua           | Front-End Developer | lichaelyashua.ursulo@cit.edu               |
 

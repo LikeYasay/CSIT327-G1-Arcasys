@@ -26,7 +26,7 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
-            return redirect("events")   # both admin & user go to events.html
+            return redirect("events")   # both admin & staff go to events.html
         else:
             messages.error(request, "Invalid credentials. Please try again.")
             return redirect("login")
@@ -93,7 +93,6 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
-
 def events_view(request):
     return render(request, "ArcasysApp/events.html")
 
@@ -103,3 +102,6 @@ def contact_view(request):
 
 def admin_dashboard_view(request):
     return render(request, "ArcasysApp/admin_dashboard.html")
+
+def admin_approval_view(request):
+    return render(request, "ArcasysApp/admin_approval.html")

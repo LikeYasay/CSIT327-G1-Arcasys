@@ -1,0 +1,96 @@
+{% extends "ArcasysApp/base.html" %}
+{% load static %}
+
+{% block title %}Admin Approval{% endblock title %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'ArcasysApp/css/admin_approval.css' %}" />
+{% endblock extra_css %}
+
+{% block content %}
+
+
+<div class="approval-page-header">
+  <a href="{% url 'events' %}" class="back-to-events">← Back to Events</a>
+  <span class="divider">|</span>
+  <h1 class="approval-title">Admin Approval</h1>
+</div>
+
+<section class="admin-approval-wrapper">
+  <div class="applications-section">
+    <h2>Pending Admin Applications</h2>
+
+    {% if applications %}
+      {% for application in applications %}
+      <div class="application-card">
+        <div class="app-info">
+          <h3>{{ application.full_name }}</h3>
+          <p class="app-email">{{ application.email }}</p>
+          <p class="app-meta">
+            {{ application.department }} &middot; Applied: {{ application.date_applied }}
+          </p>
+        </div>
+        <div class="app-actions">
+          <form method="post" action="{% url 'reject_application' application.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn reject">Reject</button>
+          </form>
+          <form method="post" action="{% url 'approve_application' application.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn approve">Approve</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <!-- Sample card if no real data -->
+      <div class="application-card sample">
+        <div class="app-info">
+          <h3>John Michael Santos</h3>
+          <p class="app-email">john.santos@cit.edu</p>
+          <p class="app-meta">
+            Engineering &middot; Applied: 2024-01-15
+          </p>
+        </div>
+        <div class="app-actions">
+          <button class="btn reject">Reject</button>
+          <button class="btn approve">Approve</button>
+        </div>
+      </div>
+
+            <!-- Sample card if no real data -->
+      <div class="application-card sample">
+        <div class="app-info">
+          <h3>John Michael Santos</h3>
+          <p class="app-email">john.santos@cit.edu</p>
+          <p class="app-meta">
+            Engineering &middot; Applied: 2024-01-15
+          </p>
+        </div>
+        <div class="app-actions">
+          <button class="btn reject">Reject</button>
+          <button class="btn approve">Approve</button>
+        </div>
+      </div>
+
+            <!-- Sample card if no real data -->
+      <div class="application-card sample">
+        <div class="app-info">
+          <h3>John Michael Santos</h3>
+          <p class="app-email">john.santos@cit.edu</p>
+          <p class="app-meta">
+            Engineering &middot; Applied: 2024-01-15
+          </p>
+        </div>
+        <div class="app-actions">
+          <button class="btn reject">Reject</button>
+          <button class="btn approve">Approve</button>
+        </div>
+      </div>
+
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock content %}

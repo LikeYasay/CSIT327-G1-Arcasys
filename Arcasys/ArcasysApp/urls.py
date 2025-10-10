@@ -10,6 +10,7 @@ urlpatterns = [
     path("events/", views.events_view, name="events"),
     path("contact/", views.contact_view, name="contact"),
     path("admin_dashboard/", views.admin_dashboard_view, name="admin_dashboard"),
+    path("admin_approval/", views.admin_approval_view, name="admin_approval"),
 
     # Forgot password routes
     path(

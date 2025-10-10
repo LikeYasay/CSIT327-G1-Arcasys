@@ -22,7 +22,9 @@ cd Arcasys   # go inside where manage.py is
 ```
 3. Activate your virtual environment:
 ```bash
-..\env\Scripts\activate
+..\env\Scripts\activate        # Windows
+# or
+source env/bin/activate        # macOS/Linux
 ```
 4. Run the Django development server:
 ```bash
@@ -149,77 +151,6 @@ git push origin --delete feature/your-feature-name       # delete on GitHub
    ```
 
 ---
-
-## 🚀 Running the Project  
-
-Whenever you want to run the project:  
-
-1. Activate the virtual environment:  
-   ```bash
-   ..\env\Scripts\activate   # Windows
-   source env/bin/activate   # macOS/Linux
-   ```
-
-2. Start the development server:  
-   ```bash
-   python manage.py runserver
-   ```
-
-3. Open your browser at 👉 [http://127.0.0.1:8000/](http://127.0.0.1:8000/)  
-
----
-
-## 🛠 Git Workflow (Best Practices)  
-
-1. Check Current Status  
-   ```bash
-   git status
-   ```
-
-2. Update Local Main  
-   ```bash
-   git checkout main
-   git pull origin main
-   ```
-
-3. Create a New Branch  
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-   Examples:
-   - feature/user-accounts  
-   - feature/ui-redesign  
-   - fix/logout-bug  
-
-4. Stage & Commit Changes  
-   ```bash
-   git add .
-   git commit -m "feature(App-Name): add logout + password reset"
-   ```
-
-5. Push Branch to GitHub  
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-6. Open Pull Request (PR) on GitHub  
-   - Compare your branch → main  
-   - Add description  
-   - Request review and merge once approved  
-
-7. Sync After Merge  
-   ```bash
-   git checkout main
-   git pull origin main
-   ```
-
-8. Clean Up Old Branches  
-   ```bash
-   git branch -d feature/your-feature-name                  # delete locally
-   git push origin --delete feature/your-feature-name       # delete on GitHub
-   ```
-
-
 
 ## 👥 Team Members  
 

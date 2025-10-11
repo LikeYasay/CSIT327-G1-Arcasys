@@ -24,6 +24,7 @@ static_root/
 # Environment variables
 .env
 *.env
+env/
 
 # IDE settings
 .vscode/

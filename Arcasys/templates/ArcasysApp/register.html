@@ -45,21 +45,50 @@
         {% endif %}
 
         <!-- Register Form -->
-        <form method="POST">
+        <form method="POST" autocomplete="off">
           {% csrf_token %}
+
+          <!-- Hidden fake fields for autofill prevention -->
+          <input type="text" name="fake_username" style="display:none">
+          <input type="password" name="fake_password" style="display:none">
+
           <div class="name-fields">
             <div class="field">
               <label for="first_name">First Name</label>
-              <input type="text" name="first_name" id="first_name" placeholder="Enter your first name" required>
+              <input 
+                type="text" 
+                name="first_name" 
+                id="first_name" 
+                placeholder="Enter your first name" 
+                required 
+                autocomplete="given-name"
+                readonly onfocus="this.removeAttribute('readonly')"
+              >
             </div>
             <div class="field">
               <label for="last_name">Last Name</label>
-              <input type="text" name="last_name" id="last_name" placeholder="Enter your last name" required>
+              <input 
+                type="text" 
+                name="last_name" 
+                id="last_name" 
+                placeholder="Enter your last name" 
+                required 
+                autocomplete="family-name"
+                readonly onfocus="this.removeAttribute('readonly')"
+              >
             </div>
           </div>
 
           <label for="email">Email</label>
-          <input type="email" name="email" id="email" placeholder="Enter your email" required>
+          <input 
+            type="email" 
+            name="email" 
+            id="email" 
+            placeholder="Enter your email" 
+            required 
+            autocomplete="email"
+            readonly onfocus="this.removeAttribute('readonly')"
+          >
 
           <label for="password">Password</label>
           <div class="password-wrapper">

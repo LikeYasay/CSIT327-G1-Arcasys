@@ -43,15 +43,16 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, UserEmail, password=None, **extra_fields):
-        extra_fields.setdefault('isStaff', True)
-        extra_fields.setdefault('isAdmin', True)
+        extra_fields.setdefault('isUserAdmin', True)
+        extra_fields.setdefault('isUserActive', True)
+        extra_fields.setdefault('isUserStaff', False)
         
-        # Get or create admin role - pass the instance, not the UUID
+        # Get or create admin role - CHANGE TO 'Admin'
         admin_role, created = Role.objects.get_or_create(
-            RoleName='Admin',
-            defaults={'RoleDescription': 'System administrator with full access'}
+            RoleName='Admin',  # ✅ Changed from 'Archive Administrator' to 'Admin'
+            defaults={'RoleDescription': 'Full system administrator with user management privileges'}
         )
-        extra_fields['RoleID'] = admin_role  # Pass the Role instance
+        extra_fields['RoleID'] = admin_role
         
         return self.create_user(UserEmail, password, **extra_fields)
 
@@ -80,33 +81,49 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         db_column='UserPasswordHash'
     )
-    UserCreateAt = models.DateTimeField(
+    UserCreatedAt = models.DateTimeField(  # ✅ Changed from UserCreateAt to UserCreatedAt
         default=timezone.now,
-        db_column='UserCreateAt'
+        db_column='UserCreatedAt'
     )
     UserLastLogin = models.DateTimeField(
         null=True, 
         blank=True,
         db_column='UserLastLogin'
     )
-    isActive = models.BooleanField(
-        default=True,
-        db_column='isActive'
-    )
-    isAdmin = models.BooleanField(
+    
+    # ACCOUNT APPROVAL SYSTEM - UPDATED NAMES
+    isUserActive = models.BooleanField(  # ✅ Changed from isActive to isUserActive
         default=False,
-        db_column='isAdmin'
+        db_column='isUserActive'
     )
-    isStaff = models.BooleanField(
+    UserApprovedBy = models.ForeignKey(  # ✅ Changed from approved_by to UserApprovedBy
+        'self', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        db_column='UserApprovedBy',
+        related_name='approved_users'
+    )
+    UserApprovedAt = models.DateTimeField(  # ✅ Changed from approved_at to UserApprovedAt
+        null=True, 
+        blank=True,
+        db_column='UserApprovedAt'
+    )
+    
+    isUserAdmin = models.BooleanField(  # ✅ Changed from isAdmin to isUserAdmin
         default=False,
-        db_column='isStaff'
+        db_column='isUserAdmin'
+    )
+    isUserStaff = models.BooleanField(  # ✅ Changed from isStaff to isUserStaff
+        default=False,
+        db_column='isUserStaff'
     )
     
     objects = UserManager()
     
     USERNAME_FIELD = 'UserEmail'
     REQUIRED_FIELDS = ['UserFullName']
-    EMAIL_FIELD = 'UserEmail'  # Fix for password reset
+    EMAIL_FIELD = 'UserEmail'
     
     class Meta:
         db_table = 'User'
@@ -114,7 +131,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.UserFullName} ({self.UserEmail})"
     
-    # Property mappings to connect Django's expected fields to your custom fields
+    # Property mappings - UPDATED to match new field names
     @property
     def password(self):
         return self.UserPasswordHash
@@ -133,34 +150,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def is_superuser(self):
-        return self.isAdmin
+        return self.isUserAdmin  # ✅ Updated to isUserAdmin
     
     @is_superuser.setter
     def is_superuser(self, value):
-        self.isAdmin = value
+        self.isUserAdmin = value  # ✅ Updated to isUserAdmin
     
     @property
     def is_staff(self):
-        return self.isStaff
+        return self.isUserStaff  # ✅ Updated to isUserStaff
     
     @is_staff.setter
     def is_staff(self, value):
-        self.isStaff = value
+        self.isUserStaff = value  # ✅ Updated to isUserStaff
     
     @property
     def is_active(self):
-        return self.isActive
+        return self.isUserActive  # ✅ Updated to isUserActive
     
     @is_active.setter
     def is_active(self, value):
-        self.isActive = value
-    
-    def save(self, *args, **kwargs):
-        if not self.RoleID_id:
-            # Assign default role if not set
-            default_role, created = Role.objects.get_or_create(
-                RoleName='Viewer',
-                defaults={'RoleDescription': 'Basic user with view-only access'}
-            )
-            self.RoleID = default_role
-        super().save(*args, **kwargs)
+        self.isUserActive = value  # ✅ Updated to isUserActive

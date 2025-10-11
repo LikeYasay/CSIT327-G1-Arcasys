@@ -11,64 +11,98 @@ Arcasys: Marketing Archive Manager is a Django Full Stack web application for **
 
 ---
 
-### 🚀 Setup & run instructions  
+### 🚀 Setup & run instructions 
 
-1. **Clone the Repository**  
-   ```bash
-   git clone https://github.com/your-repo/MarketingArchive.git
-   cd MarketingArchive/Arcasys
-   ```
+### 1. **Clone the Repository**
+```bash
+git clone https://github.com/your-repo/MarketingArchive.git
+```
 
-2. **Open the Project in VS Code**  
-   - Launch **Visual Studio Code**  
-   - Open the folder you just cloned  
-   - Open the terminal (`` Ctrl + ` ``)  
+### 2. **Navigate to the Project Folder**
+```bash
+cd MarketingArchive
+cd Arcasys  # go inside where manage.py is located
+```
 
-3. **Create and Activate a Virtual Environment**  
-   ```bash
-   python -m venv env
-   ..\env\Scripts\activate   # for Windows
-   source env/bin/activate   # for macOS/Linux
-   ```
+### 3. **Create a `.env` File**
+In the `Arcasys` folder (same level as `manage.py`), create a file named `.env`.
 
-4. **Install Dependencies**  
-   ```bash
-   pip install -r requirements.txt
-   ```
+⚠️ **Do NOT share or upload this file publicly.**  
+It contains sensitive credentials for the shared Supabase database and email service.
 
-5. **Create a `.env` File**  
-   In the `Arcasys` folder (same level as `manage.py`), create a file named `.env`.  
+➡️ **Ask the project admin or repository maintainer** for the correct `.env` configuration.
 
-   ⚠️ **Do not copy or share environment variables publicly.**  
-   The `.env` file contains sensitive credentials for the shared Supabase database and email service.  
+Example placeholder format:
+```env
+DATABASE_URL='your-database-url-here'
+SECRET_KEY='your-django-secret-key'
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1,.onrender.com
 
-   → **Ask the project admin or repository maintainer** for the correct `.env` configuration and credentials.  
+EMAIL_HOST_USER='your-email-here'
+EMAIL_HOST_PASSWORD='your-app-password-here'
+DEFAULT_FROM_EMAIL='Marketing Archive <your-email-here>'
+```
 
-   Example placeholder format:
-   ```env
-   DATABASE_URL='your-database-url-here'
-   SECRET_KEY='your-django-secret-key'
-   DEBUG=True
-   ALLOWED_HOSTS=localhost,127.0.0.1,.onrender.com
+---
 
-   EMAIL_HOST_USER='your-email-here'
-   EMAIL_HOST_PASSWORD='your-app-password-here'
-   DEFAULT_FROM_EMAIL='Marketing Archive <your-email-here>'
-   ```
+### 4. **Create & Activate a Virtual Environment**
 
-6. **Apply Database Migrations**  
-   ```bash
-   python manage.py migrate
-   ```
+If you **don’t have a virtual environment yet**, create one:
+```bash
+python -m venv env
+```
 
-7. **Run the Django Development Server**  
-   ```bash
-   python manage.py runserver
-   ```
+Then **activate it**:
 
-8. **Open the Application**  
-   Open your browser and go to 👉 **http://127.0.0.1:8000/**  
+#### On Windows (Command Prompt / PowerShell)
+```bash
+env\Scripts\activate
+```
 
+#### On macOS/Linux
+```bash
+source env/bin/activate
+```
+
+✅ *If you already have a virtual environment (e.g., `env`), just activate it using the appropriate command above.*
+
+---
+
+### 5. **Install Project Dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 6. **Apply Database Migrations**
+```bash
+python manage.py migrate
+```
+
+---
+
+### 7. **Run the Django Development Server**
+```bash
+python manage.py runserver
+```
+
+---
+
+### 8. **Open the Application**
+Open your browser and visit 👉 [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+
+---
+
+## 🧠 Notes
+- Always **activate your virtual environment** before running Django commands.  
+- If `pip` or `python` points to the wrong version, try using `python3` / `pip3`.  
+- You can verify dependencies with:
+  ```bash
+  pip list
+  ```
+  
 ---
 
 ### 🛠 Git Workflow (Best Practices)

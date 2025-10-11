@@ -1,15 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Kumbh+Sans:wght@400;600;700&display=swap');
 
-html { 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   scroll-behavior: smooth;
 }
 
 body {
-    margin: 0;
-    font-family: 'Kumbh Sans', sans-serif;
-    background: white;
-    padding-top: 60px; 
-    overflow-x: hidden;
+  font-family: 'Kumbh Sans', sans-serif;
+  background: white;
+  padding-top: 60px;  /* offset for fixed navbar */
+  overflow-x: hidden;
 }
 
 .navbar {
@@ -27,6 +29,15 @@ body {
     box-sizing: border-box; 
 }
 
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1; /* take up remaining vertical space, pushing footer down */
+}
 
 .logo-section {
     display: flex;
@@ -89,15 +100,56 @@ body {
     font-weight: bold;
 }
 
-.signup {
-    background: #8A252C;
-    color: white;
+/* Shared transition for smooth hover */
+.signup, .approve-accounts, .logout, .login {
+  transition: 
+    background-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.15s ease,
+    box-shadow 0.25s ease;
+  cursor: pointer;
 }
 
-.login {
-    background: #FFCF01;
-    color: black;
+.signup, .approve-accounts, .logout {
+  background: #8A252C;
+  color: white;
 }
+
+.signup:hover,
+.approve-accounts:hover,
+.logout:hover {
+  background: #FFCF01;              
+  color: black;                      
+  transform: translateY(-2px);      
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.signup:active,
+.approve-accounts:active,
+.logout:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+
+.login {
+  background: #FFCF01;
+  color: black;
+}
+
+.login:hover {
+  background: #8A252C;              
+  color: white;              
+       
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.login:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
 
 .footer {
     background: #8A252C; 
@@ -178,16 +230,52 @@ body {
     color: black;
 }
 
+.btn.primary:hover{
+  background-color: #e6b800;
+  transform: translateY(-2px);  
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+.btn.primary:active {
+  transform: scale(0.98); 
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+
 .btn.secondary {
     border: 2px solid #fff;
     color: #fff;
     background: transparent;
+    transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+    will-change: transform, box-shadow;
 }
 
+.btn.secondary:hover {
+  color: black;
+  border-color: black;
+  transform: translateY(-2px);                
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);     
+}
 
-.btn:hover {
+.btn.secondary:active {
+  transform: translateY(0) scale(0.98);       
+  box-shadow: 0 3px 8px rgba(0,0,0,0.16);
+}
+
+.btn.secondary:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,0.7),           
+    0 0 0 6px rgba(0,0,0,0.15);                 
+}
+
+/* .btn:hover {
     opacity: 0.85;
-}
+} */
 
 
 .desc h3{
@@ -250,7 +338,7 @@ body {
 
 .feature-card p {
   color: #333;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.5;
 }
 
@@ -260,8 +348,8 @@ body {
   background: #fafafa;
 }
 
-.problem-section h2 {
-  font-size: 28px;
+.problem-section h3 {
+  font-size: 50px;
   font-weight: bold;
   color: #8A252C;
   margin-bottom: 10px;
@@ -269,7 +357,7 @@ body {
 
 .problem-section .subtitle {
   color: #333;
-  font-size: 16px;
+  font-size: 20px;
   margin-bottom: 40px;
 }
 
@@ -287,7 +375,14 @@ body {
   width: 350px;
   text-align: center;   
   box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
+.problem-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.15);
+}
+
 
 .problem-card h3 {
   font-size: 20px;
@@ -302,7 +397,7 @@ body {
 }
 
 .problem-card ul li {
-  font-size: 15px;
+  font-size: 17px;
   color: #333;
   margin-bottom: 12px;
   display: inline-block; 
@@ -315,8 +410,8 @@ body {
   background: white;
 }
 
-.how-it-works h2 {
-  font-size: 28px;
+.how-it-works h3 {
+  font-size: 50px;
   font-weight: bold;
   color: #8A252C;
   margin-bottom: 40px;
@@ -330,7 +425,13 @@ body {
   border-radius: 12px;
   box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
   text-align: center; 
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
+.steps-container:hover {
+  transform: translateY(-8px);
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.15);
+} 
 
 .step {
   margin-bottom: 30px;
@@ -355,14 +456,14 @@ body {
 }
 
 .step-content h3 {
-  font-size: 18px;
+  font-size: 25px;
   color: #8A252C;
   margin-bottom: 8px;
   text-align: center;
 }
 
 .step-content p {
-  font-size: 15px;
+  font-size: 17px;
   color: #333;
   margin: 0;
   text-align: center;

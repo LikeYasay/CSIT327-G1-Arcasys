@@ -48,22 +48,27 @@
     box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-.contact-icon {
-    background: #8A252C;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    margin-bottom: 15px;
+.contact-card .contact-icon {
+  background: #8A252C;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+
+.contact-card .contact-icon img {
+  width: 30px;
+  height: 30px;
 }
 
 .contact-icon img {
-    width: 30px;
-    height: 30px;
-    filter: brightness(0) invert(1); 
+  filter: none !important;
 }
+
 
 .contact-card h3 {
     color: #8A252C;
@@ -195,6 +200,13 @@
     border: none;
 }
 
+.btn.primary:hover {
+    color: black;         
+    background: #FFCF01;  
+    opacity: 0.9;         
+}
+
+
 .btn.secondary{
     background: #F4F6F8;
     color: black;
@@ -271,4 +283,9 @@
 
 .emergency-contact a:hover {
     text-decoration: underline;
+}
+
+input:focus, textarea:focus {
+  border: 1px solid #000; 
+  outline: none;           
 }

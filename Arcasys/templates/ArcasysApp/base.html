@@ -13,8 +13,11 @@
       href="{% static 'ArcasysApp/images/CIT_LOGO.png' %}"
     />
   </head>
+
   <body>
     <div class="page-wrapper">
+
+      <!-- HEADER / NAVBAR -->
       <header class="navbar">
         <div class="logo-section">
           <img
@@ -27,21 +30,34 @@
             <p>Event Management System</p>
           </div>
         </div>
+
         <div class="nav-right">
           <nav class="nav-links">
             <ul>
-              <li><a href="/#about">About</a></li>
-              <li><a href="{% url 'events' %}">Events</a></li>
-              <li><a href="{% url 'contact' %}">Contact Us</a></li>
+              {% if user.is_authenticated %}
+                {% if user.isUserAdmin or user.is_superuser %}
+                  <!-- ADMIN NAVBAR -->
+                  <li><a href="{% url 'admin_dashboard' %}">Approve Accounts</a></li>  <!-- ✅ Updated URL -->
+                  <li><a href="{% url 'add_events' %}">Add Events</a></li>
+                {% elif user.isUserStaff %}
+                  <!-- STAFF NAVBAR -->
+                  <li><a href="{% url 'add_events' %}">Add Events</a></li>
+                {% endif %}
+                
+                <li class="user-welcome-item">
+                  <span class="user-welcome">Welcome, {{ user.UserFullName }}</span>
+                </li>
+              {% else %}
+                <!-- PUBLIC NAVBAR (Viewers) -->
+                <li><a href="/#about">About</a></li>
+                <li><a href="{% url 'events' %}">Events</a></li>
+                <li><a href="{% url 'contact' %}">Contact Us</a></li>
+              {% endif %}
             </ul>
           </nav>
 
           <div class="auth-buttons">
-            {% if user.is_authenticated and user.is_admin %}
-                <a href="{% url 'approve_accounts' %}" class="btn approve-accounts">Approve Accounts</a>
-                <a href="{% url 'logout' %}" class="btn logout">Log out</a>
-            {% elif user.is_authenticated %}
-                <span class="user-welcome">Welcome, {{ user.UserFullName }}</span>
+            {% if user.is_authenticated %}
                 <a href="{% url 'logout' %}" class="btn logout">Logout</a>
             {% else %}
                 <a href="{% url 'register' %}" class="btn signup">Signup</a>
@@ -51,20 +67,36 @@
         </div>
       </header>
 
+      <!-- MAIN CONTENT -->
       <main>
         {% block content %}{% endblock content %}
       </main>
 
+      <!-- FOOTER -->
       <footer class="footer">
         <div class="footer-left">
-          <p>© 2025 CIT–U | ARCASYS: Marketing Archive Manager. All rights reserved.</p>
+          <p>
+            © 2025 CIT–U | ARCASYS: Marketing Archive Manager. All rights reserved.
+          </p>
         </div>
         <div class="footer-right">
-          <a href="/#about">About</a>
-          <a href="{% url 'events' %}">Events</a>
-          <a href="{% url 'contact' %}">Contact Us</a>
+          {% if not user.is_authenticated %}
+            <!-- PUBLIC FOOTER -->
+            <a href="/#about">About</a>
+            <a href="{% url 'events' %}">Events</a>
+            <a href="{% url 'contact' %}">Contact Us</a>
+          {% else %}
+            <!-- AUTHENTICATED USER FOOTER -->
+            {% if user.isUserAdmin or user.is_superuser %}
+              <a href="{% url 'admin_dashboard' %}">Approve Accounts</a>  <!-- ✅ Updated URL -->
+              <a href="{% url 'add_events' %}">Add Events</a>
+            {% elif user.isUserStaff %}
+              <a href="{% url 'add_events' %}">Add Events</a>
+            {% endif %}
+          {% endif %}
         </div>
       </footer>
+
     </div>
   </body>
 </html>

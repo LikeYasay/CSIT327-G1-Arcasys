@@ -1,59 +1,60 @@
-{% extends "ArcasysApp/events.html" %}
+{% extends "ArcasysApp/base.html" %}
 {% load static %}
 
+{% block title %}Admin Approval{% endblock title %}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'ArcasysApp/css/events.css' %}" />
-<link rel="stylesheet" href="{% static 'ArcasysApp/css/admin_dashboard.css' %}" />
+<link rel="stylesheet" href="{% static 'ArcasysApp/css/admin_approval.css' %}" />
 {% endblock extra_css %}
 
-{% block results_header_content %}
-<div class="results-header-admin">
-    <div class="results-header-top">
-        <h2>Event Results</h2>
-        <a href="#" class="btn add-event">Add Event</a>
-    </div>
-    
-    <div class="results-header-bottom">
-        <p class="results-meta">Showing 10 of 197 events (Page 1 of 20)</p>
-        <span class="results-date">2025 | September</span>
-    </div>
-</div>
-{% endblock results_header_content %}
+{% block content %}
 
-{% block admin_actions_1 %}
-<div class="tags-and-actions-row">
-    
-    <div class="tags">
-        <span class="tag green">SSO</span>
-        <span class="tag green">LeadTheFuture</span>
-        <span class="tag green">Organizations</span>
-    </div>
-    
-    {# ADMIN ACTIONS INLINE #}
-    <div class="admin-actions-inline">
-        <a href="#" class="action-btn export">Export</a>
-        <a href="#" class="action-btn edit">Edit</a>
-        <a href="#" class="action-btn delete">Delete</a>
-    </div>
+<div class="approval-page-header">
+  <h1 class="approval-title">Admin Approval</h1>
 </div>
-{% endblock admin_actions_1 %}
 
+<section class="admin-approval-wrapper">
+  <div class="applications-section">
+    <h2>Pending Staff Applications ({{ applications|length }})</h2>
 
-{% block admin_actions_2 %}
-<div class="tags-and-actions-row">
-    
-    <div class="tags">
-        <span class="tag green">LeadTheFuture</span>
-        <span class="tag green">redefinethetop</span>
-        <span class="tag green">CITTopsAgain</span>
-        <span class="tag green">CITforSDG</span>
-    </div>
-    
-    {# ADMIN ACTIONS INLINE #}
-    <div class="admin-actions-inline">
-        <a href="#" class="action-btn export">Export</a>
-        <a href="#" class="action-btn edit">Edit</a>
-        <a href="#" class="action-btn delete">Delete</a>
-    </div>
-</div>
-{% endblock admin_actions_2 %}
+    <!-- Django messages -->
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if applications %}
+      {% for application in applications %}
+      <div class="application-card">
+        <div class="app-info">
+          <h3>{{ application.full_name }}</h3>
+          <p class="app-email">{{ application.email }}</p>
+          <p class="app-meta">
+            Applied: {{ application.date_applied }}
+          </p>
+        </div>
+        <div class="app-actions">
+          <form method="post" action="{% url 'reject_application' application.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn reject">Reject</button>
+          </form>
+          <form method="post" action="{% url 'approve_application' application.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn approve">Approve</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="no-applications">
+        <p>No pending staff applications.</p>
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock content %}

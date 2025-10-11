@@ -10,7 +10,6 @@
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-    integrity="sha512-…"
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   />
@@ -44,10 +43,23 @@
         {% endif %}
 
         <!-- Login Form -->
-        <form method="POST">
+        <form method="POST" autocomplete="off">
           {% csrf_token %}
+
+          <!-- Hidden fake fields to trick autofill -->
+          <input type="email" name="fake_email" style="display:none">
+          <input type="password" name="fake_password" style="display:none">
+
           <label for="email">Email</label>
-          <input type="email" name="email" id="email" placeholder="Enter your email" required>
+          <input 
+            type="email" 
+            name="email" 
+            id="email" 
+            placeholder="Enter your email" 
+            required 
+            autocomplete="off" 
+            readonly onfocus="this.removeAttribute('readonly')"
+          >
 
           <label for="password">Password</label>
           <div class="password-wrapper">
@@ -57,15 +69,19 @@
               id="password"
               placeholder="Enter your password"
               required
+              autocomplete="off"
+              readonly onfocus="this.removeAttribute('readonly')"
             />
             <span class="toggle-password">
-              <i class="fas fa-eye" id="togglePasswordIcon"></i>
+              <i class="fas fa-eye-slash" id="togglePasswordIcon"></i>
             </span>
           </div>
 
-
           <div class="options">
-            <label><input type="checkbox"> Remember me</label>
+            <label>
+              <input type="checkbox" name="remember_me" id="remember_me">
+              Remember me
+            </label>
             <a href="{% url 'password_reset' %}" class="forgot-link">Forgot password?</a>
           </div>
 
@@ -73,7 +89,7 @@
         </form>
 
         <p class="signup-text">
-          Don’t have an account? <a href="{% url 'register' %}">Signup</a>
+          Don't have an account? <a href="{% url 'register' %}">Signup</a>
         </p>
       </div>
     </div>
@@ -83,23 +99,85 @@
     </div>
   </div>
 
-
   <script>
     document.addEventListener("DOMContentLoaded", function() {
+      // Password visibility toggle
       const toggleIcon = document.getElementById("togglePasswordIcon");
       const passwordInput = document.getElementById("password");
 
       if (toggleIcon && passwordInput) {
         toggleIcon.addEventListener("click", function() {
-          const type =
-            passwordInput.getAttribute("type") === "password" ? "text" : "password";
+          const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
           passwordInput.setAttribute("type", type);
           this.classList.toggle("fa-eye-slash");
           this.classList.toggle("fa-eye");
         });
       }
+
+      // Check if user previously unchecked "Remember me"
+      const userExplicitlyUnchecked = localStorage.getItem('dontRememberMe');
+      
+      if (!userExplicitlyUnchecked) {
+        // Auto-fill only if user didn't explicitly uncheck
+        const rememberedEmail = getCookie('remembered_email');
+        const rememberedPassword = getCookie('remembered_password');
+        const rememberMeCheckbox = document.getElementById('remember_me');
+        
+        if (rememberedEmail) {
+            const cleanEmail = cleanCookieValue(rememberedEmail);
+            document.getElementById('email').value = cleanEmail;
+            rememberMeCheckbox.checked = true;
+        }
+        
+        if (rememberedPassword) {
+            const cleanPassword = cleanCookieValue(rememberedPassword);
+            document.getElementById('password').value = cleanPassword;
+        }
+      }
+
+      // Track when user explicitly unchecks "Remember me"
+      const rememberMeCheckbox = document.getElementById('remember_me');
+      rememberMeCheckbox.addEventListener('change', function() {
+        if (!this.checked) {
+            // User explicitly doesn't want to be remembered
+            localStorage.setItem('dontRememberMe', 'true');
+            // Clear the fields immediately
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        } else {
+            // User wants to be remembered again
+            localStorage.removeItem('dontRememberMe');
+        }
+      });
+
+      // Helper functions
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+      }
+
+      function cleanCookieValue(value) {
+        if (!value) return '';
+        let cleaned = value.replace(/^"(.*)"$/, '$1');
+        try {
+            cleaned = decodeURIComponent(cleaned);
+        } catch (e) {
+            // If URL decoding fails, use the value as is
+        }
+        cleaned = cleaned.replace(/^"+|"+$/g, '');
+        return cleaned;
+      }
     });
   </script>
-
 </body>
 </html>

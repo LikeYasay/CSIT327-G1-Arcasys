@@ -36,18 +36,15 @@ body {
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.search-bar .search-icon {
-  margin-right: 10px;
-  font-size: 18px;
-}
-
 .search-bar input {
   border: none;
   flex: 1;
   font-size: 16px;
   background: transparent;
   outline: none;
+  color: #333; /* make text visible */
 }
+
 
 .filters {
   display: flex;
@@ -188,7 +185,6 @@ body {
 .results-date { color: #8A252C; font-weight: bold; }
 .results-meta { font-size: 14px; color: #666; margin-bottom: 20px; }
 
-
 .event-card {
   background: #fff;
   border-radius: 12px;
@@ -265,3 +261,19 @@ body {
 .pagination .prev { background: #ddd; color: #333; }
 .pagination .next { background: #8A252C; color: #fff; }
 .pagination .btn:hover { opacity: 0.9; }
+
+.filter select {
+  padding: 10px 32px 10px 12px;   /* extra right padding */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  color: black;
+  background-color: #fff;
+  appearance: none;              /* remove default arrow */
+
+  /* thin custom arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' stroke='black' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+}

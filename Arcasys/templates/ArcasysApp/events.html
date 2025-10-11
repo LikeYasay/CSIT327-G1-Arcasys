@@ -10,18 +10,35 @@
   <h1 class="page-title">Search for Events</h1>
 
   <div class="search-bar">
-    <span class="search-icon">🔍</span>
+    <img
+    src="{% static 'ArcasysApp/images/search-icon.png' %}"
+    alt="Search Icon"
+    class="search-icon"
+    style="width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;display:block;object-fit:contain;margin-right:10px;"
+    />
     <input type="text" placeholder="Search events, departments, tags..." />
   </div>
 
   <div class="filters">
     <div class="filter">
-      <label for="department">Department</label>
+      <label for="department">Office/Department</label>
       <select id="department">
-        <option>All Departments</option>
-        <option>CCS</option>
-        <option>Marketing</option>
-        <option>CNAHS</option>
+              <option value="" disabled selected>Select office/department</option>
+              <option value="MO">Marketing Office (MO)</option>
+              <option value="URO">University Registrar’s Office (URO)</option>
+              <option value="OAS">Office of Admissions & Scholarships (OAS)</option>
+              <option value="ETO">Enrollment Technical Office (ETO)</option>
+              <option value="FAO">Finance & Accounting Office (FAO)</option>
+              <option value="SSO">Student Success Office (SSO)</option>
+              <option value="TSG">Technical Support Group (TSG)</option>
+              <option value="GC">Guidance Center</option>
+
+              <option value="CEA">CEA</option>
+              <option value="CCS">CCS</option>
+              <option value="CASE">CASE</option>
+              <option value="CMBA">CMBA</option>
+              <option value="CNAHS">CNAHS</option>
+              <option value="CCJ">CCJ</option>
       </select>
     </div>
 

@@ -125,6 +125,17 @@ Open your browser and visit 👉 [http://127.0.0.1:8000/](http://127.0.0.1:8000/
 
 ---
 
+## 🧠 Notes
+
+- Always **activate your virtual environment** before running Django commands.
+- If `pip` or `python` points to the wrong version, try using `python3` / `pip3`.
+- You can verify dependencies with:
+  ```bash
+  pip list
+  ```
+
+---
+
 ### 🛠 Git Workflow (Best Practices)
 
 1. Check Current Status  
@@ -198,22 +209,11 @@ Open your browser and visit 👉 [http://127.0.0.1:8000/](http://127.0.0.1:8000/
    git pull origin main
    ```
 
-8. Clean Up Old Branches  
+8. Clean Up Old Branches (Optional) 
    ```bash
    git branch -d feature/your-feature-name                  # delete locally
    git push origin --delete feature/your-feature-name       # delete on GitHub
    ```
-
----
-
-## 🧠 Notes
-
-- Always **activate your virtual environment** before running Django commands.
-- If `pip` or `python` points to the wrong version, try using `python3` / `pip3`.
-- You can verify dependencies with:
-  ```bash
-  pip list
-  ```
 
 ---
 

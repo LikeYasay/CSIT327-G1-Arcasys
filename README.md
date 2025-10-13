@@ -1,6 +1,6 @@
 # 📂 Arcasys: Marketing Archive Manager
 
-Arcasys: Marketing Archive Manager is a Django Full Stack web application for **Cebu Institute of Technology – University (CIT-U)** that centralizes event management and archiving. It consolidates scattered event postings into one platform with role-based access, smart search and filters, and integration with external platforms—improving communication, transparency, and accessibility across the university. 
+Arcasys: Marketing Archive Manager is a Django Full Stack web application for **Cebu Institute of Technology – University (CIT-U)** that centralizes event management and archiving. It consolidates scattered event postings into one platform with role-based access, smart search and filters, and integration with external platforms—improving communication, transparency, and accessibility across the university.
 
 ---
 
@@ -12,44 +12,78 @@ Arcasys: Marketing Archive Manager is a Django Full Stack web application for **
 
 ### 🚀 Setup & run instructions
 
-When you open VS Code:  
+- **Backend:** Python, Django
+- **Frontend:** HTML, CSS
+- **Database & Deployment:** Supabase, Render
 
-1. Open the terminal (`` Ctrl + ` ``).  
-2. Navigate to the project folder:  
+---
+
+## 🚀 Setup & Run Instructions
+
+### 1. Clone the Repository
 ```bash
-cd MarketingArchive
-cd Arcasys   # go inside where manage.py is
+git clone https://github.com/your-repo/MarketingArchive.git
 ```
-3. Activate your virtual environment:
+
+### 2. Navigate to the Project Folder
 ```bash
 ..\env\Scripts\activate        # Windows
 # or
 source env/bin/activate        # macOS/Linux
 ```
-4. Run the Django development server:
-```bash
-python manage.py runserver
-```
-5. Open your browser at 👉 http://127.0.0.1:8000/
 
-### 🛠 Git Workflow (Best Practices)
-1. Check Current Status
-```bash
-git status
+### 3. Create a `.env` File
+
+In the `Arcasys` folder (same level as `manage.py`), create a file named `.env`.
+
+⚠️ **Do NOT share or upload this file publicly.**
+It contains sensitive credentials for the shared Supabase database and email service.
+
+➡️ **Ask the project admin or repository maintainer** for the correct `.env` configuration.
+
+Example placeholder format:
+```env
+DATABASE_URL='your-database-url-here'
+SECRET_KEY='your-django-secret-key'
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1,.onrender.com
+
+EMAIL_HOST_USER='your-email-here'
+EMAIL_HOST_PASSWORD='your-app-password-here'
+DEFAULT_FROM_EMAIL='Marketing Archive <your-email-here>'
 ```
-2. Update Local Main
+
+---
+
+### 4. Set Up Admin Access & Supabase Invitation
+
+Before proceeding, contact the project admin to request:
+
+- The official `.env` credentials.
+- An invitation to the Supabase project for database access.
+
+Once access is confirmed, continue with the next steps.
+
+---
+
+### 5. Create & Activate a Virtual Environment
+
+If you don’t have a virtual environment yet, create one:
 ```bash
-git checkout main
-git pull origin main
+python -m venv env
 ```
-3. Create a New Branch
+
+Then activate it:
+
+#### On Windows (Command Prompt / PowerShell)
 ```bash
-git checkout -b feature/your-feature-name
+env\Scripts\activate
 ```
-Examples:
-- feature/user-accounts
-- feature/ui-redesign
-- fix/logout-bug
+
+#### On macOS/Linux
+```bash
+source env/bin/activate
+```
 
 Follow the branch naming convention below:
 ```bash
@@ -86,23 +120,28 @@ Examples:
 
 5. Push Branch to GitHub
 ```bash
-git push origin feature/your-feature-name
-```
-6. Open Pull Request (PR) on GitHub
-- Compare your branch → main
-- Add description
-- Request review and merge once approved
-
-7. Sync After Merge
-```bash
-git checkout main
-git pull origin main
+python manage.py migrate
 ```
 
-8. Clean Up Old Branches
+---
+
+### 8. Create a Superuser (Admin Account)
+
+⚠️ **Heads-up:**
+Before running this step, make sure you have already been **invited to the Supabase project** and your access has been confirmed. Without the invitation, the database connection will fail.
+
+After successful migrations, create your local Django admin account:
 ```bash
-git branch -d feature/your-feature-name                  # delete locally
-git push origin --delete feature/your-feature-name       # delete on GitHub
+python manage.py createsuperuser
+```
+
+Follow the prompts to enter your username, email, and password.
+
+---
+
+### 9. Run the Django Development Server
+```bash
+python manage.py runserver
 ```
 
 ## ⚙️ Supabase: Environment & Database Configuration
@@ -165,6 +204,20 @@ git push origin --delete feature/your-feature-name       # delete on GitHub
 
 
 
+---
 
+## 👥 Team Members
 
+| Name                             | Role                | CIT-U Email                                |
+|----------------------------------|---------------------|--------------------------------------------|
+| Valmera, Harvey Rod Chirstian L. | Product Owner       | harveyrodchristian.valmera@cit.edu         |
+| Yungco, Riggy Maryl L.           | Business Analyst    | riggymaryl.yungco@cit.edu                  |
+| Vilocura, Justine C.             | Scrum Master        | justine.vilocura@cit.edu                   |
+| Uy, Emman Jay                    | Back-End Developer  | emmanjay.uy@cit.edu                        |
+| Ursulo, Lichael Yashua           | Front-End Developer | lichaelyashua.ursulo@cit.edu               |
+| Villadarez, Niña Nicole          | Assistant Developer | ninanicole.villadarez@cit.edu              |
 
+---
+
+### 🌐 Deployed Link  
+Deployment in progress.

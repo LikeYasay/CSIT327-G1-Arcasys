@@ -18,12 +18,15 @@ Arcasys: Marketing Archive Manager is a Django Full Stack web application for **
 ```bash
 git clone https://github.com/your-repo/MarketingArchive.git
 ```
+---
 
 ### 2. Navigate to the Project Folder
 ```bash
 cd MarketingArchive
 cd Arcasys  # go inside where manage.py is located
 ```
+
+---
 
 ### 3. Create a `.env` File
 
@@ -158,11 +161,17 @@ pip list
 ```bash
 git status
 ```
+
+---
+
 ### 2. Update Local Main
 ```bash
 git checkout main
 git pull origin main
 ```
+
+---
+
 ### 3. Create a New Branch
 ```bash
 git checkout -b feature/your-feature-name
@@ -190,6 +199,8 @@ Examples:
 - git branch fix/login/color of the button
 - git branch setup/login/authentication library
 
+---
+
 ### 4. Stage & Commit Changes
 ```bash
 git add .
@@ -205,14 +216,21 @@ Examples:
 - git commit -m "fix(login): color of the button"
 - git commit -m "setup(login): authentication library"
 
+---
+
 ### 5. Push Branch to GitHub
 ```bash
 git push origin feature/your-feature-name
 ```
+
+---
+
 ### 6. Open Pull Request (PR) on GitHub
 - Compare your branch → main
 - Add description
 - Request review and merge once approved
+
+---
 
 ### 7. Sync After Merge
 ```bash
@@ -220,7 +238,9 @@ git checkout main
 git pull origin main
 ```
 
-### 8. Clean Up Old Branches
+---
+
+### 8. Clean Up Old Branches (Optional)
 ```bash
 git branch -d feature/your-feature-name                  # delete locally
 git push origin --delete feature/your-feature-name       # delete on GitHub

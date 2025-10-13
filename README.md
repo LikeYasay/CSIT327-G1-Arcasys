@@ -1,4 +1,5 @@
 # 📂 Arcasys: Marketing Archive Manager
+# 📂 Arcasys: Marketing Archive Manager
 
    Arcasys: Marketing Archive Manager is a Django Full Stack web application for **Cebu Institute of Technology – University (CIT-U)** that centralizes event management and archiving. It consolidates scattered event postings into one platform with role-based access, smart search and filters, and integration with external platforms—improving communication, transparency, and accessibility across the university.
 

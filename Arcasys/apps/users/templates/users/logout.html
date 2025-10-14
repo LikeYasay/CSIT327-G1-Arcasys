@@ -1,35 +1,33 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Logout | Marketing Archive</title>
-  <link rel="stylesheet" href="{% static 'ArcasysApp/css/logout.css' %}" />
-  <link rel="icon" type="image/png" href="{% static 'ArcasysApp/images/CIT_LOGO.png' %}" />
-</head>
-<body>
-  <div class="overlay">
-    <div class="logout-modal">
-      <button class="close-btn" onclick="window.history.back()">×</button>
 
-      <header class="logout-header">
-        <h1>MARKETING ARCHIVE</h1>
-        <p>Event Management System</p>
-      </header>
+{% block title %}Logout | Marketing Archive{% endblock %}
 
-      <img src="{% static 'ArcasysApp/images/CIT_LOGO.png' %}" alt="CIT Logo" class="logo">
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'users/css/logout.css' %}" />
+{% endblock %}
 
-      <h2>Logout</h2>
-      <p>Are you sure you want to sign out of your account?</p>
+{% block content %}
+<div class="overlay">
+  <div class="logout-modal">
+    <button class="close-btn" onclick="window.history.back()">×</button>
 
-      <form method="POST" action="{% url 'logout' %}">
-        {% csrf_token %}
-        <button type="submit" class="btn-signout">Sign Out</button>
-      </form>
+    <header class="logout-header">
+      <h1>MARKETING ARCHIVE</h1>
+      <p>Event Management System</p>
+    </header>
 
-      <button class="btn-cancel" onclick="window.history.back()">Cancel</button>
-    </div>
+    <img src="{% static 'shared/images/CIT_LOGO.png' %}" alt="CIT Logo" class="logo">
+
+    <h2>Logout</h2>
+    <p>Are you sure you want to sign out of your account?</p>
+
+    <form method="POST" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-signout">Sign Out</button>
+    </form>
+
+    <button class="btn-cancel" onclick="window.history.back()">Cancel</button>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}

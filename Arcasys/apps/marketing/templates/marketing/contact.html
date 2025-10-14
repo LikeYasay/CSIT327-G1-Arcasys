@@ -1,8 +1,10 @@
-{% extends 'ArcasysApp/base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
+{% block title %}Contact Us | Marketing Archive{% endblock %}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'ArcasysApp/css/contact.css' %}">
+<link rel="stylesheet" href="{% static 'marketing/css/contact.css' %}" />
 {% endblock %}
 
 {% block content %}
@@ -15,7 +17,7 @@
     <div class="contact-methods">
         <div class="contact-card">
             <div class="contact-icon">
-                <img src="{% static 'ArcasysApp/images/location-icon.png' %}" alt="Location" />
+                <img src="{% static 'marketing/images/location-icon.png' %}" alt="Location" />
             </div>
             <h3>Visit Our Campus</h3>
             <p>Come visit us at our main campus location for in-person assistance and support.</p>
@@ -28,7 +30,7 @@
 
         <div class="contact-card">
             <div class="contact-icon">
-                <img src="{% static 'ArcasysApp/images/phone-icon.png' %}" alt="Phone" />
+                <img src="{% static 'marketing/images/phone-icon.png' %}" alt="Phone" />
             </div>
             <h3>Call Us</h3>
             <p>Reach out to us directly for immediate assistance with your inquiries.</p>
@@ -40,7 +42,7 @@
 
         <div class="contact-card">
             <div class="contact-icon">
-                <img src="{% static 'ArcasysApp/images/email-icon.png' %}" alt="Email" />
+                <img src="{% static 'marketing/images/email-icon.png' %}" alt="Email" />
             </div>
             <h3>Email Us</h3>
             <p>Send us an email and we'll get back to you within 24 hours.</p>

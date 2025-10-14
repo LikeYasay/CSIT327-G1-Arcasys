@@ -1,8 +1,10 @@
-{% extends "ArcasysApp/base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
+{% block title %}Events | Marketing Archive{% endblock %}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'ArcasysApp/css/events.css' %}" />
+<link rel="stylesheet" href="{% static 'events/css/events.css' %}" />
 {% endblock %}
 
 {% block content %}
@@ -11,7 +13,7 @@
 
   <div class="search-bar">
     <img
-    src="{% static 'ArcasysApp/images/search-icon.png' %}"
+    src="{% static 'events/images/search-icon.png' %}"
     alt="Search Icon"
     class="search-icon"
     style="width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;display:block;object-fit:contain;margin-right:10px;"
@@ -25,7 +27,7 @@
       <select id="department">
               <option value="" disabled selected>Select office/department</option>
               <option value="MO">Marketing Office (MO)</option>
-              <option value="URO">University Registrar’s Office (URO)</option>
+              <option value="URO">University Registrar's Office (URO)</option>
               <option value="OAS">Office of Admissions & Scholarships (OAS)</option>
               <option value="ETO">Enrollment Technical Office (ETO)</option>
               <option value="FAO">Finance & Accounting Office (FAO)</option>
@@ -84,9 +86,9 @@
     <aside class="sidebar">
       <h3 class="sidebar-title">Recent Events</h3>
       <ul class="event-list">
-        <li><a href="#">Forum on Anti–Corruption…</a></li>
+        <li><a href="#">Forum on Anti-Corruption…</a></li>
         <li><a href="#">Student Organizations …</a></li>
-        <li><a href="#">#CITUEEvents: Honoring…</a></li>
+        <li><a href="#">#CITUEvents: Honoring…</a></li>
         <li><a href="#">CIT University particip…</a></li>
         <li><a href="#">College of Computer …</a></li>
         <li><a href="#">MarketED Talks: Shap…</a></li>
@@ -122,7 +124,7 @@
         {% endblock admin_actions_1 %}
         <p class="event-desc">
           Because we <strong>#LeadTheFuture</strong>, WATCH the Wildcat leadership SHINE
-          as our student leaders from the different CIT–U accredited student organizations
+          as our student leaders from the different CIT-U accredited student organizations
           receive their accreditation confirmation in a symbolic ceremony. Go, Wildcats!
         </p>
         <div class="platforms">
@@ -151,7 +153,7 @@
         {% endblock admin_actions_2 %}
         <p class="event-desc">
           Because we <strong>#LeadTheFuture</strong>, WATCH the Wildcat leadership SHINE
-          as our student leaders from the different CIT–U accredited student organizations
+          as our student leaders from the different CIT-U accredited student organizations
           receive their accreditation confirmation in a symbolic ceremony. Go, Wildcats!
         </p>
         <div class="platforms">

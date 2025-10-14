@@ -4,6 +4,6 @@ from . import views
 app_name = 'marketing'
 
 urlpatterns = [
-    path('', views.marketing_home, name='marketing_home'),
-    # Marketing URLs will be added when we move them from ArcasysApp
+    path('', views.landing_view, name='landing'),
+    path('contact/', views.contact_view, name='contact'),
 ]

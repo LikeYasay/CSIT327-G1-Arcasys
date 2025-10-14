@@ -1,7 +1,13 @@
 from django.shortcuts import render
 
-# Basic view - will be filled in later branches
-def marketing_home(request):
-    return render(request, 'marketing/base.html')
+# -----------------------------
+# Landing Page View
+# -----------------------------
+def landing_view(request):
+    return render(request, "marketing/landing.html")
 
-# Placeholder for landing/contact views that will be moved from ArcasysApp
+# -----------------------------
+# Contact Page View
+# -----------------------------
+def contact_view(request):
+    return render(request, "marketing/contact.html")

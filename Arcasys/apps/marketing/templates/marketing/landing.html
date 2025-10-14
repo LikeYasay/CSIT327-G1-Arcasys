@@ -1,0 +1,148 @@
+{% extends "ArcasysApp/base.html" %}
+{% load static %}
+
+{% block content %}
+<section class="hero">
+  <br />
+  <div class="hero-content">
+    <h1>ARCASYS</h1>
+    <h2>
+      A SECURE, EFFICIENT, AND MODERN ARCHIVE <br />
+      FOR INSTITUTIONAL EVENTS
+    </h2>
+    <div id="about" class="hero-buttons">
+      <a href="{% url 'events' %}" class="btn primary">VIEW ARCHIVES</a>
+      <a href="/#about" class="btn secondary">LEARN MORE</a>
+    </div>
+  </div>
+</section>
+
+<section class="desc">
+  <div class="desc-content">
+    <h3> What is ARCASYS?</h3>
+    <p>
+      ARCASYS is a Marketing Archive Manager it is a web-based system designed
+      to <br />
+      centralize event creation, management, and tracking at Cebu Institute of
+      Technology – <br />
+      University. It ensures fast and secure access to event information, <br />
+      automated categorization of past and recent events, and efficient
+      retrieval of event links.
+    </p>
+  </div>
+</section>
+
+<section class="features">
+  <div class="feature-card">
+    <div class="icon">
+      <img
+        src="{% static 'ArcasysApp/images/check-icon.png' %}"
+        alt="Database Icon"
+      />
+    </div>
+    <h3>Centralized Database</h3>
+    <p>
+      All event information stored in one secure, accessible location with
+      comprehensive search and filtering capabilities.
+    </p>
+  </div>
+
+  <div class="feature-card">
+    <div class="icon">
+      <img
+        src="{% static 'ArcasysApp/images/star-icon.png' %}"
+        alt="Security Icon"
+      />
+    </div>
+    <h3>Fast & Secure Retrieval</h3>
+    <p>
+      Lightning-fast search with enterprise-grade security ensuring data
+      integrity and authorized access only.
+    </p>
+  </div>
+
+  <div class="feature-card">
+    <div class="icon">
+      <img
+        src="{% static 'ArcasysApp/images/chart-icon.png' %}"
+        alt="Categorization Icon"
+      />
+    </div>
+    <h3>Automated Categorization</h3>
+    <p>
+      Smart categorization system automatically organizes events by type, date,
+      department, and status for easy management.
+    </p>
+  </div>
+</section>
+
+<section class="problem-section">
+  <h3>The Problem We Solve</h3>
+  <p class="subtitle">
+    Understanding the current challenges and opportunities that drive the need
+    for a modern event management solution.
+  </p>
+
+  <div class="problem-cards">
+    <div class="problem-card">
+      <h3>Current Challenges</h3>
+      <ul>
+        <li>⚠️ Lost or misplaced event links.</li>
+        <li>⚠️ No centralized platform.</li>
+        <li>⚠️ Hard to separate past vs. upcoming events.</li>
+        <li>⚠️ Inefficient manual announcements.</li>
+      </ul>
+    </div>
+
+    <div class="problem-card">
+      <h3>Opportunities Ahead</h3>
+      <ul>
+        <li>✅ Real-time access to events.</li>
+        <li>✅ Reliable, secure archive.</li>
+        <li>✅ Streamlined coordination.</li>
+        <li>✅ Improved transparency.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="how-it-works">
+  <h3>How It Works</h3>
+
+  <div class="steps-container">
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h3>Admins Add Events</h3>
+        <p>
+          Admins log in, create event records, and attach multiple links (FB,
+          IG, TikTok, YouTube, Website).
+        </p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h3>System Organizes & Archives</h3>
+        <p>
+          Events are automatically categorized as Past or Upcoming, stored in a
+          secure database with search & filters.
+        </p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h3>Viewers Retrieve & Export</h3>
+        <p>
+          Authorized users log in to search, view details, and export records
+          with one click.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

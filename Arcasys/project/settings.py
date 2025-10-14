@@ -62,7 +62,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'Arcasys.urls'
+ROOT_URLCONF = 'project.urls'  # ✅ Correct
 
 TEMPLATES = [
     {
@@ -82,7 +82,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Arcasys.wsgi.application'
+WSGI_APPLICATION = 'project.wsgi.application'  # ✅ Correct
 
 
 # Database

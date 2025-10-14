@@ -1,16 +1,16 @@
-{% extends "ArcasysApp/base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
-{% block title %}Admin Approval{% endblock title %}
+{% block title %}Admin Dashboard | Marketing Archive{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'ArcasysApp/css/admin_approval.css' %}" />
-{% endblock extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/admin_dashboard.css' %}" />
+{% endblock %}
 
 {% block content %}
 
 <div class="approval-page-header">
-  <h1 class="approval-title">Admin Approval</h1>
+  <h1 class="approval-title">Admin Dashboard</h1>
 </div>
 
 <section class="admin-approval-wrapper">
@@ -57,4 +57,4 @@
   </div>
 </section>
 
-{% endblock content %}
+{% endblock %}

@@ -1,10 +1,10 @@
-{% extends "ArcasysApp/events.html" %}
+{% extends "events/events.html" %}
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'ArcasysApp/css/events.css' %}" />
-<link rel="stylesheet" href="{% static 'ArcasysApp/css/add_events.css' %}" />
-{% endblock extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'events/css/add_events.css' %}" />
+{% endblock %}
 
 {% block results_header_content %}
 <div class="results-header-admin">

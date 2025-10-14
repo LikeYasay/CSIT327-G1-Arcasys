@@ -1,6 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
 
 # -----------------------------
 # Events View
@@ -21,7 +25,6 @@ def add_events_view(request):
 @login_required
 def admin_dashboard_view(request):
     from ArcasysApp.models import User
-    from django.utils import timezone
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied. Admin privileges required.")
@@ -45,10 +48,6 @@ def admin_dashboard_view(request):
 @login_required
 def approve_application(request, user_id):
     from ArcasysApp.models import User
-    from django.core.mail import send_mail
-    from django.conf import settings
-    from django.template.loader import render_to_string
-    from django.shortcuts import redirect
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")
@@ -106,10 +105,6 @@ Marketing Archive Team"""
 @login_required
 def reject_application(request, user_id):
     from ArcasysApp.models import User
-    from django.core.mail import send_mail
-    from django.conf import settings
-    from django.template.loader import render_to_string
-    from django.shortcuts import redirect
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")

@@ -5,12 +5,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Marketing Archive{% endblock title %}</title>
-    <link rel="stylesheet" href="{% static 'ArcasysApp/css/style.css' %}" />
+    <link rel="stylesheet" href="{% static 'shared/css/style.css' %}" />
     {% block extra_css %}{% endblock extra_css %}
     <link
       rel="icon"
       type="image/png"
-      href="{% static 'ArcasysApp/images/CIT_LOGO.png' %}"
+      href="{% static 'shared/images/CIT_LOGO.png' %}"
     />
   </head>
 
@@ -21,7 +21,7 @@
       <header class="navbar">
         <div class="logo-section">
           <img
-            src="{% static 'ArcasysApp/images/CIT_LOGO.png' %}"
+            src="{% static 'shared/images/CIT_LOGO.png' %}"
             alt="CIT Logo"
             class="logo"
           />
@@ -37,7 +37,7 @@
               {% if user.is_authenticated %}
                 {% if user.isUserAdmin or user.is_superuser %}
                   <!-- ADMIN NAVBAR -->
-                  <li><a href="{% url 'admin_dashboard' %}">Approve Accounts</a></li>  <!-- ✅ Updated URL -->
+                  <li><a href="{% url 'admin_dashboard' %}">Approve Accounts</a></li>
                   <li><a href="{% url 'add_events' %}">Add Events</a></li>
                 {% elif user.isUserStaff %}
                   <!-- STAFF NAVBAR -->
@@ -88,7 +88,7 @@
           {% else %}
             <!-- AUTHENTICATED USER FOOTER -->
             {% if user.isUserAdmin or user.is_superuser %}
-              <a href="{% url 'admin_dashboard' %}">Approve Accounts</a>  <!-- ✅ Updated URL -->
+              <a href="{% url 'admin_dashboard' %}">Approve Accounts</a>
               <a href="{% url 'add_events' %}">Add Events</a>
             {% elif user.isUserStaff %}
               <a href="{% url 'add_events' %}">Add Events</a>

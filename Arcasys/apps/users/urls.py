@@ -4,6 +4,7 @@ from . import views
 app_name = 'users'
 
 urlpatterns = [
-    path('', views.user_home, name='user_home'),
-    # Auth URLs will be added when we move them from ArcasysApp
+    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
+    path('logout/', views.logout_view, name='logout'),
 ]

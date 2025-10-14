@@ -24,11 +24,11 @@ def add_events_view(request):
 # -----------------------------
 @login_required
 def admin_dashboard_view(request):
-    from ArcasysApp.models import User
+    from apps.users.models import User
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied. Admin privileges required.")
-        return redirect("add_events")
+        return redirect("events:add_events")  # ✅ Fixed: Added namespace
     
     pending_users = User.objects.filter(isUserActive=False, isUserStaff=True)
     applications = []
@@ -47,11 +47,11 @@ def admin_dashboard_view(request):
 # -----------------------------
 @login_required
 def approve_application(request, user_id):
-    from ArcasysApp.models import User
+    from apps.users.models import User
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")
-        return redirect("add_events")
+        return redirect("events:add_events")  # ✅ Fixed: Added namespace
     
     try:
         user = User.objects.get(UserID=user_id, isUserActive=False, isUserStaff=True)
@@ -61,7 +61,7 @@ def approve_application(request, user_id):
         user.save()
         
         # Send approval email
-        login_url = request.build_absolute_uri("/login/")
+        login_url = request.build_absolute_uri("/users/login/")  # ✅ Fixed: Correct login path
         
         html_message = render_to_string('events/account_approved.html', {
             'user_name': user.UserFullName,
@@ -100,15 +100,15 @@ Marketing Archive Team"""
     except User.DoesNotExist:
         messages.error(request, "User not found or already approved.")
     
-    return redirect('admin_dashboard')
+    return redirect('events:admin_dashboard')  # ✅ Fixed: Added namespace
 
 @login_required
 def reject_application(request, user_id):
-    from ArcasysApp.models import User
+    from apps.users.models import User
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")
-        return redirect("add_events")
+        return redirect("events:add_events")  # ✅ Fixed: Added namespace
     
     try:
         user = User.objects.get(UserID=user_id, isUserActive=False, isUserStaff=True)
@@ -145,4 +145,4 @@ Marketing Archive Team"""
     except User.DoesNotExist:
         messages.error(request, "User not found or already processed.")
     
-    return redirect('admin_dashboard')
+    return redirect('events:admin_dashboard')  # ✅ Fixed: Added namespace

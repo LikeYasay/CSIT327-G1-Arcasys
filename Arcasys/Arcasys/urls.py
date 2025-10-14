@@ -5,7 +5,11 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('ArcasysApp.urls')),
+    
+    # Include your modular app URLs
+    path('', include('apps.marketing.urls')),  # Landing page
+    path('users/', include('apps.users.urls')),
+    path('events/', include('apps.events.urls')),
 ]
 
 if settings.DEBUG:

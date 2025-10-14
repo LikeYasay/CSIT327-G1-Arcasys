@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from ArcasysApp.models import User, Role  # Keep models centralized for now
+from .models import User, Role
 
 class CustomUserAdmin(UserAdmin):
     list_display = ('UserEmail', 'UserFullName', 'RoleID', 'isUserStaff', 'UserCreatedAt', 'isUserActive')

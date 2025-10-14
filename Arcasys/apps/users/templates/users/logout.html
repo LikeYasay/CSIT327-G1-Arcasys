@@ -1,7 +1,4 @@
-{% extends "base.html" %}
 {% load static %}
-
-{% block title %}Logout | Marketing Archive{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'users/css/logout.css' %}" />
@@ -22,7 +19,7 @@
     <h2>Logout</h2>
     <p>Are you sure you want to sign out of your account?</p>
 
-    <form method="POST" action="{% url 'logout' %}">
+    <form method="post" action="{% url 'users:logout' %}">
       {% csrf_token %}
       <button type="submit" class="btn-signout">Sign Out</button>
     </form>

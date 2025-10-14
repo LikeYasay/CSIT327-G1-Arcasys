@@ -16,7 +16,7 @@ from django.contrib.auth.views import (
 from django.contrib.auth.forms import PasswordResetForm
 from django.urls import reverse_lazy
 
-from ArcasysApp.models import User, Role
+from .models import User, Role
 
 # -----------------------------
 # Login View
@@ -24,9 +24,9 @@ from ArcasysApp.models import User, Role
 def login_view(request):
     if request.user.is_authenticated:
         if request.user.isUserAdmin or request.user.is_superuser:
-            return redirect("admin_dashboard")
+            return redirect("events:admin_dashboard")  # ✅ Fixed: Added namespace
         else:
-            return redirect("add_events")
+            return redirect("events:add_events")  # ✅ Fixed: Added namespace
 
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
@@ -67,9 +67,9 @@ def login_view(request):
 
             # Redirect based on role
             if user.isUserAdmin or user.is_superuser:
-                response = redirect("admin_dashboard")
+                response = redirect("events:admin_dashboard")  # ✅ Fixed: Added namespace
             else:
-                response = redirect("add_events")
+                response = redirect("events:add_events")  # ✅ Fixed: Added namespace
 
             # Remember Me
             if remember_me:
@@ -92,9 +92,9 @@ def login_view(request):
 def register_view(request):
     if request.user.is_authenticated:
         if request.user.isUserAdmin or request.user.is_superuser:
-            return redirect("admin_dashboard")
+            return redirect("events:admin_dashboard")  # ✅ Fixed: Added namespace
         else:
-            return redirect("add_events")
+            return redirect("events:add_events")  # ✅ Fixed: Added namespace
 
     if request.method == "POST":
         first_name = request.POST.get("first_name", "").strip()
@@ -139,7 +139,11 @@ def register_view(request):
             return render(request, "users/register.html")
 
         try:
-            staff_role = Role.objects.get(RoleName='Staff')
+            # Get or create the Staff role
+            staff_role, created = Role.objects.get_or_create(
+                RoleName='Staff',
+                defaults={'RoleDescription': 'Staff role with event management permissions'}
+            )
             user = User.objects.create_user(
                 UserEmail=email,
                 UserFullName=f"{first_name} {last_name}".strip(),
@@ -186,7 +190,7 @@ Marketing Archive Team"""
 def logout_view(request):
     if request.method == "POST":
         logout(request)
-        return redirect("login")
+        return redirect("users:login")  # ✅ Fixed: Added namespace
     return render(request, "users/logout.html")
 
 # -----------------------------
@@ -208,7 +212,7 @@ class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
     email_template_name = 'users/password_reset_email.html'
     subject_template_name = 'users/password_reset_subject.txt'
-    success_url = reverse_lazy('password_reset_done')
+    success_url = reverse_lazy('users:password_reset_done')
     form_class = CustomPasswordResetForm
 
     def form_valid(self, form):
@@ -218,7 +222,7 @@ class CustomPasswordResetView(PasswordResetView):
         try:
             pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
             
-            # Send pending account email instead of reset email
+            # Send pending account email
             html_message = render_to_string('users/pending_reset_email.html', {
                 'user_name': pending_user.UserFullName,
                 'registration_date': pending_user.UserCreatedAt.strftime('%B %d, %Y'),
@@ -249,32 +253,56 @@ Marketing Archive Team"""
                 fail_silently=False,
             )
             
-            # Still show success page (security - don't reveal account status)
-            return super().form_valid(form)
+            # Return success response but DON'T call super().form_valid(form)
+            return self.render_success_response()
             
         except User.DoesNotExist:
             # No pending account found, proceed with normal password reset
             pass
         
-        # Normal password reset for active accounts
-        opts = {
-            'use_https': self.request.is_secure(),
-            'token_generator': self.token_generator,
-            'from_email': settings.DEFAULT_FROM_EMAIL,
-            'email_template_name': self.email_template_name,
-            'subject_template_name': self.subject_template_name,
-            'request': self.request,
-            'html_email_template_name': self.email_template_name,
-        }
-        form.save(**opts)
-        return super().form_valid(form)
+        # For active users - send HTML email only
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        
+        users = form.get_users(email)
+        for user in users:
+            context = {
+                'email': user.UserEmail,
+                'domain': self.request.get_host(),
+                'site_name': 'Marketing Archive',
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'user': user,
+                'token': default_token_generator.make_token(user),
+                'protocol': 'https' if self.request.is_secure() else 'http',
+            }
+            
+            subject = 'Password Reset Request - Marketing Archive'
+            html_message = render_to_string('users/password_reset_email.html', context)
+            
+            # Send single email with HTML content
+            send_mail(
+                subject,
+                'Please view this email in HTML format.',  # Minimal plain text
+                settings.DEFAULT_FROM_EMAIL,
+                [user.UserEmail],
+                html_message=html_message,
+                fail_silently=False,
+            )
+        
+        # Return success response but DON'T call super().form_valid(form)
+        return self.render_success_response()
+
+    def render_success_response(self):
+        """Render the success page without triggering default email sending"""
+        return render(self.request, 'users/password_reset_done.html')
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'users/password_reset_done.html'
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'users/password_reset_confirm.html'
-    success_url = reverse_lazy('password_reset_complete')
+    success_url = reverse_lazy('users:password_reset_complete')  # ✅ Fixed: Added namespace
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'users/password_reset_complete.html'

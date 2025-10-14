@@ -9,6 +9,12 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.contrib.auth.views import (
+    PasswordResetView, PasswordResetDoneView, 
+    PasswordResetConfirmView, PasswordResetCompleteView
+)
+from django.contrib.auth.forms import PasswordResetForm
+from django.urls import reverse_lazy
 
 from ArcasysApp.models import User, Role
 
@@ -182,3 +188,93 @@ def logout_view(request):
         logout(request)
         return redirect("login")
     return render(request, "users/logout.html")
+
+# -----------------------------
+# Custom Password Reset Form
+# -----------------------------
+class CustomPasswordResetForm(PasswordResetForm):
+    def get_users(self, email):
+        """Return matching active users only"""
+        active_users = User._default_manager.filter(
+            UserEmail__iexact=email,
+            isUserActive=True
+        )
+        return (u for u in active_users if u.has_usable_password())
+
+# -----------------------------
+# Password Reset Views
+# -----------------------------
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'users/password_reset.html'
+    email_template_name = 'users/password_reset_email.html'
+    subject_template_name = 'users/password_reset_subject.txt'
+    success_url = reverse_lazy('password_reset_done')
+    form_class = CustomPasswordResetForm
+
+    def form_valid(self, form):
+        email = form.cleaned_data['email']
+        
+        # Check for pending accounts
+        try:
+            pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
+            
+            # Send pending account email instead of reset email
+            html_message = render_to_string('users/pending_reset_email.html', {
+                'user_name': pending_user.UserFullName,
+                'registration_date': pending_user.UserCreatedAt.strftime('%B %d, %Y'),
+            })
+            
+            plain_message = f"""Hello {pending_user.UserFullName},
+
+You requested a password reset for your Marketing Archive staff account.
+
+ACCOUNT STATUS: PENDING APPROVAL
+Your account is still waiting for administrator approval. You cannot reset your password until your account is approved.
+
+Your account registration was received on {pending_user.UserCreatedAt.strftime('%B %d, %Y')} and is currently awaiting administrator approval.
+
+Once your account is approved, you will receive an approval email and will be able to use the regular password reset feature.
+
+Please try again after your account has been approved.
+
+Best regards,
+Marketing Archive Team"""
+
+            send_mail(
+                'Password Reset Request - Pending Account - Marketing Archive',
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [pending_user.UserEmail],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            
+            # Still show success page (security - don't reveal account status)
+            return super().form_valid(form)
+            
+        except User.DoesNotExist:
+            # No pending account found, proceed with normal password reset
+            pass
+        
+        # Normal password reset for active accounts
+        opts = {
+            'use_https': self.request.is_secure(),
+            'token_generator': self.token_generator,
+            'from_email': settings.DEFAULT_FROM_EMAIL,
+            'email_template_name': self.email_template_name,
+            'subject_template_name': self.subject_template_name,
+            'request': self.request,
+            'html_email_template_name': self.email_template_name,
+        }
+        form.save(**opts)
+        return super().form_valid(form)
+
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'users/password_reset_done.html'
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'users/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'users/password_reset_complete.html'

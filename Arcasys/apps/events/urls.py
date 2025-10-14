@@ -4,5 +4,6 @@ from . import views
 app_name = 'events'
 
 urlpatterns = [
-    # URLs will be added in future branches
+    path('', views.events_home, name='events_home'),
+    # Event URLs will be added when we move them from ArcasysApp
 ]

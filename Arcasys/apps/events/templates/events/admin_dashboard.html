@@ -4,7 +4,7 @@
 {% block title %}Admin Dashboard | Marketing Archive{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'events/css/admin_dashboard.css' %}" />
+<link rel="stylesheet" href="{% static 'events/css/admin_approval.css' %}" />
 {% endblock %}
 
 {% block content %}
@@ -37,13 +37,13 @@
           </p>
         </div>
         <div class="app-actions">
-          <form method="post" action="{% url 'reject_application' application.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn reject">Reject</button>
+          <form method="post" action="{% url 'events:reject_application' application.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn reject">Reject</button>
           </form>
-          <form method="post" action="{% url 'approve_application' application.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn approve">Approve</button>
+          <form method="post" action="{% url 'events:approve_application' application.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn approve">Approve</button>
           </form>
         </div>
       </div>

@@ -1,7 +1,4 @@
-{% extends "base.html" %}
 {% load static %}
-
-{% block title %}Register | Marketing Archive{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'users/css/register.css' %}" />
@@ -20,9 +17,8 @@
           <p>Event Management System</p>
         </div>
       </div>
-      <a href="{% url 'landing' %}" class="back-link">← Back</a>
+      <a href="{% url 'marketing:landing' %}" class="back-link">← Back</a>
     </header>
-
     <div class="register-card">
       <h1>Welcome</h1>
       <p class="description">Enter your details to create an account as staff.</p>
@@ -118,7 +114,7 @@
       </form>
 
       <p class="signup-text">
-        Already have an account? <a href="{% url 'login' %}">Login</a>
+        Already have an account? <a href="{% url 'users:login' %}">Login</a>
       </p>
     </div>
   </div>

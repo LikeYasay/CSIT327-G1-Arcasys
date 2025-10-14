@@ -1,7 +1,4 @@
-{% extends "base.html" %}
 {% load static %}
-
-{% block title %}Login | Marketing Archive{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'users/css/login.css' %}" />
@@ -20,7 +17,7 @@
           <p>Event Management System</p>
         </div>
       </div>
-      <a href="{% url 'landing' %}" class="back-link">← Back</a>
+      <a href="{% url 'marketing:landing' %}" class="back-link">← Back</a>
     </header>
 
     <div class="login-card">
@@ -76,14 +73,14 @@
             <input type="checkbox" name="remember_me" id="remember_me">
             Remember me
           </label>
-          <a href="{% url 'password_reset' %}" class="forgot-link">Forgot password?</a>
+         <a href="{% url 'users:password_reset' %}" class="forgot-link">Forgot password?</a>
         </div>
 
         <button type="submit" class="btn-login">Log in</button>
       </form>
 
       <p class="signup-text">
-        Don't have an account? <a href="{% url 'register' %}">Signup</a>
+        <a href="{% url 'users:register' %}">Signup</a>
       </p>
     </div>
   </div>

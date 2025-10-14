@@ -43,13 +43,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ArcasysApp',  # Keep existing app
     
-    # NEW: Add the modular apps
-    'apps.users',
+    # Modular apps - ArcasysApp removed, models moved to users app
+    'apps.shared',
+    'apps.users',      # Now contains User and Role models
     'apps.events', 
     'apps.marketing',
-    'apps.shared',
 ]
 
 MIDDLEWARE = [
@@ -69,8 +68,8 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR / "templates",           # Existing
-            BASE_DIR / "apps/shared/templates",  # NEW: Shared templates
+            BASE_DIR / "templates",              # Existing
+            BASE_DIR / "apps/shared/templates",  # Shared templates
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -134,7 +133,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = []  # ✅ Fixed: Empty since using app-specific static folders
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
@@ -142,13 +141,13 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom user model
-AUTH_USER_MODEL = 'ArcasysApp.User'
+# Custom user model - UPDATED to use apps.users
+AUTH_USER_MODEL = 'users.User'
 
-# Authentication URLs
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'events'  # Changed from 'dashboard' to 'events' to match your view
-LOGOUT_REDIRECT_URL = 'landing'
+# Authentication URLs - UPDATED to use actual pages
+LOGIN_URL = 'users:login'
+LOGIN_REDIRECT_URL = 'events:events'  # ✅ Fixed: Redirect to events page after login
+LOGOUT_REDIRECT_URL = 'marketing:landing'  # ✅ Fixed: Redirect to landing page after logout
 
 # Email Configuration for Password Reset and Email Verification
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

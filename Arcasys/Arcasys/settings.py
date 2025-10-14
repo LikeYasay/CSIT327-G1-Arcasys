@@ -43,7 +43,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ArcasysApp',
+    'ArcasysApp',  # Keep existing app
+    
+    # NEW: Add the modular apps
+    'apps.users',
+    'apps.events', 
+    'apps.marketing',
 ]
 
 MIDDLEWARE = [
@@ -62,7 +67,10 @@ ROOT_URLCONF = 'Arcasys.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "templates"],
+        'DIRS': [
+            BASE_DIR / "templates",           # Existing
+            BASE_DIR / "apps/shared/templates",  # NEW: Shared templates
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

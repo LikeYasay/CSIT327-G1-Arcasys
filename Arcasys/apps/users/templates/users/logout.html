@@ -21,7 +21,7 @@
 
     <form method="post" action="{% url 'users:logout' %}">
       {% csrf_token %}
-      <button type="submit" class="btn-signout">Sign Out</button>
+      <button type="submit" class="btn-signout" style="margin-bottom: -5px;">Sign Out</button>
     </form>
 
     <button class="btn-cancel" onclick="window.history.back()">Cancel</button>

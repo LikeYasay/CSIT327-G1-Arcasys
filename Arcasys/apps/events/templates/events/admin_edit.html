@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/admin_edit.css' %}" />
+{% endblock extra_css %}
+
+{% block content %}
+
+<div class="edit-page-header">
+  <a href="{% url 'events:add_events' %}" class="back-to-events">← Back to Events</a>
+  <span class="divider">|</span>
+  <h1 class="edit-title">Edit Event</h1>
+</div>
+
+<div class="edit-event-wrapper">
+  <form class="edit-event-form">
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="event_title">Event Title *</label>
+            <input type="text" id="event_title" value="Student Organizations Accreditation Ceremony" />
+        </div>
+
+        <div class="form-group">
+            <label for="department">Office/Department *</label>
+            <select id="department">
+              <option value="" disabled selected>Select office/department</option>
+              <option value="MO">Marketing Office (MO)</option>
+              <option value="URO">University Registrar’s Office (URO)</option>
+              <option value="OAS">Office of Admissions & Scholarships (OAS)</option>
+              <option value="ETO">Enrollment Technical Office (ETO)</option>
+              <option value="FAO">Finance & Accounting Office (FAO)</option>
+              <option value="SSO">Student Success Office (SSO)</option>
+              <option value="TSG">Technical Support Group (TSG)</option>
+              <option value="GC">Guidance Center</option>
+
+              <option value="CEA">College of Engineering & Architecture (CEA)</option>
+              <option value="CCS">College of Computer Studies (CCS)</option>
+              <option value="CASE">College of Arts, Sciences & Education (CASE)</option>
+              <option value="CMBA">College of Management, Business & Accountancy (CMBA)</option>
+              <option value="CNAHS">College of Nursing & Allied Health Sciences (CNAHS)</option>
+              <option value="CCJ">College of Criminal Justice (CCJ)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+    <!-- Event Date -->
+    <div class="form-group">
+        <label for="event_date">Event Date *</label>
+        <input type="date" id="event_date" name="event_date" value="2025-09-05">
+    </div>
+    
+    <!-- Event Time -->
+    <div class="form-group">
+        <label for="event_time">Event Time *</label>
+        <input type="time" id="event_time" name="event_time" value="09:10">
+    </div>
+    
+    <!-- Location -->
+    <div class="form-group">
+        <label for="location">Location *</label>
+        <div class="input-with-icon">
+        <input type="text" id="location" name="location" value="CIT-U Auditorium">
+        <img src="{% static 'events/images/location.png' %}" alt="Location Icon" class="input-icon">
+        </div>
+    </div>
+    </div>
+
+    <div class="form-group">
+        <label for="description">Event Description *</label>
+        <textarea id="description" rows="5">Because we #LeadTheFuture, WATCH the Wildcat leadership SHINE as our student leaders from the different CIT-U accredited student organizations receive their accreditation confirmation in a symbolic ceremony. Go, Wildcats!</textarea>
+    </div>
+
+    <br>
+    <div class="form-group">
+        <label>Event Tags</label>
+        <div class="tags">
+            <span class="tag green">SSO</span>
+            <span class="tag green">LeadTheFuture</span>
+            <span class="tag green">Organizations</span>
+        </div>
+
+        <div class="tag-input-row">
+            <input type="text" placeholder="Add custom tag" />
+            <button type="button" class="btn add-tag">Add Tag</button>
+        </div>
+    </div>
+
+    <br>
+    <div class="form-group social-links">
+    <label>Social Media Links</label>
+
+    <div class="form-row">
+        <!-- Facebook -->
+        <div class="social-input">
+        <div class="social-header">
+            <img src="{% static 'events/images/facebook.png' %}" alt="Facebook" class="social-icon">
+            <span class="social-title">Facebook Link</span>
+            <button type="button" class="add-more">+ Add more</button>
+        </div>
+        <input type="text" id="facebook" value="https://facebook.com/event-page" />
+        </div>
+
+        <!-- TikTok -->
+        <div class="social-input">
+        <div class="social-header">
+            <img src="{% static 'events/images/tiktok.png' %}" alt="TikTok" class="social-icon">
+            <span class="social-title">TikTok Link</span>
+            <button type="button" class="add-more">+ Add more</button>
+        </div>
+        <input type="text" id="tiktok" value="https://tiktok.com/@event-post" />
+        </div>
+    </div>
+
+    <div class="form-row">
+        <!-- YouTube -->
+        <div class="social-input">
+        <div class="social-header">
+            <img src="{% static 'events/images/youtube.png' %}" alt="YouTube" class="social-icon">
+            <span class="social-title">YouTube Link</span>
+            <button type="button" class="add-more">+ Add more</button>
+        </div>
+        <input type="text" id="youtube" value="https://youtube.com/watch?v=..." />
+        </div>
+
+        <!-- Website -->
+        <div class="social-input">
+        <div class="social-header">
+            <img src="{% static 'events/images/link.png' %}" alt="Website" class="social-icon">
+            <span class="social-title">Website Link</span>
+            <button type="button" class="add-more">+ Add more</button>
+        </div>
+        <input type="text" id="website" value="https://website.com/event-registration" />
+        </div>
+    </div>    
+</div>
+
+    <div class="form-buttons">
+        <button class="btn secondary">Cancel</button>
+        <button class="btn primary">Update</button>
+    </div>
+
+  </form>
+</div>
+
+{% endblock content %}

@@ -20,6 +20,17 @@ def add_events_view(request):
     return render(request, "events/add_events.html")
 
 # -----------------------------
+# Admin Actions View
+# -----------------------------
+@login_required
+def admin_add_event_view(request):
+    return render(request, "events/admin_add_event.html")
+
+@login_required
+def admin_edit_view(request):
+    return render(request, "events/admin_edit.html")
+
+# -----------------------------
 # Admin Dashboard View
 # -----------------------------
 @login_required

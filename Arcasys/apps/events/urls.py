@@ -9,4 +9,7 @@ urlpatterns = [
     path('admin-dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('admin-approval/approve/<uuid:user_id>/', views.approve_application, name='approve_application'),
     path('admin-approval/reject/<uuid:user_id>/', views.reject_application, name='reject_application'),
+    path('admin-add/', views.admin_add_event_view, name='admin_add_event'),
+    path('admin-edit/', views.admin_edit_view, name='admin_edit'),
+    
 ]

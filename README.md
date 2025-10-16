@@ -16,7 +16,7 @@ Arcasys: Marketing Archive Manager is a Django Full Stack web application for **
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-repo/MarketingArchive.git
+git clone https://github.com/LikeYasay/CSIT327-G1-Arcasys.git
 ```
 
 ### 2. Navigate to the Project Folder

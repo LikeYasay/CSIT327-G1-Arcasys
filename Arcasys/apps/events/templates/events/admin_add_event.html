@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/admin_add_event.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-spacer">
+        <a href="{% url 'events:add_events' %}" class="back-link">← Back to Events</a>
+        <h1>Add New Event</h1>
+    </div>
+
+    <div class="form-grid">
+        <div class="form-group span-2">
+            <label for="id_event_title">Event Title <span class="required">*</span></label>
+            <input type="text" id="id_event_title" name="event_title" placeholder="Enter event title" required>
+        </div>
+
+        <div class="form-group span-2">
+            <label for="office">Office/Department <span class="required">*</span></label>
+            <select id="office">
+                <option value="" disabled selected>Select office/department</option>
+                <option value="MO">Marketing Office (MO)</option>
+                <option value="URO">University Registrar’s Office (URO)</option>
+                <option value="OAS">Office of Admissions & Scholarships (OAS)</option>
+                <option value="ETO">Enrollment Technical Office (ETO)</option>
+                <option value="FAO">Finance & Accounting Office (FAO)</option>
+                <option value="SSO">Student Success Office (SSO)</option>
+                <option value="TSG">Technical Support Group (TSG)</option>
+                <option value="GC">Guidance Center</option>
+
+                <option value="CEA">College of Engineering & Architecture (CEA)</option>
+                <option value="CCS">College of Computer Studies (CCS)</option>
+                <option value="CASE">College of Arts, Sciences & Education (CASE)</option>
+                <option value="CMBA">College of Management, Business & Accountancy (CMBA)</option>
+                <option value="CNAHS">College of Nursing & Allied Health Sciences (CNAHS)</option>
+                <option value="CCJ">College of Criminal Justice (CCJ)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="id_event_date">Event Date <span class="required">*</span></label>
+            <div class="input-with-icon">
+                <input type="date" id="id_event_date" name="event_date" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_event_time">Event Time <span class="required">*</span></label>
+            <div class="input-with-icon">
+                <input type="time" id="id_event_time" name="event_time" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_location">Location <span class="required">*</span></label>
+            <div class="input-with-icon">
+                <input type="text" id="id_location" name="location" class="location" placeholder="Event venue/location" required>
+                <img src="{% static 'events/images/location.png' %}" alt="Location Icon" class="input-icon">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group description-group">
+        <label for="id_description">Event Description <span class="required">*</span></label>
+        <textarea id="id_description" name="description" rows="5" placeholder="Provide a detailed description..." required></textarea>
+    </div>
+
+    <div class="event-tags-section">
+        <label>Event Tags</label>
+
+        <div class="tags-list" id="preset-tags">
+            <span class="tag selectable">SDG</span>
+            <span class="tag selectable">Forum</span>
+            <span class="tag selectable">LeadTheFuture</span>
+            <span class="tag selectable">Academic</span>
+            <span class="tag selectable">Workshop</span>
+            <span class="tag selectable">Conference</span>
+            <span class="tag selectable">Seminar</span>
+        </div>
+
+        <div class="custom-tag-input">
+            <input type="text" id="custom-tag-text" placeholder="Add custom tag">
+            <button type="button" class="add-tag-btn" id="btn-add-custom-tag">Add Tag</button>
+        </div>
+
+        <input type="hidden" id="id_tags_input" name="tags_input" />
+    </div>
+
+    <br>
+    <div class="form-group-social-links">
+        <label class="socmed-label">Social Media Links</label>
+
+        <div class="form-row">
+            <div class="social-input">
+                <div class="social-header">
+                    <img src="{% static 'events/images/facebook.png' %}" alt="Facebook" class="social-icon">
+                    <span class="social-title">Facebook Link</span>
+                    <button type="button" class="add-more">+ Add more</button>
+                </div>
+                <input type="text" id="facebook" value="https://facebook.com/event-page" />
+            </div>
+
+            <div class="social-input">
+                <div class="social-header">
+                    <img src="{% static 'events/images/tiktok.png' %}" alt="TikTok" class="social-icon">
+                    <span class="social-title">TikTok Link</span>
+                    <button type="button" class="add-more">+ Add more</button>
+                </div>
+                <input type="text" id="tiktok" value="https://tiktok.com/@event-post" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="social-input">
+                <div class="social-header">
+                    <img src="{% static 'events/images/youtube.png' %}" alt="YouTube" class="social-icon">
+                    <span class="social-title">YouTube Link</span>
+                    <button type="button" class="add-more">+ Add more</button>
+                </div>
+                <input type="text" id="youtube" value="https://youtube.com/watch?v=..." />
+            </div>
+
+            <div class="social-input">
+                <div class="social-header">
+                    <img src="{% static 'events/images/link.png' %}" alt="Website" class="social-icon">
+                    <span class="social-title">Website Link</span>
+                    <button type="button" class="add-more">+ Add more</button>
+                </div>
+                <input type="text" id="website" value="https://website.com/event-registration" />
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="cancel-btn" id="cancel-btn">Cancel</button>
+            <button type="button" class="create-event-btn" id="create-event-btn">Create Event</button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

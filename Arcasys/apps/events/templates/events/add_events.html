@@ -10,7 +10,7 @@
 <div class="results-header-admin">
     <div class="results-header-top">
         <h2>Event Results</h2>
-        <a href="#" class="btn add-event">Add Event</a>
+        <a href="{% url 'events:admin_add_event' %}" class="btn add-event">Add Event</a>
     </div>
     
     <div class="results-header-bottom">
@@ -32,7 +32,7 @@
     {# ADMIN ACTIONS INLINE #}
     <div class="admin-actions-inline">
         <a href="#" class="action-btn export">Export</a>
-        <a href="#" class="action-btn edit">Edit</a>
+        <a href="{% url 'events:admin_edit' %}" class="action-btn edit">Edit</a>
         <a href="#" class="action-btn delete">Delete</a>
     </div>
 </div>
@@ -52,7 +52,7 @@
     {# ADMIN ACTIONS INLINE #}
     <div class="admin-actions-inline">
         <a href="#" class="action-btn export">Export</a>
-        <a href="#" class="action-btn edit">Edit</a>
+        <a href="{% url 'events:admin_edit' %}" class="action-btn edit">Edit</a>
         <a href="#" class="action-btn delete">Delete</a>
     </div>
 </div>

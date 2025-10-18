@@ -21,7 +21,7 @@ git clone https://github.com/LikeYasay/CSIT327-G1-Arcasys.git
 
 ### 2. Navigate to the Project Folder
 ```bash
-cd MarketingArchive
+cd CSIT327-G1-Arcasys
 ```
 
 ### 3. Create & Activate a Virtual Environment

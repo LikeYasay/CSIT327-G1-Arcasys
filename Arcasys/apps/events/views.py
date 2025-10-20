@@ -1,3 +1,5 @@
+import datetime
+from django.db import OperationalError, ProgrammingError
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -5,6 +7,13 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
+from datetime import datetime
+from django.db import transaction
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
+from apps.events.models import Event, EventDepartment, EventLink, EventTag, Department, Tag
 
 # -----------------------------
 # Events View
@@ -22,13 +31,149 @@ def add_events_view(request):
 # -----------------------------
 # Admin Actions View
 # -----------------------------
-@login_required
-def admin_add_event_view(request):
-    return render(request, "events/admin_add_event.html")
+
+# Helper function for tags
+def _parse_tags(raw: str):
+    """Turn 'SDG, Workshop #Seminar' into unique tokens preserving case."""
+    if not raw:
+        return []
+    parts = [p.lstrip("#").strip() for p in raw.replace(",", " ").split() if p.strip()]
+    seen, out = set(), []
+    for p in parts:
+        k = p.lower()
+        if k not in seen:
+            out.append(p)
+            seen.add(k)
+    return out
 
 @login_required
-def admin_edit_view(request):
-    return render(request, "events/admin_edit.html")
+def admin_add_event_view(request):
+    REDIRECT_URL_NAME = "events:admin_add_event"
+    
+    if request.method == "POST":
+        # 1) Collect data
+        title       = (request.POST.get("event_title") or "").strip()
+        department = (request.POST.get("office") or "").strip() 
+        event_date  = (request.POST.get("event_date") or "").strip()
+        event_time  = (request.POST.get("event_time") or "").strip()
+        location    = (request.POST.get("location") or "").strip()
+        description = (request.POST.get("description") or "").strip()
+        tags_raw    = (request.POST.get("tags_input") or "").strip()
+
+        # Links (EventLink model)
+        facebook_link = (request.POST.get("facebook_link") or "").strip()
+        tiktok_link   = (request.POST.get("tiktok_link") or "").strip()
+        youtube_link  = (request.POST.get("youtube_link") or "").strip()
+        website_link  = (request.POST.get("website_link") or "").strip()
+
+        # MAM-29
+        required = {
+            "Event Title": title,
+            "Office/Department": department,
+            "Event Date": event_date,
+            "Event Time": event_time,
+            "Location": location,
+            "Description": description,
+        }
+        for label, val in required.items():
+            if not val:
+                messages.error(request, f"{label} is required.")
+                return redirect(REDIRECT_URL_NAME)
+
+        # MAM-31
+        try:
+            d = datetime.strptime(event_date, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format. Use YYYY-MM-DD.")
+            return redirect(REDIRECT_URL_NAME)
+
+        try:
+            t = datetime.strptime(event_time, "%H:%M").time()
+        except ValueError:
+            messages.error(request, "Invalid time format. Use 24-hr HH:MM.")
+            return redirect(REDIRECT_URL_NAME)
+
+        # Links/URLs
+        url_validator = URLValidator()
+        link_data = [
+            ("Facebook Link", facebook_link),
+            ("TikTok Link",   tiktok_link),
+            ("YouTube Link",  youtube_link),
+            ("Website Link",  website_link),
+        ]
+        for label, url in link_data:
+            if url:
+                try:
+                    url_validator(url)
+                except ValidationError:
+                    messages.error(request, f"{label} is not a valid URL.")
+                    return redirect(REDIRECT_URL_NAME)
+
+        # MAM-32
+        department_obj = Department.objects.get(pk=department)
+        try:
+            dup = Event.objects.filter(
+                EventTitle__iexact=title,
+                EventDate=d,
+                eventdepartment__DepartmentID=department_obj, 
+            ).exists()
+            
+            if dup:
+                messages.error(request, f"Event already exists.")
+                return redirect(REDIRECT_URL_NAME)
+        
+        except (OperationalError, ProgrammingError, Exception) as e:
+            messages.error(request, f"A database error occurred during duplicate check: {e}")
+            return redirect(REDIRECT_URL_NAME)
+
+        # Create event record
+        try:
+            with transaction.atomic():
+                event = Event.objects.create(
+                    EventTitle=title,
+                    EventDate=d,
+                    EventTime=t,
+                    EventLocation=location,
+                    EventDescription=description,
+                )
+                
+                # Link the Department
+                EventDepartment.objects.create(
+                    EventID=event,
+                    DepartmentID=department_obj 
+                )
+
+                # Tags 
+                tag_names = _parse_tags(tags_raw)
+                if tag_names:
+                    for nm in tag_names:
+                        tag_obj, created = Tag.objects.get_or_create(
+                            TagName__iexact=nm, 
+                            defaults={'TagName': nm}
+                        )
+                        EventTag.objects.create(EventID=event, TagID=tag_obj)
+
+                # Links/URLs
+                for link_name, link_url in link_data:
+                    if link_url:
+                        EventLink.objects.create(
+                            EventID=event, 
+                            EventLinkName=link_name.replace(" Link", ""), 
+                            EventLinkURL=link_url
+                        )
+
+            messages.success(request, f"Event created successfully.")
+            return redirect(REDIRECT_URL_NAME) 
+        
+        except Exception as e:
+            messages.error(request, f"Could not create event: {e}")
+            return redirect(REDIRECT_URL_NAME)
+
+    context = {
+        'departments': Department.objects.all(),
+    }
+    return render(request, "events/admin_add_event.html", context)
+
 
 # -----------------------------
 # Admin Dashboard View
@@ -39,7 +184,7 @@ def admin_dashboard_view(request):
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied. Admin privileges required.")
-        return redirect("events:add_events")  # ✅ Fixed: Added namespace
+        return redirect("events:add_events")
     
     pending_users = User.objects.filter(isUserActive=False, isUserStaff=True)
     applications = []
@@ -62,7 +207,7 @@ def approve_application(request, user_id):
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")
-        return redirect("events:add_events")  # ✅ Fixed: Added namespace
+        return redirect("events:add_events")
     
     try:
         user = User.objects.get(UserID=user_id, isUserActive=False, isUserStaff=True)
@@ -72,7 +217,7 @@ def approve_application(request, user_id):
         user.save()
         
         # Send approval email
-        login_url = request.build_absolute_uri("/users/login/")  # ✅ Fixed: Correct login path
+        login_url = request.build_absolute_uri("/users/login/")
         
         html_message = render_to_string('events/account_approved.html', {
             'user_name': user.UserFullName,
@@ -111,7 +256,7 @@ Marketing Archive Team"""
     except User.DoesNotExist:
         messages.error(request, "User not found or already approved.")
     
-    return redirect('events:admin_dashboard')  # ✅ Fixed: Added namespace
+    return redirect('events:admin_dashboard')
 
 @login_required
 def reject_application(request, user_id):
@@ -119,7 +264,7 @@ def reject_application(request, user_id):
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")
-        return redirect("events:add_events")  # ✅ Fixed: Added namespace
+        return redirect("events:add_events")
     
     try:
         user = User.objects.get(UserID=user_id, isUserActive=False, isUserStaff=True)
@@ -156,4 +301,8 @@ Marketing Archive Team"""
     except User.DoesNotExist:
         messages.error(request, "User not found or already processed.")
     
-    return redirect('events:admin_dashboard')  # ✅ Fixed: Added namespace
+    return redirect('events:admin_dashboard')
+
+@login_required
+def admin_edit_view(request):
+    return render(request, "events/admin_edit.html")

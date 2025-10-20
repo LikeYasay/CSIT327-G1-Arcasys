@@ -12,7 +12,19 @@
         <h1>Add New Event</h1>
     </div>
 
-    <div class="form-grid">
+    <form method="post" novalidate> 
+        {% csrf_token %}
+        <div class="add-event-card"> 
+        {% if messages %}
+            <div class="flash-area">
+                {% for message in messages %}
+                <div class="alert {{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="form-grid">
         <div class="form-group span-2">
             <label for="id_event_title">Event Title <span class="required">*</span></label>
             <input type="text" id="id_event_title" name="event_title" placeholder="Enter event title" required>
@@ -20,23 +32,11 @@
 
         <div class="form-group span-2">
             <label for="office">Office/Department <span class="required">*</span></label>
-            <select id="office">
+            <select id="office" name="office">
                 <option value="" disabled selected>Select office/department</option>
-                <option value="MO">Marketing Office (MO)</option>
-                <option value="URO">University Registrar’s Office (URO)</option>
-                <option value="OAS">Office of Admissions & Scholarships (OAS)</option>
-                <option value="ETO">Enrollment Technical Office (ETO)</option>
-                <option value="FAO">Finance & Accounting Office (FAO)</option>
-                <option value="SSO">Student Success Office (SSO)</option>
-                <option value="TSG">Technical Support Group (TSG)</option>
-                <option value="GC">Guidance Center</option>
-
-                <option value="CEA">College of Engineering & Architecture (CEA)</option>
-                <option value="CCS">College of Computer Studies (CCS)</option>
-                <option value="CASE">College of Arts, Sciences & Education (CASE)</option>
-                <option value="CMBA">College of Management, Business & Accountancy (CMBA)</option>
-                <option value="CNAHS">College of Nursing & Allied Health Sciences (CNAHS)</option>
-                <option value="CCJ">College of Criminal Justice (CCJ)</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.DepartmentID }}">{{ dept.DepartmentName }}</option>
+                {% endfor %}
             </select>
         </div>
 
@@ -100,7 +100,7 @@
                     <span class="social-title">Facebook Link</span>
                     <button type="button" class="add-more">+ Add more</button>
                 </div>
-                <input type="text" id="facebook" value="https://facebook.com/event-page" />
+                <input type="text" id="facebook" name="facebook_link" placeholder="https://facebook.com/event-page" />
             </div>
 
             <div class="social-input">
@@ -109,7 +109,7 @@
                     <span class="social-title">TikTok Link</span>
                     <button type="button" class="add-more">+ Add more</button>
                 </div>
-                <input type="text" id="tiktok" value="https://tiktok.com/@event-post" />
+                <input type="text" id="tiktok" name="tiktok_link" placeholder="https://tiktok.com/@event-post" />
             </div>
         </div>
 
@@ -120,7 +120,7 @@
                     <span class="social-title">YouTube Link</span>
                     <button type="button" class="add-more">+ Add more</button>
                 </div>
-                <input type="text" id="youtube" value="https://youtube.com/watch?v=..." />
+                <input type="text" id="youtube" name="youtube_link" placeholder="https://youtube.com/watch?v=..." />
             </div>
 
             <div class="social-input">
@@ -129,7 +129,7 @@
                     <span class="social-title">Website Link</span>
                     <button type="button" class="add-more">+ Add more</button>
                 </div>
-                <input type="text" id="website" value="https://website.com/event-registration" />
+                <input type="text" id="website" name="website_link" placeholder="https://website.com/event-registration" />
             </div>
         </div>
 
@@ -137,7 +137,88 @@
             <button type="button" class="cancel-btn" id="cancel-btn">Cancel</button>
             <button type="button" class="create-event-btn" id="create-event-btn">Create Event</button>
         </div>
-
     </div>
+    </div>
+    </form>
+    
 </div>
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form');
+
+    form.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' && event.target.tagName.toLowerCase() !== 'textarea') {
+        event.preventDefault();
+      }
+    });
+
+    document.getElementById('create-event-btn').addEventListener('click', () => document.querySelector('form').submit())
+    document.getElementById('cancel-btn').addEventListener('click', () => {
+      window.location.href = "{% url 'events:add_events' %}";
+    });
+
+    // Tags handling (gray by default, turn green when active) 
+    const preset = document.getElementById('preset-tags');
+    const hiddenTagsInput = document.getElementById('id_tags_input');
+    const customText = document.getElementById('custom-tag-text');
+    const addBtn = document.getElementById('btn-add-custom-tag');
+    let selected = new Set();
+
+    const normalize = s => s.trim().replace(/^#/, '');
+    const keyOf = s => normalize(s).toLowerCase();
+
+    function refreshHidden() {
+      hiddenTagsInput.value = Array.from(selected).join(', ');
+    }
+
+    // Toggle pre-set tags
+    preset.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('selectable')) return;
+      const raw = normalize(e.target.textContent);
+      const key = keyOf(raw);
+
+      if (e.target.classList.contains('active')) {
+        e.target.classList.remove('active');
+        [...selected].forEach(v => { if (v.toLowerCase() === key) selected.delete(v); });
+      } else {
+        e.target.classList.add('active');
+        [...selected].forEach(v => { if (v.toLowerCase() === key) selected.delete(v); });
+        selected.add(raw);
+      }
+      refreshHidden();
+    });
+
+    // Add custom tag
+    addBtn.addEventListener('click', () => {
+      const raw = normalize(customText.value);
+      if (!raw) return;
+      const key = keyOf(raw);
+      [...selected].forEach(v => { if (v.toLowerCase() === key) selected.delete(v); });
+      selected.add(raw);
+      refreshHidden();
+
+      const chip = document.createElement('span');
+      chip.className = 'tag selectable active';
+      chip.textContent = raw;
+      preset.appendChild(chip);
+      customText.value = '';
+
+      chip.addEventListener('click', () => {
+        const k = keyOf(chip.textContent);
+        if (chip.classList.contains('active')) {
+          chip.classList.remove('active');
+          [...selected].forEach(v => { if (v.toLowerCase() === k) selected.delete(v); });
+        } else {
+          chip.classList.add('active');
+          [...selected].forEach(v => { if (v.toLowerCase() === k) selected.delete(v); });
+          selected.add(chip.textContent.trim());
+        }
+        refreshHidden();
+      });
+    });
+  });
+</script>
+{% endblock %}
 {% endblock %}

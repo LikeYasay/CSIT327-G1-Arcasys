@@ -13,7 +13,7 @@ body {
   font-family: 'Kumbh Sans', sans-serif !important;
 }
 
-/* Header (matches admin_approval style) */
+/* Header */
 .edit-page-header {
   max-width: 900px;
   margin: 100px auto 20px auto; /* pushes below fixed navbar */
@@ -42,7 +42,7 @@ body {
   font-weight: 700;
 }
 
-/* Wrapper (same size as admin_approval) */
+/* Wrapper */
 .edit-event-wrapper {
   max-width: 900px;
   margin: 0 auto 40px auto;
@@ -90,27 +90,27 @@ body {
   transition: border 0.2s, box-shadow 0.2s;
 }
 
-/* Thin, black focus (like login.css) */
+/* Focus */
 .edit-event-form input:focus,
 .edit-event-form select:focus,
 .edit-event-form textarea:focus,
 .tag-input-row input:focus,
 .social-input input:focus {
-  border: 1px solid #000;   /* thin black */
-  outline: none;            /* remove default outline */
-  box-shadow: none;         /* no glow */
+  border: 1px solid #000;
+  outline: none;
+  box-shadow: none;
 }
 
-/* Select dropdown (built-in arrow + spacing) */
+/* Select dropdown */
 .edit-event-form select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   background-color: #fff;
-  padding-right: 40px; /* space for arrow */
+  padding-right: 40px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' stroke='black' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 14px center; /* small gap from edge */
+  background-position: right 14px center;
   background-size: 12px;
 }
 
@@ -165,7 +165,6 @@ body {
   transition: 0.3s ease, transform 0.2s ease;
 }
 
-/* Keep Add Tag text on one line and height aligned with inputs */
 .edit-event-form .btn.add-tag {
   white-space: nowrap;
   height: 42px;
@@ -249,14 +248,14 @@ input[type="time"]::-webkit-inner-spin-button {
   display: none;
 }
 
-/* Input with trailing icon (e.g., location image) */
+/* Input with trailing icon */
 .input-with-icon {
   position: relative;
   display: flex;
   align-items: center;
 }
 .input-with-icon input {
-  padding: 10px 40px 10px 14px; /* space for the icon on the right */
+  padding: 10px 40px 10px 14px;
 }
 .input-icon {
   position: absolute;
@@ -265,4 +264,55 @@ input[type="time"]::-webkit-inner-spin-button {
   height: 20px;
   pointer-events: none;
   filter: none;
+}
+
+/* Errors */
+.error {
+  color: #b30000;
+  font-size: 13px;
+  margin-top: 6px;
+  display: inline-block;
+}
+.form-errors {
+  background: #fff3f3;
+  border: 1px solid #ffcccc;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* --- Cancel modal --- */
+.modal.hidden { display: none; }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.modal-title {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
 }

@@ -13,10 +13,39 @@ from django.contrib.auth.views import (
     PasswordResetView, PasswordResetDoneView, 
     PasswordResetConfirmView, PasswordResetCompleteView
 )
-from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.urls import reverse_lazy
+import re
 
 from .models import User, Role
+
+# -----------------------------
+# Email Validation Helper Function
+# -----------------------------
+def is_valid_email(email):
+    """
+    Strict email validation - only allow specific domains
+    """
+    # Basic email regex pattern
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    
+    if not re.match(pattern, email):
+        return False
+    
+    domain = email.split('@')[1].lower()
+    
+    # ONLY allow these specific domains
+    allowed_domains = [
+        'gmail.com',
+        'yahoo.com', 
+        'outlook.com',
+        'hotmail.com',
+        'icloud.com',
+        'cit.edu',  # Your organization
+        # Add other specific domains you want to allow
+    ]
+    
+    return domain in allowed_domains
 
 # -----------------------------
 # Login View
@@ -24,65 +53,119 @@ from .models import User, Role
 def login_view(request):
     if request.user.is_authenticated:
         if request.user.isUserAdmin or request.user.is_superuser:
-            return redirect("events:admin_dashboard")  # ✅ Fixed: Added namespace
+            return redirect("events:admin_dashboard")
         else:
-            return redirect("events:add_events")  # ✅ Fixed: Added namespace
+            return redirect("events:add_events")
 
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "").strip()
         remember_me = request.POST.get("remember_me")
 
-        # Basic validation
-        if not email or not password:
-            messages.error(request, "Email and password are required.")
-            return render(request, "users/login.html")
+        # Store form data to repopulate on error
+        form_data = {
+            'email': email,
+            'password': password,
+        }
+        clear_fields = {}
+        field_errors = {}  # Track field-specific errors for inline display
 
-        try:
-            validate_email(email)
-        except ValidationError:
-            messages.error(request, "Please enter a valid email address.")
-            return render(request, "users/login.html")
+        # A. Client-side validation: Invalid input format
+        # 1. Check email format FIRST (most important)
+        if email and not is_valid_email(email):
+            field_errors['email'] = "Please enter a valid email address with proper domain (e.g., example@gmail.com)."
+            # FORMAT ERROR: Keep both fields filled
+            clear_fields['email'] = False    # Keep email
+            clear_fields['password'] = True # Keep password
+            return render(request, "users/login.html", {
+                'form_data': form_data,
+                'clear_fields': clear_fields,
+                'field_errors': field_errors
+            })
 
-        # Check for pending accounts first
+        # 2. Check if fields are empty (AFTER email format check)
+        if not email:
+            field_errors['email'] = "Please enter your email address."
+            clear_fields['email'] = True
+        if not password:
+            field_errors['password'] = "Please enter your password."
+            clear_fields['password'] = True
+
+        if field_errors:
+            # If any field errors exist, return immediately
+            return render(request, "users/login.html", {
+                'form_data': form_data,
+                'clear_fields': clear_fields,
+                'field_errors': field_errors
+            })
+
+        # B. Server-side validation: Authentication errors
+        # 3. Check if account exists (both active and pending)
+        user_exists = False
         try:
-            pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
-            if pending_user.check_password(password):
-                messages.warning(request, "Your account is pending administrator approval. Please wait for approval email.")
-            else:
-                messages.error(request, "Invalid email or password.")
-            return render(request, "users/login.html")
+            # Check for active account first
+            active_user = User.objects.get(UserEmail__iexact=email, isUserActive=True)
+            user_exists = True
         except User.DoesNotExist:
-            pass
+            # Check for pending account
+            try:
+                pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
+                user_exists = True
+                # Account exists but is pending
+                if pending_user.check_password(password):
+                    messages.error(request, "Your account is pending administrator approval. Please wait for approval email.", extra_tags='auth_error')
+                else:
+                    # AUTH ERROR: Generic message, keep email, clear password
+                    messages.error(request, "Invalid email or password.", extra_tags='auth_error')
+                clear_fields['email'] = False    # Keep email
+                clear_fields['password'] = True  # Clear password
+                return render(request, "users/login.html", {
+                    'form_data': form_data,
+                    'clear_fields': clear_fields,
+                    'field_errors': field_errors
+                })
+            except User.DoesNotExist:
+                # No account found at all - AUTH ERROR
+                messages.error(request, "Invalid email or password.", extra_tags='auth_error')
+                clear_fields['email'] = False    # Keep email
+                clear_fields['password'] = True  # Clear password
+                return render(request, "users/login.html", {
+                    'form_data': form_data,
+                    'clear_fields': clear_fields,
+                    'field_errors': field_errors
+                })
 
-        # Normal authentication for active users
+        # 4. Authenticate with password (account exists and is active)
         user = authenticate(request, UserEmail=email, password=password)
 
         if user is not None:
-            if user.isUserStaff and not user.isUserActive:
-                messages.warning(request, "Your account is pending administrator approval. Please wait for approval email.")
-                return render(request, "users/login.html")
-            
             login(request, user)
 
             # Redirect based on role
             if user.isUserAdmin or user.is_superuser:
-                response = redirect("events:admin_dashboard")  # ✅ Fixed: Added namespace
+                response = redirect("events:admin_dashboard")
             else:
-                response = redirect("events:add_events")  # ✅ Fixed: Added namespace
+                response = redirect("events:add_events")
 
             # Remember Me
             if remember_me:
-                response.set_cookie('remembered_email', email, max_age=30*24*60*60)  # 30 days
-                response.set_cookie('remembered_password', password, max_age=30*24*60*60)  # 30 days
+                response.set_cookie('remembered_email', email, max_age=30*24*60*60)
+                response.set_cookie('remembered_password', password, max_age=30*24*60*60)
             else:
                 response.delete_cookie('remembered_email')
                 response.delete_cookie('remembered_password')
 
             return response
         else:
-            messages.error(request, "Invalid email or password.")
-            return render(request, "users/login.html")
+            # Password is incorrect but email exists - AUTH ERROR
+            messages.error(request, "Invalid email or password.", extra_tags='auth_error')
+            clear_fields['email'] = False    # Keep email
+            clear_fields['password'] = True  # Clear only password
+            return render(request, "users/login.html", {
+                'form_data': form_data,
+                'clear_fields': clear_fields,
+                'field_errors': field_errors
+            })
 
     return render(request, "users/login.html")
 
@@ -92,51 +175,115 @@ def login_view(request):
 def register_view(request):
     if request.user.is_authenticated:
         if request.user.isUserAdmin or request.user.is_superuser:
-            return redirect("events:admin_dashboard")  # ✅ Fixed: Added namespace
+            return redirect("events:admin_dashboard")
         else:
-            return redirect("events:add_events")  # ✅ Fixed: Added namespace
+            return redirect("events:add_events")
 
     if request.method == "POST":
         first_name = request.POST.get("first_name", "").strip()
         last_name = request.POST.get("last_name", "").strip()
-        email = request.POST.get("email", "").strip()
+        email = request.POST.get("email", "").strip().lower()
         password = request.POST.get("password", "").strip()
         confirm_password = request.POST.get("confirm_password", "").strip()
 
-        # Validation
-        required_fields = {'First Name': first_name, 'Last Name': last_name, 'Email': email, 
-                          'Password': password, 'Confirm Password': confirm_password}
-        for field, value in required_fields.items():
-            if not value:
-                messages.error(request, f"{field} is required.")
-                return render(request, "users/register.html")
+        # Store form data to repopulate on error
+        form_data = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email,
+            'password': password,
+            'confirm_password': confirm_password,
+        }
 
-        try:
-            validate_email(email)
-        except ValidationError:
-            messages.error(request, "Please enter a valid email address.")
-            return render(request, "users/register.html")
+        clear_fields = {}
+        field_errors = {}  # Track field-specific errors for inline display
 
-        if password != confirm_password:
-            messages.error(request, "Passwords do not match.")
-            return render(request, "users/register.html")
+        # A. Client-side validation: Invalid input format
+        # 1. Check email format FIRST
+        if email and not is_valid_email(email):
+            field_errors['email'] = "Please enter a valid email address with proper domain (e.g., example@gmail.com)."
+            # FORMAT ERROR: Keep all fields filled
+            clear_fields['email'] = False
+            clear_fields['password'] = False
+            clear_fields['confirm_password'] = False
+            return render(request, "users/register.html", {
+                'form_data': form_data,
+                'clear_fields': clear_fields,
+                'field_errors': field_errors
+            })
 
-        # Use Django's built-in password validation
+        # 2. Check if fields are empty (AFTER email format check)
+        if not first_name:
+            field_errors['first_name'] = "Please enter your first name."
+            clear_fields['first_name'] = True
+        if not last_name:
+            field_errors['last_name'] = "Please enter your last name."
+            clear_fields['last_name'] = True
+        if not email:
+            field_errors['email'] = "Please enter your email address."
+            clear_fields['email'] = True
+        if not password:
+            field_errors['password'] = "Please enter your password."
+            clear_fields['password'] = True
+        if not confirm_password:
+            field_errors['confirm_password'] = "Please confirm your password."
+            clear_fields['confirm_password'] = True
+
+        if field_errors:
+            # If any field errors exist, return immediately
+            return render(request, "users/register.html", {
+                'form_data': form_data,
+                'clear_fields': clear_fields,
+                'field_errors': field_errors
+            })
+
+        # C. Password strength validation (BEFORE checking match)
+        password_errors = []
         try:
             validate_password(password)
         except DjangoValidationError as e:
-            for error in e:
-                messages.error(request, error)
-            return render(request, "users/register.html")
+            password_errors = list(e.messages)
+        
+        # Show password errors sequentially (only the first one)
+        if password_errors:
+            field_errors['password'] = password_errors[0]  # Show only the first error
+            # Keep all fields filled for correction
+            clear_fields['password'] = False
+            clear_fields['confirm_password'] = False
+            return render(request, "users/register.html", {
+                'form_data': form_data,
+                'clear_fields': clear_fields,
+                'field_errors': field_errors
+            })
 
-        # Check existing user
-        existing_user = User.objects.filter(UserEmail=email).first()
+        # B. Password confirmation mismatch (AFTER password strength check)
+        if password != confirm_password:
+            field_errors['confirm_password'] = "Passwords do not match."
+            # Keep all fields filled, don't clear anything
+            clear_fields['password'] = False
+            clear_fields['confirm_password'] = False
+            return render(request, "users/register.html", {
+                'form_data': form_data,
+                'clear_fields': clear_fields,
+                'field_errors': field_errors
+            })
+
+        # D. Server-side validation: Existing user
+        existing_user = User.objects.filter(UserEmail__iexact=email).first()
         if existing_user:
             if existing_user.isUserActive:
-                messages.error(request, "Email already registered. Please login.")
+                messages.error(request, "Email already registered. Please login.", extra_tags='server_error')
             else:
-                messages.error(request, "Email has pending application. Wait for approval.")
-            return render(request, "users/register.html")
+                messages.error(request, "Email has pending application. Wait for approval.", extra_tags='server_error')
+            # Clear email for security, keep names
+            clear_fields['email'] = True
+            clear_fields['password'] = True
+            clear_fields['confirm_password'] = True
+            return render(request, "users/register.html", {
+                'form_data': form_data,
+                'clear_fields': clear_fields,
+                'field_errors': field_errors
+            })
 
         try:
             # Get or create the Staff role
@@ -179,8 +326,12 @@ Marketing Archive Team"""
             })
 
         except Exception as e:
-            messages.error(request, f"Registration error: {str(e)}")
-            return render(request, "users/register.html")
+            messages.error(request, f"Registration error: {str(e)}", extra_tags='server_error')
+            return render(request, "users/register.html", {
+                'form_data': form_data,
+                'clear_fields': clear_fields,
+                'field_errors': field_errors
+            })
 
     return render(request, "users/register.html")
 
@@ -190,7 +341,7 @@ Marketing Archive Team"""
 def logout_view(request):
     if request.method == "POST":
         logout(request)
-        return redirect("users:login")  # ✅ Fixed: Added namespace
+        return redirect("users:login")
     return render(request, "users/logout.html")
 
 # -----------------------------
@@ -204,6 +355,47 @@ class CustomPasswordResetForm(PasswordResetForm):
             isUserActive=True
         )
         return (u for u in active_users if u.has_usable_password())
+
+# -----------------------------
+# Custom Set Password Form for Clean Validation (EXACTLY like register view)
+# -----------------------------
+class CustomSetPasswordForm(SetPasswordForm):
+    def clean(self):
+        # Don't call super().clean() at all - we handle everything
+        cleaned_data = self.cleaned_data
+        new_password1 = cleaned_data.get("new_password1")
+        new_password2 = cleaned_data.get("new_password2")
+        
+        # Clear ALL existing errors
+        self._errors = {}
+        
+        # A. Password strength validation FIRST (like register view)
+        if new_password1:
+            password_errors = []
+            try:
+                validate_password(new_password1, self.user)
+            except DjangoValidationError as e:
+                password_errors = list(e.messages)
+            
+            # Show only the first password error
+            if password_errors:
+                self.add_error('new_password1', password_errors[0])
+                return cleaned_data
+
+        # B. Password confirmation mismatch (ONLY if password is valid)
+        if new_password1 and new_password2 and new_password1 != new_password2:
+            self.add_error('new_password2', "Passwords do not match.")
+            return cleaned_data
+        
+        # If we get here, validation passed
+        return cleaned_data
+
+    # Override the default validation methods to prevent duplicate checks
+    def clean_new_password1(self):
+        return self.cleaned_data.get('new_password1')
+
+    def clean_new_password2(self):
+        return self.cleaned_data.get('new_password2')
 
 # -----------------------------
 # Password Reset Views
@@ -253,11 +445,9 @@ Marketing Archive Team"""
                 fail_silently=False,
             )
             
-            # Return success response but DON'T call super().form_valid(form)
             return self.render_success_response()
             
         except User.DoesNotExist:
-            # No pending account found, proceed with normal password reset
             pass
         
         # For active users - send HTML email only
@@ -280,17 +470,15 @@ Marketing Archive Team"""
             subject = 'Password Reset Request - Marketing Archive'
             html_message = render_to_string('users/password_reset_email.html', context)
             
-            # Send single email with HTML content
             send_mail(
                 subject,
-                'Please view this email in HTML format.',  # Minimal plain text
+                'Please view this email in HTML format.',
                 settings.DEFAULT_FROM_EMAIL,
                 [user.UserEmail],
                 html_message=html_message,
                 fail_silently=False,
             )
         
-        # Return success response but DON'T call super().form_valid(form)
         return self.render_success_response()
 
     def render_success_response(self):
@@ -302,7 +490,12 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'users/password_reset_confirm.html'
-    success_url = reverse_lazy('users:password_reset_complete')  # ✅ Fixed: Added namespace
+    success_url = reverse_lazy('users:password_reset_complete')
+    form_class = CustomSetPasswordForm  # Use our custom form with clean validation
+
+    def form_invalid(self, form):
+        # This ensures our custom form errors are displayed properly
+        return self.render_to_response(self.get_context_data(form=form))
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'users/password_reset_complete.html'

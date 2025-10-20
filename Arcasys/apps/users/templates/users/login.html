@@ -3,6 +3,26 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'users/css/login.css' %}" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+    /* Server-side auth error styling */
+    .auth-error {
+        color: #dc3545;
+        text-align: center;
+    }
+
+    /* Field error styling */
+    .field-error {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .error-border {
+        border: 2px solid #dc3545 !important;
+        border-radius: 8px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -24,14 +44,14 @@
       <h1>Welcome Back</h1>
       <p class="description">Enter your details to proceed.</p>
 
-      <!-- Django messages -->
-      {% if messages %}
-        <ul class="messages">
-          {% for message in messages %}
-            <li class="{{ message.tags }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
+      <!-- Server-side authentication errors (non-bulleted) -->
+      {% for message in messages %}
+        {% if 'auth_error' in message.tags %}
+          <div class="auth-error">
+            {{ message }}
+          </div>
+        {% endif %}
+      {% endfor %}
 
       <!-- Login Form -->
       <form method="POST" autocomplete="off">
@@ -50,7 +70,12 @@
           required 
           autocomplete="off" 
           readonly onfocus="this.removeAttribute('readonly')"
+          value="{% if not clear_fields.email %}{{ form_data.email|default:'' }}{% endif %}"
+          class="{% if field_errors.email %}error-border{% endif %}"
         >
+        {% if field_errors.email %}
+          <span class="field-error">{{ field_errors.email }}</span>
+        {% endif %}
 
         <label for="password">Password</label>
         <div class="password-wrapper">
@@ -62,11 +87,16 @@
             required
             autocomplete="off"
             readonly onfocus="this.removeAttribute('readonly')"
+            value="{% if not clear_fields.password %}{{ form_data.password|default:'' }}{% endif %}"
+            class="{% if field_errors.password %}error-border{% endif %}"
           />
           <span class="toggle-password">
             <i class="fas fa-eye-slash" id="togglePasswordIcon"></i>
           </span>
         </div>
+        {% if field_errors.password %}
+          <span class="field-error">{{ field_errors.password }}</span>
+        {% endif %}
 
         <div class="options">
           <label>
@@ -108,8 +138,11 @@
     // Check if user previously unchecked "Remember me"
     const userExplicitlyUnchecked = localStorage.getItem('dontRememberMe');
     
-    if (!userExplicitlyUnchecked) {
-      // Auto-fill only if user didn't explicitly uncheck
+    // Only auto-fill if there are no validation errors and user didn't explicitly uncheck
+    const hasValidationErrors = {% if messages or field_errors %}true{% else %}false{% endif %};
+    
+    if (!userExplicitlyUnchecked && !hasValidationErrors) {
+      // Auto-fill only if user didn't explicitly uncheck and no validation errors
       const rememberedEmail = getCookie('remembered_email');
       const rememberedPassword = getCookie('remembered_password');
       const rememberMeCheckbox = document.getElementById('remember_me');
@@ -128,18 +161,20 @@
 
     // Track when user explicitly unchecks "Remember me"
     const rememberMeCheckbox = document.getElementById('remember_me');
-    rememberMeCheckbox.addEventListener('change', function() {
-      if (!this.checked) {
-          // User explicitly doesn't want to be remembered
-          localStorage.setItem('dontRememberMe', 'true');
-          // Clear the fields immediately
-          document.getElementById('email').value = '';
-          document.getElementById('password').value = '';
-      } else {
-          // User wants to be remembered again
-          localStorage.removeItem('dontRememberMe');
-      }
-    });
+    if (rememberMeCheckbox) {
+      rememberMeCheckbox.addEventListener('change', function() {
+        if (!this.checked) {
+            // User explicitly doesn't want to be remembered
+            localStorage.setItem('dontRememberMe', 'true');
+            // Clear the fields immediately
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        } else {
+            // User wants to be remembered again
+            localStorage.removeItem('dontRememberMe');
+        }
+      });
+    }
 
     // Helper functions
     function getCookie(name) {

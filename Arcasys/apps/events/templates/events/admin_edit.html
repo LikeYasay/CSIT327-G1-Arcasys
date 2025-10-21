@@ -8,141 +8,264 @@
 {% block content %}
 
 <div class="edit-page-header">
-  <a href="{% url 'events:add_events' %}" class="back-to-events">← Back to Events</a>
+  <a href="{% url 'events:add_events' %}" class="back-to-events" id="backToEvents">← Back to Events</a>
   <span class="divider">|</span>
   <h1 class="edit-title">Edit Event</h1>
 </div>
 
 <div class="edit-event-wrapper">
-  <form class="edit-event-form">
+  <form class="edit-event-form" method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="form-errors">
+        {% for err in form.non_field_errors %}<p class="error">{{ err }}</p>{% endfor %}
+      </div>
+    {% endif %}
 
     <div class="form-row">
-        <div class="form-group">
-            <label for="event_title">Event Title *</label>
-            <input type="text" id="event_title" value="Student Organizations Accreditation Ceremony" />
-        </div>
+      <div class="form-group">
+        <label for="event_title">Event Title *</label>
+        <input type="text" id="event_title" name="event_title" value="{{ form.event_title.value|default_if_none:'' }}" />
+        {% if form.event_title.errors %}<span class="error">{{ form.event_title.errors.0 }}</span>{% endif %}
+      </div>
 
-        <div class="form-group">
-            <label for="department">Office/Department *</label>
-            <select id="department">
-              <option value="" disabled selected>Select office/department</option>
-              <option value="MO">Marketing Office (MO)</option>
-              <option value="URO">University Registrar’s Office (URO)</option>
-              <option value="OAS">Office of Admissions & Scholarships (OAS)</option>
-              <option value="ETO">Enrollment Technical Office (ETO)</option>
-              <option value="FAO">Finance & Accounting Office (FAO)</option>
-              <option value="SSO">Student Success Office (SSO)</option>
-              <option value="TSG">Technical Support Group (TSG)</option>
-              <option value="GC">Guidance Center</option>
-
-              <option value="CEA">College of Engineering & Architecture (CEA)</option>
-              <option value="CCS">College of Computer Studies (CCS)</option>
-              <option value="CASE">College of Arts, Sciences & Education (CASE)</option>
-              <option value="CMBA">College of Management, Business & Accountancy (CMBA)</option>
-              <option value="CNAHS">College of Nursing & Allied Health Sciences (CNAHS)</option>
-              <option value="CCJ">College of Criminal Justice (CCJ)</option>
-            </select>
-        </div>
+      <div class="form-group">
+        <label for="department">Office/Department *</label>
+        <select id="department" name="department">
+          <option value="" disabled {% if not form.department.value %}selected{% endif %}>Select office/department</option>
+          {% for val,label in form.fields.department.choices %}
+            <option value="{{ val }}" {% if form.department.value == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% if form.department.errors %}<span class="error">{{ form.department.errors.0 }}</span>{% endif %}
+      </div>
     </div>
 
     <div class="form-row">
-    <!-- Event Date -->
-    <div class="form-group">
+      <div class="form-group">
         <label for="event_date">Event Date *</label>
-        <input type="date" id="event_date" name="event_date" value="2025-09-05">
-    </div>
-    
-    <!-- Event Time -->
-    <div class="form-group">
+        <input type="date" id="event_date" name="event_date" value="{{ form.event_date.value|default_if_none:'' }}">
+        {% if form.event_date.errors %}<span class="error">{{ form.event_date.errors.0 }}</span>{% endif %}
+      </div>
+
+      <div class="form-group">
         <label for="event_time">Event Time *</label>
-        <input type="time" id="event_time" name="event_time" value="09:10">
-    </div>
-    
-    <!-- Location -->
-    <div class="form-group">
+        <input type="time" id="event_time" name="event_time" value="{{ form.event_time.value|default_if_none:'' }}">
+        {% if form.event_time.errors %}<span class="error">{{ form.event_time.errors.0 }}</span>{% endif %}
+      </div>
+
+      <div class="form-group">
         <label for="location">Location *</label>
         <div class="input-with-icon">
-        <input type="text" id="location" name="location" value="CIT-U Auditorium">
-        <img src="{% static 'events/images/location.png' %}" alt="Location Icon" class="input-icon">
+          <input type="text" id="location" name="location" value="{{ form.location.value|default_if_none:'' }}">
+          <img src="{% static 'events/images/location.png' %}" alt="Location Icon" class="input-icon">
         </div>
-    </div>
+        {% if form.location.errors %}<span class="error">{{ form.location.errors.0 }}</span>{% endif %}
+      </div>
     </div>
 
     <div class="form-group">
-        <label for="description">Event Description *</label>
-        <textarea id="description" rows="5">Because we #LeadTheFuture, WATCH the Wildcat leadership SHINE as our student leaders from the different CIT-U accredited student organizations receive their accreditation confirmation in a symbolic ceremony. Go, Wildcats!</textarea>
+      <label for="description">Event Description *</label>
+      <textarea id="description" name="description" rows="5">{{ form.description.value|default_if_none:'' }}</textarea>
+      {% if form.description.errors %}<span class="error">{{ form.description.errors.0 }}</span>{% endif %}
     </div>
 
     <br>
     <div class="form-group">
-        <label>Event Tags</label>
-        <div class="tags">
-            <span class="tag green">SSO</span>
-            <span class="tag green">LeadTheFuture</span>
-            <span class="tag green">Organizations</span>
-        </div>
+      <label>Event Tags</label>
 
-        <div class="tag-input-row">
-            <input type="text" placeholder="Add custom tag" />
-            <button type="button" class="btn add-tag">Add Tag</button>
-        </div>
+      <!-- Chips are rendered by JS based on the input -->
+      <div class="tags"></div>
+
+      <div class="tag-input-row">
+        <input type="text" name="tags" placeholder="Add tags (comma-separated)"
+               value="{{ form.tags.value|default_if_none:'' }}" />
+        <button type="button" class="btn add-tag" id="addTagBtn">Add Tag</button>
+      </div>
+      {% if form.tags.errors %}<span class="error">{{ form.tags.errors.0 }}</span>{% endif %}
     </div>
 
     <br>
     <div class="form-group social-links">
-    <label>Social Media Links</label>
+      <label>Social Media Links</label>
 
-    <div class="form-row">
-        <!-- Facebook -->
+      <div class="form-row">
         <div class="social-input">
-        <div class="social-header">
+          <div class="social-header">
             <img src="{% static 'events/images/facebook.png' %}" alt="Facebook" class="social-icon">
             <span class="social-title">Facebook Link</span>
             <button type="button" class="add-more">+ Add more</button>
-        </div>
-        <input type="text" id="facebook" value="https://facebook.com/event-page" />
+          </div>
+          <input type="text" id="facebook" name="facebook" value="{{ form.facebook.value|default_if_none:'' }}" />
+          {% if form.facebook.errors %}<span class="error">{{ form.facebook.errors.0 }}</span>{% endif %}
         </div>
 
-        <!-- TikTok -->
         <div class="social-input">
-        <div class="social-header">
+          <div class="social-header">
             <img src="{% static 'events/images/tiktok.png' %}" alt="TikTok" class="social-icon">
             <span class="social-title">TikTok Link</span>
             <button type="button" class="add-more">+ Add more</button>
+          </div>
+          <input type="text" id="tiktok" name="tiktok" value="{{ form.tiktok.value|default_if_none:'' }}" />
+          {% if form.tiktok.errors %}<span class="error">{{ form.tiktok.errors.0 }}</span>{% endif %}
         </div>
-        <input type="text" id="tiktok" value="https://tiktok.com/@event-post" />
-        </div>
-    </div>
+      </div>
 
-    <div class="form-row">
-        <!-- YouTube -->
+      <div class="form-row">
         <div class="social-input">
-        <div class="social-header">
+          <div class="social-header">
             <img src="{% static 'events/images/youtube.png' %}" alt="YouTube" class="social-icon">
             <span class="social-title">YouTube Link</span>
             <button type="button" class="add-more">+ Add more</button>
-        </div>
-        <input type="text" id="youtube" value="https://youtube.com/watch?v=..." />
+          </div>
+          <input type="text" id="youtube" name="youtube" value="{{ form.youtube.value|default_if_none:'' }}" />
+          {% if form.youtube.errors %}<span class="error">{{ form.youtube.errors.0 }}</span>{% endif %}
         </div>
 
-        <!-- Website -->
         <div class="social-input">
-        <div class="social-header">
+          <div class="social-header">
             <img src="{% static 'events/images/link.png' %}" alt="Website" class="social-icon">
             <span class="social-title">Website Link</span>
             <button type="button" class="add-more">+ Add more</button>
+          </div>
+          <input type="text" id="website" name="website" value="{{ form.website.value|default_if_none:'' }}" />
+          {% if form.website.errors %}<span class="error">{{ form.website.errors.0 }}</span>{% endif %}
         </div>
-        <input type="text" id="website" value="https://website.com/event-registration" />
-        </div>
-    </div>    
-</div>
-
-    <div class="form-buttons">
-        <button class="btn secondary">Cancel</button>
-        <button class="btn primary">Update</button>
+      </div>
     </div>
 
+    <div class="form-buttons">
+      <button type="button" class="btn secondary" id="resetBtn">Reset</button>
+      <a href="{% url 'events:add_events' %}" class="btn secondary" id="cancelLink">Cancel</a>
+      <button type="submit" class="btn primary">Update</button>
+    </div>
   </form>
 </div>
+
+<!-- Cancel confirmation modal -->
+<div id="cancelModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-content">
+    <h3 class="modal-title">Discard changes?</h3>
+    <p>Any unsaved changes will be lost.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn secondary" id="stayBtn">Keep Editing</button>
+      <a id="discardBtn" class="btn primary" href="{% url 'events:add_events' %}">Discard</a>
+    </div>
+  </div>
+</div>
+
+<!-- Page-specific JS -->
+<script>
+  (function () {
+    const form = document.querySelector('.edit-event-form');
+    if (!form) return;
+
+    const cancelLink = document.getElementById('cancelLink');
+    const backToEvents = document.getElementById('backToEvents');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const modal = document.getElementById('cancelModal');
+    const stayBtn = document.getElementById('stayBtn');
+    const discardBtn = document.getElementById('discardBtn');
+
+    const tagsInput = form.querySelector('input[name="tags"]');
+    const chipsWrap = form.querySelector('.tags');
+
+    // --- Dirty state tracking ---
+    const snapshot = () => new URLSearchParams(new FormData(form)).toString();
+    const initial = snapshot();
+    let dirty = false;
+
+    function markDirty() { dirty = (snapshot() !== initial); }
+
+    form.addEventListener('input', markDirty);
+    form.addEventListener('change', markDirty);
+
+    // Warn on tab close / reload if dirty
+    window.addEventListener('beforeunload', (e) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    // Show/hide modal
+    function showModal() {
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+    function hideModal() {
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    // Intercept Cancel & Back links if dirty
+    function handleCancelClick(e) {
+      if (dirty) {
+        e.preventDefault();
+        showModal();
+      }
+    }
+
+    if (cancelLink) cancelLink.addEventListener('click', handleCancelClick);
+    if (backToEvents) backToEvents.addEventListener('click', handleCancelClick);
+
+    if (stayBtn) stayBtn.addEventListener('click', hideModal);
+
+    if (discardBtn) {
+      discardBtn.addEventListener('click', () => {
+        // allow navigation without beforeunload
+        window.removeEventListener('beforeunload', () => {});
+      });
+    }
+
+    // Reset to initial values
+    if (resetBtn) {
+      resetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        form.reset();
+        dirty = false;
+        refreshChipsFromTags();
+      });
+    }
+
+    // TAGS: render chips from input
+    function refreshChipsFromTags() {
+      if (!tagsInput || !chipsWrap) return;
+      const parts = (tagsInput.value || '')
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
+      chipsWrap.innerHTML = '';
+      parts.forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'tag green';
+        span.textContent = t;
+        chipsWrap.appendChild(span);
+      });
+    }
+
+    if (tagsInput) {
+      tagsInput.addEventListener('input', refreshChipsFromTags);
+      refreshChipsFromTags(); // init on load
+    }
+
+    // Optional: clicking "Add Tag" will append the current text (if any) as a chip (UX sugar)
+    const addTagBtn = document.getElementById('addTagBtn');
+    if (addTagBtn && tagsInput) {
+      addTagBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        let v = tagsInput.value.trim();
+        if (!v) return;
+        // no-op: we keep comma-separated; chips auto-refresh via input event
+        if (!v.endsWith(',')) {
+          tagsInput.value = v + ', ';
+        }
+        tagsInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
+  })();
+</script>
 
 {% endblock content %}

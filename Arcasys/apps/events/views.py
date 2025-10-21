@@ -14,6 +14,7 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from apps.events.models import Event, EventDepartment, EventLink, EventTag, Department, Tag
+from .forms import AdminEditEventForm
 
 # -----------------------------
 # Events View
@@ -173,6 +174,40 @@ def admin_add_event_view(request):
         'departments': Department.objects.all(),
     }
     return render(request, "events/admin_add_event.html", context)
+
+@login_required
+def admin_edit_view(request):
+    # Normally you'd fetch an Event instance by ID and use its values for initial.
+    initial = {
+        "event_title": "Student Organizations Accreditation Ceremony",
+        "department": "SSO",
+        "event_date": "2025-09-05",
+        "event_time": "09:10",
+        "location": "CIT-U Auditorium",
+        "description": (
+            "Because we #LeadTheFuture, WATCH the Wildcat leadership SHINE as our student "
+            "leaders from the different CIT-U accredited student organizations receive their "
+            "accreditation confirmation in a symbolic ceremony. Go, Wildcats!"
+        ),
+        "facebook": "https://facebook.com/event-page",
+        "tiktok": "https://tiktok.com/@event-post",
+        "youtube": "https://youtube.com/watch?v=...",
+        "website": "https://website.com/event-registration",
+        "tags": "SSO, LeadTheFuture, Organizations",
+    }
+
+    if request.method == "POST":
+        form = AdminEditEventForm(request.POST)
+        if form.is_valid():
+            # TODO: Persist to DB (update Event record)
+            # e.g. Event.objects.filter(pk=event_id).update(**mapped_fields)
+            messages.success(request, "Event updated successfully.")
+            return redirect("events:admin_edit")
+        messages.error(request, "Please fix the errors below.")
+    else:
+        form = AdminEditEventForm(initial=initial)
+
+    return render(request, "events/admin_edit.html", {"form": form})
 
 
 # -----------------------------

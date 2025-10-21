@@ -25,6 +25,6 @@ def contact_view(request):
 def redirect_to_role_based_landing(user):
     """Redirect users to appropriate landing page based on their role"""
     if user.isUserAdmin or user.is_superuser:
-        return redirect("events:admin_dashboard")
+        return redirect("events:admin_approval")
     else:
-        return redirect("events:add_events")
+        return redirect("events:events")

@@ -2,13 +2,13 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'events/css/admin_add_event.css' %}">
+<link rel="stylesheet" href="{% static 'events/css/add_event.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="header-spacer">
-        <a href="{% url 'events:add_events' %}" class="back-link">← Back to Events</a>
+        <a href="{% url 'events:events' %}" class="back-link">← Back to Events</a>
         <h1>Add New Event</h1>
     </div>
 
@@ -156,7 +156,7 @@
 
     document.getElementById('create-event-btn').addEventListener('click', () => document.querySelector('form').submit())
     document.getElementById('cancel-btn').addEventListener('click', () => {
-      window.location.href = "{% url 'events:add_events' %}";
+      window.location.href = "{% url 'events:events' %}";
     });
 
     // Tags handling (gray by default, turn green when active) 

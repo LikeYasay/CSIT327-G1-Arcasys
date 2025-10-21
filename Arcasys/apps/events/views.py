@@ -17,39 +17,29 @@ from apps.events.models import Event, EventDepartment, EventLink, EventTag, Depa
 from .forms import AdminEditEventForm
 
 # -----------------------------
-# Events View
+# Events View - FOR ALL USERS
 # -----------------------------
 def events_view(request):
-    return render(request, "events/events.html")
+    # Check permissions for conditional UI
+    can_manage_events = request.user.is_authenticated and (request.user.isUserAdmin or request.user.isUserStaff)
+    
+    context = {
+        'can_manage_events': can_manage_events,
+        'is_admin': request.user.is_authenticated and request.user.isUserAdmin,
+    }
+    return render(request, "events/events.html", context)
 
 # -----------------------------
-# Add Events View
+# Add Event View - FOR STAFF & ADMIN
 # -----------------------------
 @login_required
-def add_events_view(request):
-    return render(request, "events/add_events.html")
-
-# -----------------------------
-# Admin Actions View
-# -----------------------------
-
-# Helper function for tags
-def _parse_tags(raw: str):
-    """Turn 'SDG, Workshop #Seminar' into unique tokens preserving case."""
-    if not raw:
-        return []
-    parts = [p.lstrip("#").strip() for p in raw.replace(",", " ").split() if p.strip()]
-    seen, out = set(), []
-    for p in parts:
-        k = p.lower()
-        if k not in seen:
-            out.append(p)
-            seen.add(k)
-    return out
-
-@login_required
-def admin_add_event_view(request):
-    REDIRECT_URL_NAME = "events:admin_add_event"
+def add_event_view(request):
+    # Check if user has permission to add events
+    if not request.user.isUserAdmin and not request.user.isUserStaff:
+        messages.error(request, "Unauthorized access. Staff or admin privileges required.")
+        return redirect("events:events")
+    
+    REDIRECT_URL_NAME = "events:add_event"
     
     if request.method == "POST":
         # 1) Collect data
@@ -173,10 +163,18 @@ def admin_add_event_view(request):
     context = {
         'departments': Department.objects.all(),
     }
-    return render(request, "events/admin_add_event.html", context)
+    return render(request, "events/add_event.html", context)
 
+# -----------------------------
+# Edit Event View - FOR STAFF & ADMIN
+# -----------------------------
 @login_required
-def admin_edit_view(request):
+def edit_event_view(request):
+    # Check if user has permission to edit events
+    if not request.user.isUserAdmin and not request.user.isUserStaff:
+        messages.error(request, "Unauthorized access. Staff or admin privileges required.")
+        return redirect("events:events")
+    
     # Normally you'd fetch an Event instance by ID and use its values for initial.
     initial = {
         "event_title": "Student Organizations Accreditation Ceremony",
@@ -202,24 +200,37 @@ def admin_edit_view(request):
             # TODO: Persist to DB (update Event record)
             # e.g. Event.objects.filter(pk=event_id).update(**mapped_fields)
             messages.success(request, "Event updated successfully.")
-            return redirect("events:admin_edit")
+            return redirect("events:edit_event")
         messages.error(request, "Please fix the errors below.")
     else:
         form = AdminEditEventForm(initial=initial)
 
-    return render(request, "events/admin_edit.html", {"form": form})
+    return render(request, "events/edit_event.html", {"form": form})
 
+# Helper function for tags
+def _parse_tags(raw: str):
+    """Turn 'SDG, Workshop #Seminar' into unique tokens preserving case."""
+    if not raw:
+        return []
+    parts = [p.lstrip("#").strip() for p in raw.replace(",", " ").split() if p.strip()]
+    seen, out = set(), []
+    for p in parts:
+        k = p.lower()
+        if k not in seen:
+            out.append(p)
+            seen.add(k)
+    return out
 
 # -----------------------------
 # Admin Dashboard View
 # -----------------------------
 @login_required
-def admin_dashboard_view(request):
+def admin_approval_view(request):
     from apps.users.models import User
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied. Admin privileges required.")
-        return redirect("events:add_events")
+        return redirect("events:events")  # FIXED: Changed from 'events:add_events' to 'events:events'
     
     pending_users = User.objects.filter(isUserActive=False, isUserStaff=True)
     applications = []
@@ -231,7 +242,7 @@ def admin_dashboard_view(request):
             'date_applied': user.UserCreatedAt.strftime('%Y-%m-%d')
         })
     
-    return render(request, "events/admin_dashboard.html", {'applications': applications})
+    return render(request, "events/admin_approval.html", {'applications': applications})
 
 # -----------------------------
 # Approval/Reject Views
@@ -242,7 +253,7 @@ def approve_application(request, user_id):
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")
-        return redirect("events:add_events")
+        return redirect("events:events")  # FIXED: Changed from 'events:add_events' to 'events:events'
     
     try:
         user = User.objects.get(UserID=user_id, isUserActive=False, isUserStaff=True)
@@ -291,7 +302,7 @@ Marketing Archive Team"""
     except User.DoesNotExist:
         messages.error(request, "User not found or already approved.")
     
-    return redirect('events:admin_dashboard')
+    return redirect('events:admin_approval')
 
 @login_required
 def reject_application(request, user_id):
@@ -299,7 +310,7 @@ def reject_application(request, user_id):
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")
-        return redirect("events:add_events")
+        return redirect("events:events")  # FIXED: Changed from 'events:add_events' to 'events:events'
     
     try:
         user = User.objects.get(UserID=user_id, isUserActive=False, isUserStaff=True)
@@ -336,8 +347,4 @@ Marketing Archive Team"""
     except User.DoesNotExist:
         messages.error(request, "User not found or already processed.")
     
-    return redirect('events:admin_dashboard')
-
-@login_required
-def admin_edit_view(request):
-    return render(request, "events/admin_edit.html")
+    return redirect('events:admin_approval')

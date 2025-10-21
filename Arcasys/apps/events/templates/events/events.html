@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'events/css/events.css' %}" />
+<link rel="stylesheet" href="{% static 'events/css/add_events.css' %}" />
 {% endblock %}
 
 {% block content %}
@@ -99,14 +100,32 @@
     </aside>
 
     <div class="results-content">
-      {% block results_header_content %}
-      <div class="results-header">
-        <h2>Event Results</h2>
-        <span class="results-date">2025 | September</span>
-      </div>
-      <p class="results-meta">Showing 10 of 197 events (Page 1 of 20)</p>
-      {% endblock results_header_content %}
+      <!-- DYNAMIC HEADER BASED ON USER ROLE -->
+      {% if request.user.isUserAdmin or request.user.isUserStaff %}
+        {% block results_header_content %}
+        <!-- ADMIN HEADER -->
+        <div class="results-header-admin">
+            <div class="results-header-top">
+                <h2>Event Results</h2>
+                <a href="{% url 'events:add_event' %}" class="add-event">Add Event</a>
+            </div>
+            
+            <div class="results-header-bottom">
+                <p class="results-meta">Showing 10 of 197 events (Page 1 of 20)</p>
+                <span class="results-date">2025 | September</span>
+            </div>
+        </div>
+        {% endblock results_header_content %}
+      {% else %}
+        <!-- REGULAR USER HEADER -->
+        <div class="results-header">
+          <h2>Event Results</h2>
+          <span class="results-date">2025 | September</span>
+        </div>
+        <p class="results-meta">Showing 10 of 197 events (Page 1 of 20)</p>
+      {% endif %}
 
+      <!-- EVENT CARD 1 -->
       <div class="event-card">
         <div class="event-card-header">
           <h3 class="event-title">
@@ -115,13 +134,37 @@
           <span class="event-date">📅 September 5, 2025</span>
         </div>
         <p class="event-department">Students Success Office</p>
-        {% block admin_actions_1 %}
-        <div class="tags">
-          <span class="tag green">SSO</span>
-          <span class="tag green">LeadTheFuture</span>
-          <span class="tag green">Organizations</span>
-        </div>
-        {% endblock admin_actions_1 %}
+        
+        <!-- TAGS AND ACTIONS ROW -->
+        {% if request.user.isUserAdmin or request.user.isUserStaff %}
+          {% block admin_actions_1 %}
+          <!-- TAGS AND ACTIONS ROW FOR EVENT 1 -->
+          <div class="tags-and-actions-row">
+              <div class="tags">
+                  <span class="tag green">SSO</span>
+                  <span class="tag green">LeadTheFuture</span>
+                  <span class="tag green">Organizations</span>
+              </div>
+              
+              <!-- ADMIN ACTIONS INLINE -->
+              <div class="admin-actions-inline">
+                  <a href="#" class="action-btn export">Export</a>
+                  <a href="{% url 'events:edit_event' %}" class="action-btn edit">Edit</a>
+                  {% if request.user.isUserAdmin %}
+                  <a href="#" class="action-btn delete">Delete</a>
+                  {% endif %}
+              </div>
+          </div>
+          {% endblock admin_actions_1 %}
+        {% else %}
+          <!-- REGULAR USER TAGS ONLY -->
+          <div class="tags">
+            <span class="tag green">SSO</span>
+            <span class="tag green">LeadTheFuture</span>
+            <span class="tag green">Organizations</span>
+          </div>
+        {% endif %}
+        
         <p class="event-desc">
           Because we <strong>#LeadTheFuture</strong>, WATCH the Wildcat leadership SHINE
           as our student leaders from the different CIT-U accredited student organizations
@@ -135,6 +178,7 @@
         </div>
       </div>
 
+      <!-- EVENT CARD 2 -->
       <div class="event-card">
         <div class="event-card-header">
           <h3 class="event-title">
@@ -143,14 +187,39 @@
           <span class="event-date">📅 September 1, 2025</span>
         </div>
         <p class="event-department">PE Department</p>
-        {% block admin_actions_2 %}
-        <div class="tags">
-          <span class="tag green">LeadTheFuture</span>
-          <span class="tag green">redefinethetop</span>
-          <span class="tag green">CITTopsAgain</span>
-          <span class="tag green">CITforSDG</span>
-        </div>
-        {% endblock admin_actions_2 %}
+        
+        <!-- TAGS AND ACTIONS ROW -->
+        {% if request.user.isUserAdmin or request.user.isUserStaff %}
+          {% block admin_actions_2 %}
+          <!-- TAGS AND ACTIONS ROW FOR EVENT 2 -->
+          <div class="tags-and-actions-row">
+              <div class="tags">
+                  <span class="tag green">LeadTheFuture</span>
+                  <span class="tag green">redefinethetop</span>
+                  <span class="tag green">CITTopsAgain</span>
+                  <span class="tag green">CITforSDG</span>
+              </div>
+              
+              <!-- ADMIN ACTIONS INLINE -->
+              <div class="admin-actions-inline">
+                  <a href="#" class="action-btn export">Export</a>
+                  <a href="{% url 'events:edit_event' %}" class="action-btn edit">Edit</a>
+                  {% if request.user.isUserAdmin %}
+                  <a href="#" class="action-btn delete">Delete</a>
+                  {% endif %}
+              </div>
+          </div>
+          {% endblock admin_actions_2 %}
+        {% else %}
+          <!-- REGULAR USER TAGS ONLY -->
+          <div class="tags">
+            <span class="tag green">LeadTheFuture</span>
+            <span class="tag green">redefinethetop</span>
+            <span class="tag green">CITTopsAgain</span>
+            <span class="tag green">CITforSDG</span>
+          </div>
+        {% endif %}
+        
         <p class="event-desc">
           Because we <strong>#LeadTheFuture</strong>, WATCH the Wildcat leadership SHINE
           as our student leaders from the different CIT-U accredited student organizations

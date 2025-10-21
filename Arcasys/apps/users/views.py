@@ -53,9 +53,9 @@ def is_valid_email(email):
 def login_view(request):
     if request.user.is_authenticated:
         if request.user.isUserAdmin or request.user.is_superuser:
-            return redirect("events:admin_dashboard")
+            return redirect("events:admin_approval")
         else:
-            return redirect("events:add_events")
+            return redirect("events:events")
 
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
@@ -143,9 +143,9 @@ def login_view(request):
 
             # Redirect based on role
             if user.isUserAdmin or user.is_superuser:
-                response = redirect("events:admin_dashboard")
+                response = redirect("events:admin_approval")
             else:
-                response = redirect("events:add_events")
+                response = redirect("events:events")
 
             # Remember Me
             if remember_me:
@@ -175,9 +175,9 @@ def login_view(request):
 def register_view(request):
     if request.user.is_authenticated:
         if request.user.isUserAdmin or request.user.is_superuser:
-            return redirect("events:admin_dashboard")
+            return redirect("events:admin_approval")
         else:
-            return redirect("events:add_events")
+            return redirect("events:events")
 
     if request.method == "POST":
         first_name = request.POST.get("first_name", "").strip()

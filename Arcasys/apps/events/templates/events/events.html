@@ -6,20 +6,57 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'events/css/events.css' %}" />
 <link rel="stylesheet" href="{% static 'events/css/add_events.css' %}" />
+<style>
+    /* Red error message styling */
+    .alert-error {
+        color: #dc3545;
+        border-radius: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .alert-error::before {
+        font-size: 16px;
+    }
+
+    /* Red border for search container when there's an error */
+    .search-bar.error {
+        border: 2px solid #dc3545 !important;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <section class="events-container">
   <h1 class="page-title">Search for Events</h1>
 
-  <div class="search-bar">
+  <!-- Django messages for empty search error -->
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="alert alert-error">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="search-bar {% if messages %}error{% endif %}">
     <img
     src="{% static 'events/images/search-icon.png' %}"
     alt="Search Icon"
     class="search-icon"
     style="width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;display:block;object-fit:contain;margin-right:10px;"
     />
-    <input type="text" placeholder="Search events, departments, tags..." />
+    <!-- Updated search form with proper method and action -->
+    <form method="get" action="{% url 'events:events' %}" style="display: flex; width: 100%;">
+        <input type="text" name="q" placeholder="Search events, departments, tags..." 
+               value="{{ search_query|default:'' }}" />
+        <button type="submit" style="display: none;">Search</button>
+    </form>
   </div>
 
   <div class="filters">

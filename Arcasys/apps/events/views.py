@@ -20,11 +20,33 @@ from .forms import AdminEditEventForm
 # Events View - FOR ALL USERS
 # -----------------------------
 def events_view(request):
-    # Check permissions for conditional UI
-    can_manage_events = request.user.is_authenticated and (request.user.isUserAdmin or request.user.isUserStaff)
+    # Handle search functionality
+    search_query = request.GET.get('q', '').strip()
+    
+    # EMPTY SEARCH VALIDATION - YOUR JIRA TASK
+    if 'q' in request.GET and not search_query:
+        messages.error(request, "Please enter a search term to find events.")
+        # Return to the same page but without search filter
+        events = Event.objects.all().order_by('-EventDate')[:10]
+        context = {
+            'events': events,
+            'search_query': search_query,
+            'can_manage_events': request.user.is_authenticated and (request.user.isUserAdmin or request.user.isUserStaff),
+            'is_admin': request.user.is_authenticated and request.user.isUserAdmin,
+        }
+        return render(request, "events/events.html", context)
+    
+    # If there's a valid search query, filter events
+    if search_query:
+        events = Event.objects.filter(EventTitle__icontains=search_query)
+    else:
+        # Show all events or recent events if no search
+        events = Event.objects.all().order_by('-EventDate')[:10]
     
     context = {
-        'can_manage_events': can_manage_events,
+        'events': events,
+        'search_query': search_query,
+        'can_manage_events': request.user.is_authenticated and (request.user.isUserAdmin or request.user.isUserStaff),
         'is_admin': request.user.is_authenticated and request.user.isUserAdmin,
     }
     return render(request, "events/events.html", context)
@@ -230,7 +252,7 @@ def admin_approval_view(request):
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied. Admin privileges required.")
-        return redirect("events:events")  # FIXED: Changed from 'events:add_events' to 'events:events'
+        return redirect("events:events")
     
     pending_users = User.objects.filter(isUserActive=False, isUserStaff=True)
     applications = []
@@ -253,7 +275,7 @@ def approve_application(request, user_id):
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")
-        return redirect("events:events")  # FIXED: Changed from 'events:add_events' to 'events:events'
+        return redirect("events:events")
     
     try:
         user = User.objects.get(UserID=user_id, isUserActive=False, isUserStaff=True)
@@ -310,7 +332,7 @@ def reject_application(request, user_id):
     
     if not request.user.isUserAdmin and not request.user.is_superuser:
         messages.error(request, "Access denied.")
-        return redirect("events:events")  # FIXED: Changed from 'events:add_events' to 'events:events'
+        return redirect("events:events")
     
     try:
         user = User.objects.get(UserID=user_id, isUserActive=False, isUserStaff=True)

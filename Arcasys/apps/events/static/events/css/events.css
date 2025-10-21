@@ -277,3 +277,59 @@ body {
   background-position: right 10px center;
   background-size: 12px;
 }
+
+.results-header-top h2 {
+    margin: 0; 
+}
+
+.results-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.results-header-top .add-event {
+    background-color: #FFCF01; 
+    color: #000000;
+    font-weight: 600; 
+    padding: 10px 18px; 
+    border-radius: 8px; 
+    text-decoration: none;
+    transition: 0.3s ease;
+}
+
+.results-header-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.tags-and-actions-row {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 15px; 
+}
+
+.admin-actions-inline {
+    display: flex;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+.admin-actions-inline .action-btn {
+    display: flex; 
+    align-items: center;
+    gap: 4px; 
+    text-decoration: none;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.admin-actions-inline .export { color: #34A853; } 
+.admin-actions-inline .edit { color: #FFCF01; } 
+.admin-actions-inline .delete { color: #EA4335; }

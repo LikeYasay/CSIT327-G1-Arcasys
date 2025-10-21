@@ -37,11 +37,11 @@
               {% if user.is_authenticated %}
                 {% if user.isUserAdmin or user.is_superuser %}
                   <!-- ADMIN NAVBAR -->
-                  <li><a href="{% url 'events:admin_dashboard' %}">Approve Accounts</a></li>
-                  <li><a href="{% url 'events:add_events' %}">Add Events</a></li>
+                  <li><a href="{% url 'events:admin_approval' %}">Approve Accounts</a></li>
+                  <li><a href="{% url 'events:events' %}">Events</a></li> <!-- FIXED -->
                 {% elif user.isUserStaff %}
                   <!-- STAFF NAVBAR -->
-                  <li><a href="{% url 'events:add_events' %}">Add Events</a></li>
+                  <li><a href="{% url 'events:events' %}">Events</a></li> <!-- FIXED -->
                 {% endif %}
                 
                 <li class="user-welcome-item">
@@ -88,10 +88,10 @@
           {% else %}
             <!-- AUTHENTICATED USER FOOTER -->
             {% if user.isUserAdmin or user.is_superuser %}
-              <a href="{% url 'events:admin_dashboard' %}">Approve Accounts</a>
-              <a href="{% url 'events:add_events' %}">Add Events</a>
+              <a href="{% url 'events:admin_approval' %}">Approve Accounts</a>
+              <a href="{% url 'events:add_event' %}">Add Events</a> <!-- FIXED -->
             {% elif user.isUserStaff %}
-              <a href="{% url 'events:add_events' %}">Add Events</a>
+              <a href="{% url 'events:add_event' %}">Add Events</a> <!-- FIXED -->
             {% endif %}
           {% endif %}
         </div>

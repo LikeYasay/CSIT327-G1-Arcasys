@@ -15,10 +15,7 @@ class Role(models.Model):
         unique=True,
         db_column='RoleName'
     )
-    RoleDescription = models.TextField(
-        blank=True,
-        db_column='RoleDescription'
-    )
+    # RoleDescription REMOVED - keep everything else the same
     
     class Meta:
         db_table = 'Role'
@@ -32,12 +29,14 @@ class UserManager(BaseUserManager):
             raise ValueError('The Email field must be set')
         email = self.normalize_email(UserEmail)
         
-        # Handle Role assignment properly
-        role = extra_fields.pop('RoleID', None)
-        user = self.model(UserEmail=email, **extra_fields)
-        if role:
-            user.RoleID = role
+        # Get or create Staff role for regular users
+        if 'RoleID' not in extra_fields:
+            staff_role, created = Role.objects.get_or_create(
+                RoleName='Staff'
+            )
+            extra_fields['RoleID'] = staff_role
         
+        user = self.model(UserEmail=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -49,8 +48,7 @@ class UserManager(BaseUserManager):
         
         # Get or create admin role
         admin_role, created = Role.objects.get_or_create(
-            RoleName='Admin',
-            defaults={'RoleDescription': 'Full system administrator with user management privileges'}
+            RoleName='Admin'
         )
         extra_fields['RoleID'] = admin_role
         
@@ -81,7 +79,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         db_column='UserPasswordHash'
     )
-    UserCreatedAt = models.DateTimeField(  # ✅ Changed from UserCreateAt to UserCreatedAt
+    UserCreatedAt = models.DateTimeField(
         default=timezone.now,
         db_column='UserCreatedAt'
     )
@@ -91,12 +89,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_column='UserLastLogin'
     )
     
-    # ACCOUNT APPROVAL SYSTEM - UPDATED NAMES
-    isUserActive = models.BooleanField(  # ✅ Changed from isActive to isUserActive
+    # KEEP YOUR ORIGINAL FIELD NAMES
+    isUserActive = models.BooleanField(
         default=False,
         db_column='isUserActive'
     )
-    UserApprovedBy = models.ForeignKey(  # ✅ Changed from approved_by to UserApprovedBy
+    UserApprovedBy = models.ForeignKey(
         'self', 
         on_delete=models.SET_NULL, 
         null=True, 
@@ -104,17 +102,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_column='UserApprovedBy',
         related_name='approved_users'
     )
-    UserApprovedAt = models.DateTimeField(  # ✅ Changed from approved_at to UserApprovedAt
+    UserApprovedAt = models.DateTimeField(
         null=True, 
         blank=True,
         db_column='UserApprovedAt'
     )
     
-    isUserAdmin = models.BooleanField(  # ✅ Changed from isAdmin to isUserAdmin
+    isUserAdmin = models.BooleanField(
         default=False,
         db_column='isUserAdmin'
     )
-    isUserStaff = models.BooleanField(  # ✅ Changed from isStaff to isUserStaff
+    isUserStaff = models.BooleanField(
         default=False,
         db_column='isUserStaff'
     )
@@ -131,7 +129,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.UserFullName} ({self.UserEmail})"
     
-    # Property mappings - UPDATED to match new field names
+    # KEEP YOUR PROPERTY MAPPINGS
     @property
     def password(self):
         return self.UserPasswordHash
@@ -150,24 +148,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def is_superuser(self):
-        return self.isUserAdmin  # ✅ Updated to isUserAdmin
+        return self.isUserAdmin
     
     @is_superuser.setter
     def is_superuser(self, value):
-        self.isUserAdmin = value  # ✅ Updated to isUserAdmin
+        self.isUserAdmin = value
     
     @property
     def is_staff(self):
-        return self.isUserStaff  # ✅ Updated to isUserStaff
+        return self.isUserStaff
     
     @is_staff.setter
     def is_staff(self, value):
-        self.isUserStaff = value  # ✅ Updated to isUserStaff
+        self.isUserStaff = value
     
     @property
     def is_active(self):
-        return self.isUserActive  # ✅ Updated to isUserActive
+        return self.isUserActive
     
     @is_active.setter
     def is_active(self, value):
-        self.isUserActive = value  # ✅ Updated to isUserActive
+        self.isUserActive = value

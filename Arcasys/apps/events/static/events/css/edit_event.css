@@ -266,6 +266,50 @@ input[type="time"]::-webkit-inner-spin-button {
   filter: none;
 }
 
+/* Flash messages */
+.flash-area {
+  margin: 0 0 16px 0;
+}
+
+.alert {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  margin-bottom: 5px;
+}
+
+/* success (green), error (red), info (blue), warning (amber) */
+.alert.success, .alert.message-success {
+  background: #ecfdf5;
+  border-color: #34d399;
+  color: #065f46;
+}
+
+.alert.error, .alert.message-error {
+  font-size: 16px;
+  color: #991b1b;
+}
+
+.alert.info, .alert.message-info {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e3a8a;
+}
+
+.alert.warning, .alert.message-warning {
+  background: #fffbeb;
+  border-color: #facc15;
+  color: #92400e;
+}
+
+/* optional fade-out */
+.alert.fade-out {
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+
 /* Errors */
 .error {
   color: #b30000;

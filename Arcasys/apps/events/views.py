@@ -1,6 +1,6 @@
 import datetime
 from django.db import OperationalError, ProgrammingError
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
@@ -37,6 +37,7 @@ def events_view(request):
         return render(request, "events/events.html", context)
     
     # If there's a valid search query, filter events
+    # MAM - 39
     if search_query:
         events = Event.objects.filter(EventTitle__icontains=search_query)
     else:
@@ -191,43 +192,91 @@ def add_event_view(request):
 # Edit Event View - FOR STAFF & ADMIN
 # -----------------------------
 @login_required
-def edit_event_view(request):
+def edit_event_view(request, EventID):
     # Check if user has permission to edit events
     if not request.user.isUserAdmin and not request.user.isUserStaff:
         messages.error(request, "Unauthorized access. Staff or admin privileges required.")
         return redirect("events:events")
     
-    # Normally you'd fetch an Event instance by ID and use its values for initial.
+    # Fetch event instance
+    event = get_object_or_404(Event, pk=EventID)
+
+    # Prepare initial form data from the event
     initial = {
-        "event_title": "Student Organizations Accreditation Ceremony",
-        "department": "SSO",
-        "event_date": "2025-09-05",
-        "event_time": "09:10",
-        "location": "CIT-U Auditorium",
-        "description": (
-            "Because we #LeadTheFuture, WATCH the Wildcat leadership SHINE as our student "
-            "leaders from the different CIT-U accredited student organizations receive their "
-            "accreditation confirmation in a symbolic ceremony. Go, Wildcats!"
-        ),
-        "facebook": "https://facebook.com/event-page",
-        "tiktok": "https://tiktok.com/@event-post",
-        "youtube": "https://youtube.com/watch?v=...",
-        "website": "https://website.com/event-registration",
-        "tags": "SSO, LeadTheFuture, Organizations",
+    "event_title": event.EventTitle,
+    "department": event.eventdepartment_set.first().DepartmentID if event.eventdepartment_set.exists() else None,
+    "event_date": event.EventDate.strftime("%Y-%m-%d") if event.EventDate else "",
+    "event_time": event.EventTime.strftime("%H:%M") if event.EventTime else "",
+    "location": event.EventLocation,
+    "description": event.EventDescription,
+    "tags": ', '.join([tag.TagID.TagName for tag in event.eventtag_set.all()]),
     }
 
+    # Social links (if exist)
+    links = {link.EventLinkName.lower(): link.EventLinkURL for link in event.eventlink_set.all()}
+    initial.update({
+        "facebook": links.get("facebook", ""),
+        "tiktok": links.get("tiktok", ""),
+        "youtube": links.get("youtube", ""),
+        "website": links.get("website", ""),
+    })
+
+    # MAM - 36
     if request.method == "POST":
         form = AdminEditEventForm(request.POST)
         if form.is_valid():
-            # TODO: Persist to DB (update Event record)
-            # e.g. Event.objects.filter(pk=event_id).update(**mapped_fields)
-            messages.success(request, "Event updated successfully.")
-            return redirect("events:edit_event")
-        messages.error(request, "Please fix the errors below.")
+            # Handle saving manually since it's not a ModelForm
+            event.EventTitle = form.cleaned_data["event_title"]
+            event.EventLocation = form.cleaned_data["location"]
+            event.EventDate = form.cleaned_data["event_date"]
+            event.EventTime = form.cleaned_data["event_time"]
+            event.EventDescription = form.cleaned_data["description"]
+            event.EventUpdatedAt = timezone.now()
+            event.save()
+
+            department_instance = form.cleaned_data["department"]
+            # Ensure the department relation always matches the current selection
+            event.eventdepartment_set.all().delete()
+            event.eventdepartment_set.create(DepartmentID=department_instance)
+
+            # Tags
+            event.eventtag_set.all().delete()
+            tags_str = form.cleaned_data.get("tags", "")
+            for tag_name in [t.strip() for t in tags_str.split(",") if t.strip()]:
+                from .models import Tag
+                tag_obj, _ = Tag.objects.get_or_create(TagName=tag_name)
+                event.eventtag_set.create(TagID=tag_obj)
+
+            # Links
+            for name in ["facebook", "tiktok", "youtube", "website"]:
+                url = form.cleaned_data.get(name)
+                if url:
+                    from .models import EventLink
+                    link, _ = EventLink.objects.get_or_create(EventID=event, EventLinkName=name.capitalize())
+                    link.EventLinkURL = url
+                    link.save()
+                else:
+                    from .models import EventLink
+                    EventLink.objects.filter(EventID=event, EventLinkName=name.capitalize()).delete()
+
+            messages.success(request, f"Event updated successfully.")
+            event.refresh_from_db()
+            return redirect("events:edit_event", EventID=event.EventID)
+        else:
+            messages.error(request, f"Please fix the errors below.")
     else:
         form = AdminEditEventForm(initial=initial)
 
-    return render(request, "events/edit_event.html", {"form": form})
+    # Departments for dropdown
+    departments = Department.objects.all()
+
+    context = {
+        "form": form,
+        "event": event,
+        "departments": departments,
+    }
+
+    return render(request, "events/edit_event.html", context)
 
 # Helper function for tags
 def _parse_tags(raw: str):

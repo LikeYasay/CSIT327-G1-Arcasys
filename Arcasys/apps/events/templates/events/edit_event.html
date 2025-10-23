@@ -16,6 +16,14 @@
 <div class="edit-event-wrapper">
   <form class="edit-event-form" method="post" novalidate>
     {% csrf_token %}
+    
+    {% if messages %}
+      <div class="alert-messages">
+        {% for message in messages %}
+          <div class="alert {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
 
     {% if form.non_field_errors %}
       <div class="form-errors">
@@ -33,12 +41,16 @@
       <div class="form-group">
         <label for="department">Office/Department *</label>
         <select id="department" name="department">
-          <option value="" disabled {% if not form.department.value %}selected{% endif %}>Select office/department</option>
-          {% for val,label in form.fields.department.choices %}
-            <option value="{{ val }}" {% if form.department.value == val %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
+            <option value="" disabled {% if not form.department.value %}selected{% endif %}>
+                Select office/department
+            </option>
+            {% for dept in form.fields.department.queryset %}
+              <option value="{{ dept.DepartmentID }}" {% if dept.DepartmentID|stringformat:"s" == form.department.value|stringformat:"s" %}selected{% endif %}>{{ dept.DepartmentName }}</option>
+            {% endfor %}
         </select>
-        {% if form.department.errors %}<span class="error">{{ form.department.errors.0 }}</span>{% endif %}
+        {% if form.department.errors %}
+            <span class="error">{{ form.department.errors.0 }}</span>
+        {% endif %}
       </div>
     </div>
 
@@ -164,11 +176,9 @@
     const cancelLink = document.getElementById('cancelLink');
     const backToEvents = document.getElementById('backToEvents');
     const resetBtn = document.getElementById('resetBtn');
-
     const modal = document.getElementById('cancelModal');
     const stayBtn = document.getElementById('stayBtn');
     const discardBtn = document.getElementById('discardBtn');
-
     const tagsInput = form.querySelector('input[name="tags"]');
     const chipsWrap = form.querySelector('.tags');
 
@@ -178,19 +188,19 @@
     let dirty = false;
 
     function markDirty() { dirty = (snapshot() !== initial); }
-
     form.addEventListener('input', markDirty);
     form.addEventListener('change', markDirty);
 
-    // Warn on tab close / reload if dirty
-    window.addEventListener('beforeunload', (e) => {
+    // --- beforeunload warning handler ---
+    function handleBeforeUnload(e) {
       if (dirty) {
         e.preventDefault();
         e.returnValue = '';
       }
-    });
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // Show/hide modal
+    // --- Show/hide modal ---
     function showModal() {
       modal.classList.remove('hidden');
       modal.setAttribute('aria-hidden', 'false');
@@ -200,27 +210,30 @@
       modal.setAttribute('aria-hidden', 'true');
     }
 
-    // Intercept Cancel & Back links if dirty
+    // --- Cancel/back click interception ---
     function handleCancelClick(e) {
       if (dirty) {
         e.preventDefault();
         showModal();
       }
     }
-
     if (cancelLink) cancelLink.addEventListener('click', handleCancelClick);
     if (backToEvents) backToEvents.addEventListener('click', handleCancelClick);
-
     if (stayBtn) stayBtn.addEventListener('click', hideModal);
 
+    // --- Discard: allow navigation without warning ---
     if (discardBtn) {
       discardBtn.addEventListener('click', () => {
-        // allow navigation without beforeunload
-        window.removeEventListener('beforeunload', () => {});
+        window.removeEventListener('beforeunload', handleBeforeUnload);
       });
     }
 
-    // Reset to initial values
+    // --- Submit: allow normal submit without warning ---
+    form.addEventListener('submit', () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    });
+
+    // --- Reset to initial values ---
     if (resetBtn) {
       resetBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -230,7 +243,7 @@
       });
     }
 
-    // TAGS: render chips from input
+    // --- Tags handling ---
     function refreshChipsFromTags() {
       if (!tagsInput || !chipsWrap) return;
       const parts = (tagsInput.value || '')
@@ -248,17 +261,15 @@
 
     if (tagsInput) {
       tagsInput.addEventListener('input', refreshChipsFromTags);
-      refreshChipsFromTags(); // init on load
+      refreshChipsFromTags();
     }
 
-    // Optional: clicking "Add Tag" will append the current text (if any) as a chip (UX sugar)
     const addTagBtn = document.getElementById('addTagBtn');
     if (addTagBtn && tagsInput) {
       addTagBtn.addEventListener('click', (e) => {
         e.preventDefault();
         let v = tagsInput.value.trim();
         if (!v) return;
-        // no-op: we keep comma-separated; chips auto-refresh via input event
         if (!v.endsWith(',')) {
           tagsInput.value = v + ', ';
         }

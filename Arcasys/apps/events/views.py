@@ -20,35 +20,72 @@ from .forms import AdminEditEventForm
 # Events View - FOR ALL USERS
 # -----------------------------
 def events_view(request):
+    from django.db.models import Q
+    from datetime import datetime
+    
     # Handle search functionality
     search_query = request.GET.get('q', '').strip()
+    department_filter = request.GET.get('department', '')
+    platform_filter = request.GET.get('platform', '')
+    from_date = request.GET.get('from_date', '')
+    to_date = request.GET.get('to_date', '')
     
-    # EMPTY SEARCH VALIDATION - YOUR JIRA TASK
+    # Start with all events
+    events = Event.objects.all().order_by('-EventDate')
+    
+    # EMPTY SEARCH VALIDATION
     if 'q' in request.GET and not search_query:
         messages.error(request, "Please enter a search term to find events.")
-        # Return to the same page but without search filter
-        events = Event.objects.all().order_by('-EventDate')[:10]
-        context = {
-            'events': events,
-            'search_query': search_query,
-            'can_manage_events': request.user.is_authenticated and (request.user.isUserAdmin or request.user.isUserStaff),
-            'is_admin': request.user.is_authenticated and request.user.isUserAdmin,
-        }
-        return render(request, "events/events.html", context)
+    elif search_query:
+        # If there's a valid search query, filter events
+        events = events.filter(
+            Q(EventTitle__icontains=search_query) |
+            Q(EventDescription__icontains=search_query) |
+            Q(eventdepartment__DepartmentID__DepartmentName__icontains=search_query) |
+            Q(eventtag__TagID__TagName__icontains=search_query)
+        ).distinct()
     
-    # If there's a valid search query, filter events
-    # MAM - 39
-    if search_query:
-        events = Event.objects.filter(EventTitle__icontains=search_query)
-    else:
-        # Show all events or recent events if no search
-        events = Event.objects.all().order_by('-EventDate')[:10]
+    # Apply department filter
+    if department_filter:
+        events = events.filter(eventdepartment__DepartmentID=department_filter)
+    
+    # Apply platform filter
+    if platform_filter:
+        events = events.filter(eventlink__EventLinkName__icontains=platform_filter)
+    
+    # Apply date range filter
+    if from_date:
+        try:
+            from_date_obj = datetime.strptime(from_date, '%Y-%m-%d').date()
+            events = events.filter(EventDate__gte=from_date_obj)
+        except ValueError:
+            pass
+    
+    if to_date:
+        try:
+            to_date_obj = datetime.strptime(to_date, '%Y-%m-%d').date()
+            events = events.filter(EventDate__lte=to_date_obj)
+        except ValueError:
+            pass
+    
+    # Pagination - FIXED THIS LINE (was missing # for comment)
+    paginator = Paginator(events, 10)  # Show 10 events per page
+    page_number = request.GET.get('page')
+    events_page = paginator.get_page(page_number)
+    
+    # Get unique departments and platforms for filters
+    departments = Department.objects.all()
+    
+    # Get recent events for sidebar (last 10 created)
+    recent_events = Event.objects.all().order_by('-EventCreatedAt')[:10]
     
     context = {
-        'events': events,
+        'events': events_page,
         'search_query': search_query,
         'can_manage_events': request.user.is_authenticated and (request.user.isUserAdmin or request.user.isUserStaff),
         'is_admin': request.user.is_authenticated and request.user.isUserAdmin,
+        'departments': departments,
+        'recent_events': recent_events,
     }
     return render(request, "events/events.html", context)
 

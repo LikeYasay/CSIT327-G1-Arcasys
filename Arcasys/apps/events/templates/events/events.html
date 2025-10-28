@@ -1,1 +1,223 @@
-{% extends "base.html" %} {% load static %} {% block title %}Events | Marketing Archive{% endblock %} {% block extra_css %} <link rel="stylesheet" href="{% static 'events/css/events.css' %}" /> <link rel="stylesheet" href="{% static 'events/css/add_events.css' %}" /> {% endblock %} {% block content %} <section class="events-container"> <h1 class="page-title">Search for Events</h1> <!-- Django messages for empty search error --> {% if messages %} <div class="messages"> {% for message in messages %} <div class="alert alert-error"> {{ message }} </div> {% endfor %} </div> {% endif %} <div class="search-bar {% if messages %}error{% endif %}"> <img src="{% static 'events/images/search-icon.png' %}" alt="Search Icon" class="search-icon" style="width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;display:block;object-fit:contain;margin-right:10px;" /> <!-- Updated search form with proper method and action --> <form method="get" action="{% url 'events:events' %}" style="display: flex; width: 100%;"> <input type="text" name="q" placeholder="Search events, departments, tags..." value="{{ search_query|default:'' }}" /> <button type="submit" style="display: none;">Search</button> </form> </div> <!-- Main Filter Form --> <form method="get" action="{% url 'events:events' %}" id="filterForm"> <div class="filters"> <div class="filter"> <label for="department">Office/Department</label> <select id="department" name="department"> <option value="" disabled selected>Select office/department</option> {% for dept in departments %} <option value="{{ dept.DepartmentID }}" {% if request.GET.department == dept.DepartmentID|stringformat:"s" %}selected{% endif %}> {{ dept.DepartmentName }} </option> {% endfor %} </select> </div> <div class="filter"> <label for="platform">Platform</label> <select id="platform" name="platform"> <option value="">All Platforms</option> <option value="Zoom" {% if request.GET.platform == "Zoom" %}selected{% endif %}>Zoom</option> <option value="Teams" {% if request.GET.platform == "Teams" %}selected{% endif %}>Teams</option> <option value="Onsite" {% if request.GET.platform == "Onsite" %}selected{% endif %}>Onsite</option> <option value="Facebook" {% if request.GET.platform == "Facebook" %}selected{% endif %}>Facebook</option> <option value="YouTube" {% if request.GET.platform == "YouTube" %}selected{% endif %}>YouTube</option> <option value="TikTok" {% if request.GET.platform == "TikTok" %}selected{% endif %}>TikTok</option> </select> </div> <div class="filter"> <label for="fromDate">From Date</label> <input type="date" id="fromDate" name="from_date" value="{{ request.GET.from_date }}"> </div> <div class="filter"> <label for="toDate">To Date</label> <input type="date" id="toDate" name="to_date" value="{{ request.GET.to_date }}"> </div> <div class="filter-buttons"> <button type="submit" class="btn apply">Apply Filters</button> <a href="{% url 'events:events' %}" class="btn clear">Clear All</a> <button type="button" class="btn export" onclick="exportToCSV()">Export to CSV</button> </div> </div> </form> <div class="results-wrapper"> <aside class="sidebar"> <h3 class="sidebar-title">Recent Events</h3> <ul class="event-list"> {% for event in recent_events %} <li><a href="#">{{ event.EventTitle|truncatechars:30 }}</a></li> {% empty %} <li>No recent events</li> {% endfor %} </ul> </aside> <div class="results-content"> <!-- DYNAMIC HEADER BASED ON USER ROLE --> {% if request.user.isUserAdmin or request.user.isUserStaff %} <div class="results-header-admin"> <div class="results-header-top"> <h2>Event Results</h2> <a href="{% url 'events:add_event' %}" class="add-event">Add Event</a> </div> <div class="results-header-bottom"> <p class="results-meta">Showing {{ events|length }} of {{ events.paginator.count }} events</p> <span class="results-date">{% now "F Y" %}</span> </div> </div> {% else %} <div class="results-header"> <h2>Event Results</h2> <span class="results-date">{% now "F Y" %}</span> </div> <p class="results-meta">Showing {{ events|length }} of {{ events.paginator.count }} events</p> {% endif %} <!-- DYNAMIC EVENT CARDS --> {% for event in events %} <div class="event-card"> <div class="event-card-header"> <h3 class="event-title"> {{ event.EventTitle }} </h3> <span class="event-date">📅 {{ event.EventDate|date:"F j, Y" }}</span> </div> <!-- DYNAMIC DEPARTMENT --> <p class="event-department"> {% with event.eventdepartment_set.first as dept %} {% if dept %}{{ dept.DepartmentID.DepartmentName }}{% else %}No Department{% endif %} {% endwith %} </p> <!-- TAGS AND ACTIONS ROW --> {% if request.user.isUserAdmin or request.user.isUserStaff %} <div class="tags-and-actions-row"> <div class="tags"> <!-- DYNAMIC TAGS --> {% for event_tag in event.eventtag_set.all %} <span class="tag green">{{ event_tag.TagID.TagName }}</span> {% empty %} <span class="tag">No tags</span> {% endfor %} </div> <!-- ADMIN ACTIONS INLINE --> <div class="admin-actions-inline"> <a href="#" class="action-btn export">Export</a> <a href="{% url 'events:edit_event' EventID=event.EventID %}" class="action-btn edit">Edit</a> {% if request.user.isUserAdmin %} <a href="#" class="action-btn delete">Delete</a> {% endif %} </div> </div> {% else %} <!-- REGULAR USER TAGS ONLY --> <div class="tags"> {% for event_tag in event.eventtag_set.all %} <span class="tag green">{{ event_tag.TagID.TagName }}</span> {% empty %} <span class="tag">No tags</span> {% endfor %} </div> {% endif %} <!-- DYNAMIC DESCRIPTION --> <p class="event-desc"> {{ event.EventDescription|truncatewords:30 }} </p> <!-- DYNAMIC PLATFORMS --> <div class="platforms"> {% for link in event.eventlink_set.all %} <span class="platform">{{ link.EventLinkName }}</span> {% empty %} <span class="platform">No links</span> {% endfor %} </div> </div> {% empty %} <div class="no-events"> <p>No events found. {% if request.user.isUserAdmin or request.user.isUserStaff %}<a href="{% url 'events:add_event' %}">Add the first event</a>{% endif %}</p> </div> {% endfor %} <!-- PAGINATION --> {% if events.has_other_pages %} <div class="pagination"> {% if events.has_previous %} <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if request.GET.department %}department={{ request.GET.department }}&{% endif %}{% if request.GET.platform %}platform={{ request.GET.platform }}&{% endif %}{% if request.GET.from_date %}from_date={{ request.GET.from_date }}&{% endif %}{% if request.GET.to_date %}to_date={{ request.GET.to_date }}&{% endif %}page={{ events.previous_page_number }}" class="btn prev">← Previous</a> {% endif %} {% if events.has_next %} <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if request.GET.department %}department={{ request.GET.department }}&{% endif %}{% if request.GET.platform %}platform={{ request.GET.platform }}&{% endif %}{% if request.GET.from_date %}from_date={{ request.GET.from_date }}&{% endif %}{% if request.GET.to_date %}to_date={{ request.GET.to_date }}&{% endif %}page={{ events.next_page_number }}" class="btn next">Next →</a> {% endif %} </div> {% endif %} </div> </div> </section> <script> function exportToCSV() { // Simple CSV export functionality alert('Export to CSV functionality would be implemented here'); // In a real implementation, this would make an API call to generate and download CSV } // Set default date ranges if not set document.addEventListener('DOMContentLoaded', function() { const fromDateInput = document.getElementById('fromDate'); const toDateInput = document.getElementById('toDate'); // Set default to last 30 days if no date is selected if (!fromDateInput.value) { const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30); fromDateInput.value = thirtyDaysAgo.toISOString().split('T')[0]; } if (!toDateInput.value) { toDateInput.value = new Date().toISOString().split('T')[0]; } // Ensure toDate is not before fromDate fromDateInput.addEventListener('change', function() { if (toDateInput.value && this.value > toDateInput.value) { toDateInput.value = this.value; } }); toDateInput.addEventListener('change', function() { if (fromDateInput.value && this.value < fromDateInput.value) { this.value = fromDateInput.value; } }); }); </script> {% endblock %}
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}
+Events | Marketing Archive
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/events.css' %}" />
+{% endblock %}
+
+{% block content %}
+<section class="events-container">
+  <h1 class="page-title">Search for Events</h1>
+
+  {% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+    <div class="alert alert-error">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="search-bar {% if messages %}error{% endif %}">
+    <img src="{% static 'events/images/search-icon.png' %}" alt="Search Icon" class="search-icon"
+      style="width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;display:block;object-fit:contain;margin-right:10px;" />
+    <form method="get" action="{% url 'events:events' %}" style="display: flex; width: 100%;">
+      <input type="text" name="q" placeholder="Search events, departments, tags..."
+        value="{{ search_query|default:'' }}" />
+      <button type="submit" style="display: none;">Search</button>
+    </form>
+  </div>
+
+  <form method="get" action="{% url 'events:events' %}" id="filterForm">
+    <div class="filters">
+      <div class="filter">
+        <label for="department">Office/Department</label>
+        <select id="department" name="department">
+          <option value="" disabled selected>Select office/department</option>
+          {% for dept in departments %}
+          <option value="{{ dept.DepartmentID }}"
+            {% if request.GET.department == dept.DepartmentID|stringformat:"s" %}selected{% endif %}>
+            {{ dept.DepartmentName }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filter">
+        <label for="platform">Platform</label>
+        <select id="platform" name="platform">
+          <option value="">All Platforms</option>
+          <option value="Zoom" {% if request.GET.platform == "Zoom" %}selected{% endif %}>Zoom</option>
+          <option value="Teams" {% if request.GET.platform == "Teams" %}selected{% endif %}>Teams</option>
+          <option value="Onsite" {% if request.GET.platform == "Onsite" %}selected{% endif %}>Onsite</option>
+          <option value="Facebook" {% if request.GET.platform == "Facebook" %}selected{% endif %}>Facebook</option>
+          <option value="YouTube" {% if request.GET.platform == "YouTube" %}selected{% endif %}>YouTube</option>
+          <option value="TikTok" {% if request.GET.platform == "TikTok" %}selected{% endif %}>TikTok</option>
+        </select>
+      </div>
+
+      <div class="filter">
+        <label for="fromDate">From Date</label>
+        <input type="date" id="fromDate" name="from_date" value="{{ request.GET.from_date }}">
+      </div>
+
+      <div class="filter">
+        <label for="toDate">To Date</label>
+        <input type="date" id="toDate" name="to_date" value="{{ request.GET.to_date }}">
+      </div>
+
+      <div class="filter-buttons">
+        <button type="submit" class="btn apply">Apply Filters</button>
+        <a href="{% url 'events:events' %}" class="btn clear">Clear All</a>
+        <button type="button" class="btn export" onclick="exportToCSV()">Export to CSV</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="results-wrapper">
+    <aside class="sidebar">
+      <h3 class="sidebar-title">Recent Events</h3>
+      <ul class="event-list">
+        {% for event in recent_events %}
+        <li><a href="#">{{ event.EventTitle|truncatechars:30 }}</a></li>
+        {% empty %}
+        <li>No recent events</li>
+        {% endfor %}
+      </ul>
+    </aside>
+
+    <div class="results-content">
+      {% if request.user.isUserAdmin or request.user.isUserStaff %}
+      <div class="results-header-admin">
+        <div class="results-header-top">
+          <h2>Event Results</h2>
+          <a href="{% url 'events:add_event' %}" class="add-event">Add Event</a>
+        </div>
+        <div class="results-header-bottom">
+          <p class="results-meta">Showing {{ events|length }} of {{ events.paginator.count }} events</p>
+          <span class="results-date">{% now "F Y" %}</span>
+        </div>
+      </div>
+      {% else %}
+      <div class="results-header">
+        <h2>Event Results</h2>
+        <span class="results-date">{% now "F Y" %}</span>
+      </div>
+      <p class="results-meta">Showing {{ events|length }} of {{ events.paginator.count }} events</p>
+      {% endif %}
+
+      {% for event in events %}
+      <div class="event-card">
+        <div class="event-card-header">
+          <h3 class="event-title">{{ event.EventTitle }}</h3>
+          <span class="event-date">📅 {{ event.EventDate|date:"F j, Y" }}</span>
+        </div>
+
+        <p class="event-department">
+          {% with event.eventdepartment_set.first as dept %}
+          {% if dept %}{{ dept.DepartmentID.DepartmentName }}{% else %}No Department{% endif %}
+          {% endwith %}
+        </p>
+
+        {% if request.user.isUserAdmin or request.user.isUserStaff %}
+        <div class="tags-and-actions-row">
+          <div class="tags">
+            {% for event_tag in event.eventtag_set.all %}
+            <span class="tag green">{{ event_tag.TagID.TagName }}</span>
+            {% empty %}
+            <span class="tag">No tags</span>
+            {% endfor %}
+          </div>
+          <div class="admin-actions-inline">
+            <a href="#" class="action-btn export">Export</a>
+            <a href="{% url 'events:edit_event' EventID=event.EventID %}" class="action-btn edit">Edit</a>
+            {% if request.user.isUserAdmin %}
+            <a href="#" class="action-btn delete">Delete</a>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <div class="tags">
+          {% for event_tag in event.eventtag_set.all %}
+          <span class="tag green">{{ event_tag.TagID.TagName }}</span>
+          {% empty %}
+          <span class="tag">No tags</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <p class="event-desc">{{ event.EventDescription|truncatewords:30 }}</p>
+
+        <div class="platforms">
+          {% for link in event.eventlink_set.all %}
+          <span class="platform">{{ link.EventLinkName }}</span>
+          {% empty %}
+          <span class="platform">No links</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="no-events">
+        <p>No events found.
+          {% if request.user.isUserAdmin or request.user.isUserStaff %}
+          <a href="{% url 'events:add_event' %}">Add the first event</a>
+          {% endif %}
+        </p>
+      </div>
+      {% endfor %}
+
+      {% if events.has_other_pages %}
+      <div class="pagination">
+        {% if events.has_previous %}
+        <a
+          href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if request.GET.department %}department={{ request.GET.department }}&{% endif %}{% if request.GET.platform %}platform={{ request.GET.platform }}&{% endif %}{% if request.GET.from_date %}from_date={{ request.GET.from_date }}&{% endif %}{% if request.GET.to_date %}to_date={{ request.GET.to_date }}&{% endif %}page={{ events.previous_page_number }}"
+          class="btn prev">← Previous</a>
+        {% endif %}
+        {% if events.has_next %}
+        <a
+          href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if request.GET.department %}department={{ request.GET.department }}&{% endif %}{% if request.GET.platform %}platform={{ request.GET.platform }}&{% endif %}{% if request.GET.from_date %}from_date={{ request.GET.from_date }}&{% endif %}{% if request.GET.to_date %}to_date={{ request.GET.to_date }}&{% endif %}page={{ events.next_page_number }}"
+          class="btn next">Next →</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<script>
+  function exportToCSV() {
+    alert('Export to CSV functionality would be implemented here');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const fromDateInput = document.getElementById('fromDate');
+    const toDateInput = document.getElementById('toDate');
+
+    if (!fromDateInput.value) {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      fromDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+
+    if (!toDateInput.value) {
+      toDateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    fromDateInput.addEventListener('change', function () {
+      if (toDateInput.value && this.value > toDateInput.value) {
+        toDateInput.value = this.value;
+      }
+    });
+
+    toDateInput.addEventListener('change', function () {
+      if (fromDateInput.value && this.value < fromDateInput.value) {
+        this.value = fromDateInput.value;
+      }
+    });
+  });
+</script>
+{% endblock %}

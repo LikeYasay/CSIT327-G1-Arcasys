@@ -5,6 +5,7 @@ asgiref>=3.6.0,<4.0.0
 # --- Database (PostgreSQL) ---
 psycopg2-binary>=2.9.0,<3.0.0
 psycopg2>=2.9.0,<3.0.0
+dj-database-url>=1.3.0,<2.0.0
 
 # --- Environment Variables ---
 python-dotenv>=1.0.0,<2.0.0

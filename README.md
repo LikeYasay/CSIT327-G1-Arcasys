@@ -30,7 +30,7 @@ Make sure you’re still in the MarketingArchive root directory (the same folder
 If you don’t have a virtual environment yet, create one:
 
 ```bash
-python -m venv env
+py -m venv env
 ```
 
 Then activate it:
@@ -47,19 +47,13 @@ source env/bin/activate
 
 ✅ If you already have a virtual environment (e.g., env), just activate it using the appropriate command above.
 
-### 4. Navigate to the Arcasys Folder
-Once your virtual environment is activated, go inside the Django project folder:
 
-```bash
-cd Arcasys
-```
-
-### 5. Install Project Dependencies
+### 4. Install Project Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 6. Create a .env File
+### 5. Create a .env File
 In the Arcasys folder (same level as manage.py), create a file named `.env`.
 
 ⚠️ **Do NOT share or upload this file publicly.**
@@ -80,7 +74,7 @@ EMAIL_HOST_PASSWORD='your-app-password-here'
 DEFAULT_FROM_EMAIL='Marketing Archive <your-email-here>'
 ```
 
-### 7. Set Up Admin Access & Supabase Invitation
+### 6. Set Up Admin Access & Supabase Invitation
 Before proceeding, contact the project admin to request:
 
 - The official `.env` credentials.  
@@ -88,14 +82,14 @@ Before proceeding, contact the project admin to request:
 
 Once access is confirmed, continue with the next steps.
 
-### 8. Apply Database Migrations
+### 7. Apply Database Migrations
 Once your environment and dependencies are ready, apply migrations:
 
 ```bash
 python manage.py migrate
 ```
 
-### 9. Create a Superuser (Admin Account)
+### 8. Create a Superuser (Admin Account)
 ⚠️ **Heads-up:** Before running this step, make sure you have already been invited to the Supabase project and your access has been confirmed. Without the invitation, the database connection will fail.
 
 After successful migrations, create your local Django admin account:
@@ -128,14 +122,14 @@ exit()
 🔐 **Note:** Setting a password manually is required because Arcasys uses a custom user model.  
 This password will allow you to log in to the **Django Admin Dashboard** and the **Arcasys Admin Page**.
 
-### 10. Run the Django Development Server
+### 9. Run the Django Development Server
 Make sure your virtual environment is still active and you’re inside the Arcasys folder:
 
 ```bash
 python manage.py runserver
 ```
 
-### 11. Open the Application
+### 10. Open the Application
 Open your browser and visit 👉 [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
 ---

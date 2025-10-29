@@ -136,7 +136,7 @@ def login_view(request):
                 })
 
         # 4. Authenticate with password (account exists and is active)
-        user = authenticate(request, UserEmail=email, password=password)
+        user = authenticate(request, username=email, password=password)
 
         if user is not None:
             login(request, user)
@@ -287,10 +287,7 @@ def register_view(request):
 
         try:
             # Get or create the Staff role
-            staff_role, created = Role.objects.get_or_create(
-                RoleName='Staff',
-                defaults={'RoleDescription': 'Staff role with event management permissions'}
-            )
+           staff_role, created = Role.objects.get_or_create(RoleName='Staff')
             user = User.objects.create_user(
                 UserEmail=email,
                 UserFullName=f"{first_name} {last_name}".strip(),

@@ -9,7 +9,8 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from datetime import datetime
 from django.db import transaction
-from django.shortcuts import render
+from django.http import JsonResponse
+from django.db.models import Q
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
@@ -88,6 +89,28 @@ def events_view(request):
         'recent_events': recent_events,
     }
     return render(request, "events/events.html", context)
+
+def events_search_ajax(request):
+    query = request.GET.get('q', '').strip()
+    results = []
+
+    if query:
+        events = Event.objects.filter(
+            Q(EventTitle__icontains=query) |
+            Q(EventLocation__icontains=query)
+        ).order_by('-EventDate')[:5]  # show top 5 most recent matches
+
+        results = [
+            {
+                'id': str(e.EventID),
+                'title': e.EventTitle,
+                'date': e.EventDate.strftime('%b %d, %Y'),
+                'location': e.EventLocation,
+            }
+            for e in events
+        ]
+
+    return JsonResponse({'results': results})
 
 # -----------------------------
 # Add Event View - FOR STAFF & ADMIN

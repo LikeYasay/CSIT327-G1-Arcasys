@@ -22,6 +22,7 @@ body {
 }
 
 .search-bar {
+  position: relative; /* important for absolute positioning of results */
   display: flex;
   align-items: center;
   border: 1px solid #ddd;
@@ -39,6 +40,49 @@ body {
   background: transparent;
   outline: none;
   color: #333;
+}
+
+/* Typeahead dropdown */
+.typeahead-list {
+  position: absolute;
+  margin-top: 5px;
+  top: 100%; /* directly below search bar */
+  left: 0;
+  width: calc(100% - 0px); /* full width of the search bar */
+  background: #fff;
+  border: none;
+  border-radius: 6px;
+  z-index: 1000;
+  list-style: none;
+  padding: 0;
+  margin-top: 5px;
+  max-height: 250px;
+  overflow-y: auto;
+  transition: border 0.2s ease;
+  box-sizing: border-box;
+}
+
+.typeahead-list.has-results {
+  border: 1px solid #ddd;
+}
+
+.typeahead-list li {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.typeahead-list li:last-child {
+  border-bottom: none;
+}
+
+.typeahead-list li a {
+  text-decoration: none;
+  color: #333;
+  display: block;
+}
+
+.typeahead-list li:hover {
+  background: #f7f7f7;
 }
 
 /* --- FIXED FILTER BAR --- */
@@ -92,12 +136,14 @@ body {
 
 /* Align buttons on same row */
 .filter-buttons {
+  margin-left: auto;
   display: flex;
   gap: 10px;
   align-items: flex-end;
+  min-height: fit-content;
 }
 
-.btn {
+.btn.apply, .btn.clear, .btn.export {
   padding: 12px 20px;
   border-radius: 8px;
   border: none;
@@ -106,6 +152,10 @@ body {
   font-size: 14px;
   transition: 0.3s ease;
   height: 42px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn.apply {
@@ -205,6 +255,40 @@ body {
   color: #222;
 }
 
+.results-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.results-header-top h2 {
+  margin: 0;
+}
+
+.results-header-top .add-event {
+  background-color: #FFCF01;
+  color: #000000;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: 0.3s ease;
+}
+
+.results-header-top .add-event:hover {
+  background-color: #8A252C;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.results-header-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
 .results-date {
   color: #8A252C;
   font-weight: bold;
@@ -280,12 +364,65 @@ body {
 
 .platform {
   display: inline-block;
-  padding: 5px 10px;
-  background: #e3e8ff;
+  padding: 5px 12px;
+  margin: 3px;
+  border-radius: 20px;
+  background-color: #e3e8ff;
   color: #333;
-  border-radius: 12px;
-  font-size: 12px;
-  margin: 3px 5px 0 0;
+  text-decoration: none; 
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.platform:hover {
+  background-color: #007bff; 
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-2px);
+}
+
+.tags-and-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.admin-actions-inline {
+  display: flex;
+  gap: 15px;
+  flex-shrink: 0;
+}
+
+.admin-actions-inline .action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.admin-actions-inline .export {
+  color: #34A853;
+}
+
+.admin-actions-inline .edit {
+  color: #FFCF01;
+}
+
+.admin-actions-inline .delete {
+  color: #EA4335;
+}
+
+.admin-actions-inline .action-btn:hover {
+  color: #8A252C;
+  transform: translateY(-2px);
 }
 
 .pagination {

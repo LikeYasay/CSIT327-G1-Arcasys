@@ -26,10 +26,11 @@ Events | Marketing Archive
     <img src="{% static 'events/images/search-icon.png' %}" alt="Search Icon" class="search-icon"
       style="width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;display:block;object-fit:contain;margin-right:10px;" />
     <form method="get" action="{% url 'events:events' %}" style="display: flex; width: 100%;">
-      <input type="text" name="q" placeholder="Search events, departments, tags..."
+      <input id="search-input" type="text" name="q" placeholder="Search events, departments, tags..." autocomplete="off"
         value="{{ search_query|default:'' }}" />
       <button type="submit" style="display: none;">Search</button>
     </form>
+    <ul id="typeahead-results" class="typeahead-list"></ul>
   </div>
 
   <form method="get" action="{% url 'events:events' %}" id="filterForm">
@@ -154,7 +155,14 @@ Events | Marketing Archive
 
         <div class="platforms">
           {% for link in event.eventlink_set.all %}
-          <span class="platform">{{ link.EventLinkName }}</span>
+            <a 
+              href="{{ link.EventLinkURL }}" 
+              class="platform" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              >
+              {{ link.EventLinkName }}
+            </a>
           {% empty %}
           <span class="platform">No links</span>
           {% endfor %}
@@ -193,6 +201,10 @@ Events | Marketing Archive
     alert('Export to CSV functionality would be implemented here');
   }
 
+  function deleteEvent() {
+    alert('Delete event functionality would be implemented here');
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     const fromDateInput = document.getElementById('fromDate');
     const toDateInput = document.getElementById('toDate');
@@ -216,6 +228,61 @@ Events | Marketing Archive
     toDateInput.addEventListener('change', function () {
       if (fromDateInput.value && this.value < fromDateInput.value) {
         this.value = fromDateInput.value;
+      }
+    });
+
+    // MAM-40 Instant search results
+    const searchInput = document.querySelector('#search-input');
+    const resultsBox = document.querySelector('.typeahead-list');
+    let timer = null;
+
+    searchInput.addEventListener('input', function () {
+      const query = searchInput.value.trim();
+
+      clearTimeout(timer);
+
+      if (!query) {
+        resultsBox.innerHTML = '';
+        resultsBox.classList.remove('has-results');
+        return;
+      }
+
+      timer = setTimeout(() => {
+        fetch(`/events/search/?q=${encodeURIComponent(query)}`)
+          .then(res => res.json())
+          .then(data => {
+            const results = data.results || [];
+
+            if (results.length > 0) {
+              resultsBox.innerHTML = results
+                .map(
+                  (r) => `
+                  <li class="search-result-item">
+                    <div class="search-result">
+                      <strong>${r.title}</strong><br>
+                      <small>${r.date} — ${r.location}</small>
+                    </div>
+                  </li>
+                `
+                )
+                .join('');
+              resultsBox.classList.add('has-results');
+            } else {
+              resultsBox.innerHTML = '<li class="search-result-item">No events found</li>';
+              resultsBox.classList.add('has-results');
+            }
+          })
+          .catch(() => {
+            resultsBox.innerHTML = '<li class="search-result-item">Error fetching results</li>';
+            resultsBox.classList.add('has-results');
+          });
+      }, 200); // Debounce delay
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!resultsBox.contains(e.target) && !searchInput.contains(e.target)) {
+        resultsBox.innerHTML = '';
+        resultsBox.classList.remove('has-results');
       }
     });
   });

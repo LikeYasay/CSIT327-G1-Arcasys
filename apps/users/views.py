@@ -287,7 +287,7 @@ def register_view(request):
 
         try:
             # Get or create the Staff role
-           staff_role, created = Role.objects.get_or_create(RoleName='Staff')
+            staff_role, created = Role.objects.get_or_create(RoleName='Staff')
             user = User.objects.create_user(
                 UserEmail=email,
                 UserFullName=f"{first_name} {last_name}".strip(),

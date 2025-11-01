@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Storage Settings | Marketing Archive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/storage_settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="backup-page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <ul class="sidebar-menu">
+        <li>Backup Schedules</li>
+        <li>Storage Settings</li>
+        <li>Restore Operations</li>
+    </ul>
+
+    <div class="system-status">
+      <h3>System Status</h3>
+      <p><strong>Last Backup:</strong> <span class="status success">Success</span></p>
+      <p><strong>Storage Used:</strong> 1.6 TB / 3.5 TB</p>
+      <p><strong>Active Jobs:</strong> 3</p>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <section class="backup-content">
+    <div class="backup-header">
+      <div>
+        <h1>Storage Settings</h1>
+        <p>Configure storage locations, retention policies, and optimization settings</p>
+      </div>
+      <button class="update-btn">Update Settings</button>
+    </div>
+
+    <!-- STORAGE OVERVIEW -->
+    <div class="storage-section">
+      <div class="overview-card">
+        <h2>Storage Overview</h2>
+        <div class="overview-details">
+          <p><strong>Total Storage:</strong> <span>3.5 TB</span></p>
+          <p><strong>Used Storage:</strong> <span>1.6 TB</span></p>
+
+          <div class="storage-bar">
+            <div class="used" style="width: 45.7%;"></div>
+          </div>
+          <p class="usage-text">45.7% of total storage used</p>
+        </div>
+      </div>
+
+      <!-- BACKUP SETTINGS -->
+      <div class="backup-settings-card">
+        <h2>Backup Settings</h2>
+        <div class="setting-item">
+          <p>Compression Enabled</p>
+          <div class="toggle active"><div class="circle"></div></div>
+        </div>
+        <div class="setting-item">
+          <p>Encryption Enabled</p>
+          <div class="toggle active"><div class="circle"></div></div>
+        </div>
+        <div class="setting-item">
+          <p>Retention Period</p>
+          <select>
+            <option>30 days</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- BACKUP STATISTICS -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <h3 class="stat-number total">127</h3>
+        <p class="stat-label">Total Backups</p>
+      </div>
+      <div class="stat-card">
+        <h3 class="stat-number success">124</h3>
+        <p class="stat-label">Successful</p>
+      </div>
+      <div class="stat-card">
+        <h3 class="stat-number failed">3</h3>
+        <p class="stat-label">Failed</p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggles = document.querySelectorAll(".toggle");
+
+    toggles.forEach(toggle => {
+      toggle.addEventListener("click", () => {
+        toggle.classList.toggle("active"); // turn ON/OFF
+
+        const label = toggle.previousElementSibling; // get <p> before it
+        if (toggle.classList.contains("active")) {
+          console.log(`${label.textContent.trim()} is now ENABLED`);
+        } else {
+          console.log(`${label.textContent.trim()} is now DISABLED`);
+        }
+      });
+    });
+  });
+</script>
+</div>
+{% endblock %}

@@ -467,3 +467,15 @@ body {
   border: 2px solid #dc3545 !important;
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
 }
+
+/* Remove the dropdown arrow from date inputs */
+.filter input[type="date"] {
+  background-image: none !important;
+  padding-right: 5px; /* adjust spacing cleanly */
+}
+
+/* Keep only the calendar icon visible */
+.filter input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  cursor: pointer;
+}

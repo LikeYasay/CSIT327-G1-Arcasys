@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Backup Schedules | Marketing Archive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/backup_schedule.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="backup-page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <ul class="sidebar-menu">
+      <li class="active">Backup Schedules</li>
+      <li>Storage Settings</li>
+      <li>Restore Operations</li>
+    </ul>
+
+    <div class="system-status">
+      <h3>System Status</h3>
+      <p><strong>Last Backup:</strong> <span class="status success">Success</span></p>
+      <p><strong>Storage Used:</strong> 1.6 TB / 3.5 TB</p>
+      <p><strong>Active Jobs:</strong> 3</p>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <section class="backup-content">
+    <div class="backup-header">
+      <div>
+        <h1>Backup Schedules</h1>
+        <p>Manage automated backup schedules and configurations</p>
+      </div>
+      <button class="add-btn">Add Schedule</button>
+    </div>
+
+    <!-- Schedule Cards -->
+    <div class="schedule-card">
+      <div class="schedule-card-header">
+        <h2 class="schedule-title">
+          Daily Database Backup
+          <span class="status-badge active">Active</span>
+        </h2>
+        <div class="actions">
+          <a href="#" class="disable">Disable</a>
+          <a href="#" class="edit">Edit</a>
+          <a href="#" class="delete">Delete</a>
+        </div>
+      </div>
+
+      <p class="schedule-time">Daily at 02:00 AM</p>
+      <div class="schedule-info">
+        <p><strong>Last Run:</strong> 2025-01-15 02:00</p>
+        <p><strong>Next Run:</strong> 2025-01-16 02:00</p>
+        <p><strong>Backup Size:</strong> 2.4 GB</p>
+      </div>
+    </div>
+
+    <div class="schedule-card">
+      <div class="schedule-card-header">
+        <h2 class="schedule-title">
+          Weekly Full System Backup
+          <span class="status-badge active">Active</span>
+        </h2>
+        <div class="actions">
+          <a href="#" class="disable">Disable</a>
+          <a href="#" class="edit">Edit</a>
+          <a href="#" class="delete">Delete</a>
+        </div>
+      </div>
+
+      <p class="schedule-time">Weekly at Sunday 01:00 AM</p>
+      <div class="schedule-info">
+        <p><strong>Last Run:</strong> 2025-01-14 01:00</p>
+        <p><strong>Next Run:</strong> 2025-01-21 01:00</p>
+        <p><strong>Backup Size:</strong> 15.2 GB</p>
+      </div>
+    </div>
+
+    <div class="schedule-card">
+      <div class="schedule-card-header">
+        <h2 class="schedule-title">
+          Monthly Archive Backup
+          <span class="status-badge inactive">Inactive</span>
+        </h2>
+        <div class="actions">
+          <a href="#" class="enable">Enable</a>
+          <a href="#" class="edit">Edit</a>
+          <a href="#" class="delete">Delete</a>
+        </div>
+      </div>
+
+      <p class="schedule-time">Monthly at 1st 03:00 AM</p>
+      <div class="schedule-info">
+        <p><strong>Last Run:</strong> 2024-12-01 03:00</p>
+        <p><strong>Next Run:</strong> 2025-02-01 03:00</p>
+        <p><strong>Backup Size:</strong> 45.8 GB</p>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

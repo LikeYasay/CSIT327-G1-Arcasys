@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Backup Dashboard | Marketing Archive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/log_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active">Status</button>
+    <button class="tab">System Logs</button>
+    <button class="tab">Backup History</button>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-section">
+    <div class="summary-card">
+      <h2 class="count maroon">12</h2>
+      <p class="label">Total Backups</p>
+      <span>Active backup jobs</span>
+    </div>
+    <div class="summary-card">
+      <h2 class="count green">9</h2>
+      <p class="label">Successful</p>
+      <span>Last 24 hours</span>
+    </div>
+    <div class="summary-card">
+      <h2 class="count red">2</h2>
+      <p class="label">Failed</p>
+      <span>Requires attention</span>
+    </div>
+    <div class="summary-card">
+      <h2 class="count blue">1</h2>
+      <p class="label">Running</p>
+      <span>Currently active</span>
+    </div>
+  </div>
+
+  <!-- ACTIVE BACKUP JOBS -->
+  <section class="active-jobs">
+    <div class="section-header">
+      <h3>Active Backup Jobs</h3>
+      <button class="btn-yellow">Run New Backup</button>
+    </div>
+
+    <table class="job-table">
+      <thead>
+        <tr>
+          <th>Backup Name</th>
+          <th>Status</th>
+          <th>Last Run</th>
+          <th>Size</th>
+          <th>Duration</th>
+          <th>Type</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Database Backup</td>
+          <td><span class="badge green">Completed</span></td>
+          <td>1/15/2025 2:30:00 PM</td>
+          <td>2.4 GB</td>
+          <td>5m 32s</td>
+          <td>Automated</td>
+          <td class="actions">
+            <a class="run">Run</a>
+            <a class="view">View</a>
+            <a class="delete">Delete</a>
+          </td>
+        </tr>
+        <tr>
+          <td>File System Backup</td>
+          <td><span class="badge blue">Running</span></td>
+          <td>1/15/2025 3:00:00 PM</td>
+          <td>1.2 GB</td>
+          <td>2m 15s</td>
+          <td>Manual</td>
+          <td class="actions">
+            <a class="run">Run</a>
+            <a class="view">View</a>
+            <a class="delete">Delete</a>
+          </td>
+        </tr>
+        <tr>
+          <td>Configuration Backup</td>
+          <td><span class="badge red">Failed</span></td>
+          <td>1/15/2025 1:45:00 PM</td>
+          <td>45 MB</td>
+          <td>0m 30s</td>
+          <td>Automated</td>
+          <td class="actions">
+            <a class="run">Run</a>
+            <a class="view">View</a>
+            <a class="delete">Delete</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ERRORS & ALERTS -->
+  <section class="alerts">
+    <div class="section-header">
+      <h3>Recent Errors & Alerts</h3>
+      <a href="#" class="view-all">View All</a>
+    </div>
+
+    <div class="alert-card">
+      <div class="dot maroon"></div>
+      <div class="alert-info">
+        <h4>Critical</h4>
+        <p class="time">1/15/2025 1:45:23 PM</p>
+        <p>Database connection timeout during backup</p>
+        <small>Backup: Configuration Backup</small>
+      </div>
+      <div class="alert-actions">
+        <a class="view">View</a>
+        <a class="resolve">Resolve</a>
+      </div>
+    </div>
+
+    <div class="alert-card">
+      <div class="dot yellow"></div>
+      <div class="alert-info">
+        <h4>Warning</h4>
+        <p class="time">1/15/2025 12:30:15 PM</p>
+        <p>Backup storage approaching 85% capacity</p>
+        <small>Backup: System Storage</small>
+      </div>
+      <div class="alert-actions">
+        <a class="view">View</a>
+        <a class="resolve">Resolve</a>
+      </div>
+    </div>
+
+    <div class="alert-card">
+      <div class="dot orange"></div>
+      <div class="alert-info">
+        <h4>Error</h4>
+        <p class="time">1/15/2025 11:20:45 AM</p>
+        <p>Failed to compress backup file</p>
+        <small>Backup: File System Backup</small>
+      </div>
+      <div class="alert-actions">
+        <a class="view">View</a>
+        <a class="resolve">Resolve</a>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

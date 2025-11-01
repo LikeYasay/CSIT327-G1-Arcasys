@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Restore Operations | Marketing Archive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/restore_operations.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="backup-page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <ul class="sidebar-menu">
+        <li>Backup Schedules</li>
+        <li>Storage Settings</li>
+        <li class="active">Restore Operations</li>
+    </ul>
+
+    <div class="system-status">
+      <h3>System Status</h3>
+      <p><strong>Last Backup:</strong> <span class="status success">Success</span></p>
+      <p><strong>Storage Used:</strong> 1.6 TB / 3.5 TB</p>
+      <p><strong>Active Jobs:</strong> 3</p>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <section class="backup-content">
+    <div class="backup-header">
+      <div>
+        <h1>Restore Operations</h1>
+        <p>Monitor and manage data restoration processes</p>
+      </div>
+      <button class="start-btn">Start Restore</button>
+    </div>
+
+    <!-- Database Restore -->
+    <div class="restore-card">
+      <div class="restore-header">
+        <h2>Database Restore – Jan 14</h2>
+        <a href="#" class="details-link">View Details</a>
+      </div>
+      <div class="status-badge yellow">In Progress</div>
+      <p class="progress-label">Progress: 65%</p>
+      <div class="progress-bar">
+        <div class="progress-fill yellow" style="width: 65%;"></div>
+      </div>
+      <div class="restore-info">
+        <p><strong>Start Time:</strong> 2025-01-15 14:30</p>
+        <p><strong>Estimated Completion:</strong> 2025-01-15 15:45</p>
+      </div>
+    </div>
+
+    <!-- File System Restore -->
+    <div class="restore-card">
+      <div class="restore-header">
+        <h2>File System Restore</h2>
+        <a href="#" class="details-link">View Details</a>
+      </div>
+      <div class="status-badge green">Completed</div>
+      <p class="progress-label">Progress: 100%</p>
+      <div class="progress-bar">
+        <div class="progress-fill green" style="width: 100%;"></div>
+      </div>
+      <div class="restore-info">
+        <p><strong>Start Time:</strong> 2025-01-15 10:00</p>
+        <p><strong>Estimated Completion:</strong> 2025-01-15 11:30</p>
+      </div>
+    </div>
+
+    <!-- Available Backups -->
+    <div class="available-section">
+      <h2>Available Backups for Restore</h2>
+      <div class="available-grid">
+        <div class="available-card">
+          <div>
+            <h3>Database Backup</h3>
+            <p>2025-01-15 02:00 – 2.4 GB</p>
+          </div>
+          <a href="#" class="restore-link">Restore</a>
+        </div>
+
+        <div class="available-card">
+          <div>
+            <h3>Full System Backup</h3>
+            <p>2025-01-14 01:00 – 15.2 GB</p>
+          </div>
+          <a href="#" class="restore-link">Restore</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

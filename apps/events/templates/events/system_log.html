@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}System Logs | Marketing Archive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/system_log.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab">Status</button>
+    <button class="tab active">System Logs</button>
+    <button class="tab">Backup History</button>
+  </div>
+
+  <!-- SYSTEM LOGS SECTION -->
+  <section class="system-logs">
+    <div class="section-header">
+      <h3>System Logs</h3>
+      <div class="log-buttons">
+        <button class="btn-blue">Export Logs</button>
+        <button class="btn-gray">Clear Logs</button>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters">
+      <select>
+        <option>All Levels</option>
+        <option>Info</option>
+        <option>Warning</option>
+        <option>Error</option>
+        <option>Critical</option>
+      </select>
+
+      <select>
+        <option>Last 24 Hours</option>
+        <option>Last 7 Days</option>
+        <option>Last 30 Days</option>
+      </select>
+
+      <input type="text" placeholder="Search logs..." />
+    </div>
+
+    <!-- LOG VIEWER -->
+    <div class="log-console">
+      <p><span class="gray">[2025-01-15 15:30:45]</span> <span class="info">INFO:</span> <span class="success">Database backup started successfully</span></p>
+      <p><span class="gray">[2025-01-15 15:25:12]</span> <span class="warn">WARN:</span> <span class="warn-text">Backup storage at 85% capacity</span></p>
+      <p><span class="gray">[2025-01-15 15:20:33]</span> <span class="error">ERROR:</span> <span class="error-text">Failed to connect to backup server</span></p>
+      <p><span class="gray">[2025-01-15 15:15:22]</span> <span class="info">INFO:</span> <span class="info-text">File system backup completed</span></p>
+      <p><span class="gray">[2025-01-15 15:10:11]</span> <span class="info">INFO:</span> <span class="info-text">Configuration backup started</span></p>
+      <p><span class="gray">[2025-01-15 15:05:44]</span> <span class="critical">CRITICAL:</span> <span class="error-text">Database connection timeout</span></p>
+      <p><span class="gray">[2025-01-15 15:00:00]</span> <span class="info">INFO:</span> <span class="info-text">Scheduled backup job initiated</span></p>
+      <p><span class="gray">[2025-01-15 14:55:33]</span> <span class="info">INFO:</span> <span class="success">Backup verification completed successfully</span></p>
+      <p><span class="gray">[2025-01-15 14:50:22]</span> <span class="warn">WARN:</span> <span class="warn-text">Temporary files cleanup required</span></p>
+      <p><span class="gray">[2025-01-15 14:45:11]</span> <span class="info">INFO:</span> <span class="info-text">System health check passed</span></p>
+    </div>
+  </section>
+</div>
+{% endblock %}

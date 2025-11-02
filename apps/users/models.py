@@ -114,6 +114,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_column='UserApprovedAt'
     )
 
+    isUserAdmin = models.BooleanField(
+        default=False,
+        db_column='isUserAdmin'
+    )
+    isUserStaff = models.BooleanField(
+        default=False,
+        db_column='isUserStaff'
+    )
+
     objects = UserManager()
 
     USERNAME_FIELD = 'UserEmail'
@@ -126,14 +135,30 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.UserFullName} ({self.UserEmail})"
 
-    # Property mappings - KEEP THESE
+    # KEEP YOUR PROPERTY MAPPINGS
     @property
-    def is_active(self):
-        return self.isUserActive
+    def password(self):
+        return self.UserPasswordHash
 
-    @is_active.setter
-    def is_active(self, value):
-        self.isUserActive = value
+    @password.setter
+    def password(self, value):
+        self.UserPasswordHash = value
+
+    @property
+    def last_login(self):
+        return self.UserLastLogin
+
+    @last_login.setter
+    def last_login(self, value):
+        self.UserLastLogin = value
+
+    @property
+    def is_superuser(self):
+        return self.isUserAdmin
+
+    @is_superuser.setter
+    def is_superuser(self, value):
+        self.isUserAdmin = value
 
     @property
     def is_staff(self):
@@ -144,13 +169,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.isUserStaff = value
 
     @property
-    def is_superuser(self):
-        return self.isUserAdmin
+    def is_active(self):
+        return self.isUserActive
 
-    @is_superuser.setter
-    def is_superuser(self, value):
-        self.isUserAdmin = value
-
-    # Add this method for Django compatibility
-    def get_username(self):
-        return self.UserEmail
+    @is_active.setter
+    def is_active(self, value):
+        self.isUserActive = value

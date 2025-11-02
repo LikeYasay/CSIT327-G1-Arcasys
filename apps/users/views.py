@@ -75,8 +75,8 @@ def login_view(request):
         if email and not is_valid_email(email):
             field_errors['email'] = "Please enter a valid email address with proper domain (e.g., example@gmail.com)."
             # FORMAT ERROR: Keep both fields filled
-            clear_fields['email'] = False    # Keep email
-            clear_fields['password'] = True # Keep password
+            clear_fields['email'] = False  # Keep email
+            clear_fields['password'] = True  # Keep password
             return render(request, "users/login.html", {
                 'form_data': form_data,
                 'clear_fields': clear_fields,
@@ -113,11 +113,13 @@ def login_view(request):
                 user_exists = True
                 # Account exists but is pending
                 if pending_user.check_password(password):
-                    messages.error(request, "Your account is pending administrator approval. Please wait for approval email.", extra_tags='auth_error')
+                    messages.error(request,
+                                   "Your account is pending administrator approval. Please wait for approval email.",
+                                   extra_tags='auth_error')
                 else:
                     # AUTH ERROR: Generic message, keep email, clear password
                     messages.error(request, "Invalid email or password.", extra_tags='auth_error')
-                clear_fields['email'] = False    # Keep email
+                clear_fields['email'] = False  # Keep email
                 clear_fields['password'] = True  # Clear password
                 return render(request, "users/login.html", {
                     'form_data': form_data,
@@ -127,7 +129,7 @@ def login_view(request):
             except User.DoesNotExist:
                 # No account found at all - AUTH ERROR
                 messages.error(request, "Invalid email or password.", extra_tags='auth_error')
-                clear_fields['email'] = False    # Keep email
+                clear_fields['email'] = False  # Keep email
                 clear_fields['password'] = True  # Clear password
                 return render(request, "users/login.html", {
                     'form_data': form_data,
@@ -136,31 +138,47 @@ def login_view(request):
                 })
 
         # 4. Authenticate with password (account exists and is active)
-        user = authenticate(request, username=email, password=password)
+        try:
+            user = authenticate(request, username=email, password=password)
 
-        if user is not None:
-            login(request, user)
+            if user is not None:
+                login(request, user)
 
-            # Redirect based on role
-            if user.isUserAdmin or user.is_superuser:
-                response = redirect("events:admin_approval")
+                # Redirect based on role
+                if user.isUserAdmin or user.is_superuser:
+                    response = redirect("events:admin_approval")
+                else:
+                    response = redirect("events:events")
+
+                # Remember Me
+                if remember_me:
+                    response.set_cookie('remembered_email', email, max_age=30 * 24 * 60 * 60)
+                    response.set_cookie('remembered_password', password, max_age=30 * 24 * 60 * 60)
+                else:
+                    response.delete_cookie('remembered_email')
+                    response.delete_cookie('remembered_password')
+
+                return response
             else:
-                response = redirect("events:events")
+                # Password is incorrect but email exists - AUTH ERROR
+                messages.error(request, "Invalid email or password.", extra_tags='auth_error')
+                clear_fields['email'] = False  # Keep email
+                clear_fields['password'] = True  # Clear only password
+                return render(request, "users/login.html", {
+                    'form_data': form_data,
+                    'clear_fields': clear_fields,
+                    'field_errors': field_errors
+                })
 
-            # Remember Me
-            if remember_me:
-                response.set_cookie('remembered_email', email, max_age=30*24*60*60)
-                response.set_cookie('remembered_password', password, max_age=30*24*60*60)
-            else:
-                response.delete_cookie('remembered_email')
-                response.delete_cookie('remembered_password')
+        except Exception as e:
+            # Log the actual error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Authentication error: {str(e)}", exc_info=True)
 
-            return response
-        else:
-            # Password is incorrect but email exists - AUTH ERROR
-            messages.error(request, "Invalid email or password.", extra_tags='auth_error')
-            clear_fields['email'] = False    # Keep email
-            clear_fields['password'] = True  # Clear only password
+            messages.error(request, "An error occurred during login. Please try again.", extra_tags='auth_error')
+            clear_fields['email'] = False
+            clear_fields['password'] = True
             return render(request, "users/login.html", {
                 'form_data': form_data,
                 'clear_fields': clear_fields,

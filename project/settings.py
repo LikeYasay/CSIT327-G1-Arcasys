@@ -27,11 +27,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Modular apps
     'apps.shared',
     'apps.users',
-    'apps.events', 
+    'apps.events',
     'apps.marketing',
 ]
 
@@ -102,6 +102,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
+
+# Authentication Backends - ADD THIS SECTION
+AUTHENTICATION_BACKENDS = [
+    'apps.users.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Authentication Redirects
 LOGIN_URL = 'users:login'

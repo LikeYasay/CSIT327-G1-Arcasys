@@ -1,128 +1,102 @@
-import os
-from pathlib import Path
-import dj_database_url
-from dotenv import load_dotenv
+import uuid
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.db import models
+from django.utils import timezone
 
-# Load environment variables from .env file (local development only)
-if os.environ.get("RENDER", "") != "true":
-    load_dotenv()
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+class Role(models.Model):
+    RoleID = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='RoleID')
+    RoleName = models.CharField(max_length=50, unique=True, db_column='RoleName')
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-only')
+    class Meta:
+        db_table = 'Role'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+    def __str__(self):
+        return self.RoleName
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-CSRF_TRUSTED_ORIGINS = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost').split(',')
 
-# Application definition
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    
-    # Modular apps
-    'apps.shared',
-    'apps.users',
-    'apps.events', 
-    'apps.marketing',
-]
+class UserManager(BaseUserManager):
+    def create_user(self, UserEmail, password=None, **extra_fields):
+        if not UserEmail:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(UserEmail)
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+        if 'RoleID' not in extra_fields:
+            staff_role, created = Role.objects.get_or_create(RoleName='Staff')
+            extra_fields['RoleID'] = staff_role
 
-ROOT_URLCONF = 'project.urls'
+        user = self.model(UserEmail=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            BASE_DIR / "templates",
-            BASE_DIR / "apps/shared/templates",
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
+    def create_superuser(self, UserEmail, password=None, **extra_fields):
+        extra_fields.setdefault('isUserAdmin', True)
+        extra_fields.setdefault('isUserActive', True)
+        extra_fields.setdefault('isUserStaff', False)
 
-WSGI_APPLICATION = 'project.wsgi.application'
+        admin_role, created = Role.objects.get_or_create(RoleName='Admin')
+        extra_fields['RoleID'] = admin_role
 
-# Database Configuration for Render + Supabase
-DATABASE_URL = os.environ.get('DATABASE_URL')
-DATABASES = {
-    "default": dj_database_url.config(
-        default=DATABASE_URL or "sqlite:///db.sqlite3",
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+        return self.create_user(UserEmail, password, **extra_fields)
 
-# Password validation
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
 
-# Internationalization
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Manila'
-USE_I18N = True
-USE_TZ = True
+class User(AbstractBaseUser, PermissionsMixin):
+    UserID = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='UserID')
+    RoleID = models.ForeignKey(Role, on_delete=models.PROTECT, db_column='RoleID')
+    UserFullName = models.CharField(max_length=255, db_column='UserFullName')
+    UserEmail = models.EmailField(unique=True, db_column='UserEmail')
 
-# Static files (WhiteNoise)
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    # REMOVE username field - use UserEmail as username
+    UserPasswordHash = models.CharField(max_length=128, blank=True, db_column='UserPasswordHash')
+    UserCreatedAt = models.DateTimeField(default=timezone.now, db_column='UserCreatedAt')
+    UserLastLogin = models.DateTimeField(null=True, blank=True, db_column='UserLastLogin')
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+    isUserActive = models.BooleanField(default=False, db_column='isUserActive')
+    isUserAdmin = models.BooleanField(default=False, db_column='isUserAdmin')
+    isUserStaff = models.BooleanField(default=False, db_column='isUserStaff')
 
-# Custom User Model
-AUTH_USER_MODEL = 'users.User'
+    UserApprovedBy = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True,
+                                       db_column='UserApprovedBy', related_name='approved_users')
+    UserApprovedAt = models.DateTimeField(null=True, blank=True, db_column='UserApprovedAt')
 
-# Authentication Redirects
-LOGIN_URL = 'users:login'
-LOGIN_REDIRECT_URL = 'events:events'
-LOGOUT_REDIRECT_URL = 'marketing:landing'
+    objects = UserManager()
 
-# Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '')
+    USERNAME_FIELD = 'UserEmail'
+    REQUIRED_FIELDS = ['UserFullName']
+    EMAIL_FIELD = 'UserEmail'
 
-# Session Settings
-SESSION_COOKIE_AGE = 600
-SESSION_SAVE_EVERY_REQUEST = True
+    class Meta:
+        db_table = 'User'
 
-# Security Settings (Production)
-if os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'True').lower() == 'true':
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    def __str__(self):
+        return f"{self.UserFullName} ({self.UserEmail})"
+
+    # Property mappings - KEEP THESE
+    @property
+    def is_active(self):
+        return self.isUserActive
+
+    @is_active.setter
+    def is_active(self, value):
+        self.isUserActive = value
+
+    @property
+    def is_staff(self):
+        return self.isUserStaff
+
+    @is_staff.setter
+    def is_staff(self, value):
+        self.isUserStaff = value
+
+    @property
+    def is_superuser(self):
+        return self.isUserAdmin
+
+    @is_superuser.setter
+    def is_superuser(self, value):
+        self.isUserAdmin = value
+
+    # Add this method for Django compatibility
+    def get_username(self):
+        return self.UserEmail

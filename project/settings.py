@@ -103,6 +103,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
+# Authentication Backends - ADD THIS SECTION
+AUTHENTICATION_BACKENDS = [
+    'apps.users.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # Authentication Redirects
 LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'events:events'

@@ -135,15 +135,40 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.UserFullName} ({self.UserEmail})"
 
-    # KEEP YOUR PROPERTY MAPPINGS
+    # Simplified property mappings
+    @property
+    def username(self):
+        return self.UserEmail
+
+    @property
+    def is_staff(self):
+        return self.isUserAdmin
+
+    @property
+    def is_active(self):
+        return self.isUserActive
+
+    @property
+    def is_superuser(self):
+        return self.isUserAdmin
+
+    # Required methods for PermissionsMixin
+    def has_perm(self, perm, obj=None):
+        return self.isUserAdmin
+
+    def has_module_perms(self, app_label):
+        return self.isUserAdmin
+
+    # Map password field
     @property
     def password(self):
         return self.UserPasswordHash
 
     @password.setter
     def password(self, value):
-        self.UserPasswordHash = value
+        self.set_password(value)
 
+    # Map last_login field
     @property
     def last_login(self):
         return self.UserLastLogin
@@ -151,27 +176,3 @@ class User(AbstractBaseUser, PermissionsMixin):
     @last_login.setter
     def last_login(self, value):
         self.UserLastLogin = value
-
-    @property
-    def is_superuser(self):
-        return self.isUserAdmin
-
-    @is_superuser.setter
-    def is_superuser(self, value):
-        self.isUserAdmin = value
-
-    @property
-    def is_staff(self):
-        return self.isUserStaff
-
-    @is_staff.setter
-    def is_staff(self, value):
-        self.isUserStaff = value
-
-    @property
-    def is_active(self):
-        return self.isUserActive
-
-    @is_active.setter
-    def is_active(self, value):
-        self.isUserActive = value

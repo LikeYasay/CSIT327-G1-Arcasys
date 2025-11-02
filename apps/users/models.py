@@ -5,8 +5,17 @@ from django.utils import timezone
 
 
 class Role(models.Model):
-    RoleID = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='RoleID')
-    RoleName = models.CharField(max_length=50, unique=True, db_column='RoleName')
+    RoleID = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        db_column='RoleID'
+    )
+    RoleName = models.CharField(
+        max_length=50,
+        unique=True,
+        db_column='RoleName'
+    )
 
     class Meta:
         db_table = 'Role'
@@ -42,23 +51,68 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    UserID = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='UserID')
-    RoleID = models.ForeignKey(Role, on_delete=models.PROTECT, db_column='RoleID')
-    UserFullName = models.CharField(max_length=255, db_column='UserFullName')
-    UserEmail = models.EmailField(unique=True, db_column='UserEmail')
+    UserID = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        db_column='UserID'
+    )
+    RoleID = models.ForeignKey(
+        Role,
+        on_delete=models.PROTECT,
+        db_column='RoleID'
+    )
+    UserFullName = models.CharField(
+        max_length=255,
+        db_column='UserFullName'
+    )
+    UserEmail = models.EmailField(
+        unique=True,
+        db_column='UserEmail'
+    )
 
-    # REMOVE username field - use UserEmail as username
-    UserPasswordHash = models.CharField(max_length=128, blank=True, db_column='UserPasswordHash')
-    UserCreatedAt = models.DateTimeField(default=timezone.now, db_column='UserCreatedAt')
-    UserLastLogin = models.DateTimeField(null=True, blank=True, db_column='UserLastLogin')
+    # ✅ REQUIRED: Django AbstractBaseUser needs this exact field name
+    password = models.CharField(
+        max_length=128,
+        db_column='UserPasswordHash'  # Maps to your existing database column
+    )
 
-    isUserActive = models.BooleanField(default=False, db_column='isUserActive')
-    isUserAdmin = models.BooleanField(default=False, db_column='isUserAdmin')
-    isUserStaff = models.BooleanField(default=False, db_column='isUserStaff')
+    UserCreatedAt = models.DateTimeField(
+        default=timezone.now,
+        db_column='UserCreatedAt'
+    )
+    UserLastLogin = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_column='UserLastLogin'
+    )
 
-    UserApprovedBy = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True,
-                                       db_column='UserApprovedBy', related_name='approved_users')
-    UserApprovedAt = models.DateTimeField(null=True, blank=True, db_column='UserApprovedAt')
+    isUserActive = models.BooleanField(
+        default=False,
+        db_column='isUserActive'
+    )
+    isUserAdmin = models.BooleanField(
+        default=False,
+        db_column='isUserAdmin'
+    )
+    isUserStaff = models.BooleanField(
+        default=False,
+        db_column='isUserStaff'
+    )
+
+    UserApprovedBy = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='UserApprovedBy',
+        related_name='approved_users'
+    )
+    UserApprovedAt = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_column='UserApprovedAt'
+    )
 
     objects = UserManager()
 

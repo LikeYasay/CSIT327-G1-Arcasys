@@ -47,14 +47,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     UserFullName = models.CharField(max_length=255, db_column='UserFullName')
     UserEmail = models.EmailField(unique=True, db_column='UserEmail')
 
-    # KEEP YOUR ORIGINAL FIELD NAMES - Add username for Django compatibility
-    username = models.CharField(max_length=150, unique=True, blank=True, null=True)
-
+    # REMOVE username field - use UserEmail as username
     UserPasswordHash = models.CharField(max_length=128, blank=True, db_column='UserPasswordHash')
     UserCreatedAt = models.DateTimeField(default=timezone.now, db_column='UserCreatedAt')
     UserLastLogin = models.DateTimeField(null=True, blank=True, db_column='UserLastLogin')
 
-    # KEEP YOUR ORIGINAL FIELD NAMES
     isUserActive = models.BooleanField(default=False, db_column='isUserActive')
     isUserAdmin = models.BooleanField(default=False, db_column='isUserAdmin')
     isUserStaff = models.BooleanField(default=False, db_column='isUserStaff')
@@ -75,7 +72,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.UserFullName} ({self.UserEmail})"
 
-    # KEEP YOUR PROPERTY MAPPINGS - they're correct!
+    # Property mappings - KEEP THESE
     @property
     def is_active(self):
         return self.isUserActive
@@ -100,11 +97,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_superuser(self, value):
         self.isUserAdmin = value
 
-    def save(self, *args, **kwargs):
-        # Auto-generate username from email for Django compatibility
-        if not self.username:
-            self.username = self.UserEmail
-        super().save(*args, **kwargs)
-
+    # Add this method for Django compatibility
     def get_username(self):
         return self.UserEmail

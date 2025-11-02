@@ -27,11 +27,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Modular apps
     'apps.shared',
     'apps.users',
-    'apps.events', 
+    'apps.events',
     'apps.marketing',
 ]
 

@@ -70,11 +70,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         db_column='UserEmail'
     )
-    UserPasswordHash = models.CharField(
+
+    # ✅ REQUIRED: Django AbstractBaseUser needs this exact field name
+    password = models.CharField(
         max_length=128,
-        blank=True,
-        db_column='UserPasswordHash'
+        db_column='UserPasswordHash'  # Maps to your existing database column
     )
+
     UserCreatedAt = models.DateTimeField(
         default=timezone.now,
         db_column='UserCreatedAt'
@@ -89,6 +91,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         db_column='isUserActive'
     )
+    isUserAdmin = models.BooleanField(
+        default=False,
+        db_column='isUserAdmin'
+    )
+    isUserStaff = models.BooleanField(
+        default=False,
+        db_column='isUserStaff'
+    )
+
     UserApprovedBy = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,

@@ -17,6 +17,8 @@ class Role(models.Model):
         db_column='RoleName'
     )
 
+    # RoleDescription REMOVED - keep everything else the same
+
     class Meta:
         db_table = 'Role'
 
@@ -30,6 +32,7 @@ class UserManager(BaseUserManager):
             raise ValueError('The Email field must be set')
         email = self.normalize_email(UserEmail)
 
+        # Get or create Staff role for regular users
         if 'RoleID' not in extra_fields:
             staff_role, created = Role.objects.get_or_create(RoleName='Staff')
             extra_fields['RoleID'] = staff_role
@@ -44,7 +47,10 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('isUserActive', True)
         extra_fields.setdefault('isUserStaff', False)
 
-        admin_role, created = Role.objects.get_or_create(RoleName='Admin')
+        # Get or create admin role
+        admin_role, created = Role.objects.get_or_create(
+            RoleName='Admin'
+        )
         extra_fields['RoleID'] = admin_role
 
         return self.create_user(UserEmail, password, **extra_fields)
@@ -87,6 +93,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_column='UserLastLogin'
     )
 
+    # KEEP YOUR ORIGINAL FIELD NAMES
     isUserActive = models.BooleanField(
         default=False,
         db_column='isUserActive'
@@ -135,40 +142,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.UserFullName} ({self.UserEmail})"
 
-    # Simplified property mappings
-    @property
-    def username(self):
-        return self.UserEmail
-
-    @property
-    def is_staff(self):
-        return self.isUserAdmin
-
-    @property
-    def is_active(self):
-        return self.isUserActive
-
-    @property
-    def is_superuser(self):
-        return self.isUserAdmin
-
-    # Required methods for PermissionsMixin
-    def has_perm(self, perm, obj=None):
-        return self.isUserAdmin
-
-    def has_module_perms(self, app_label):
-        return self.isUserAdmin
-
-    # Map password field
+    # KEEP YOUR PROPERTY MAPPINGS
     @property
     def password(self):
         return self.UserPasswordHash
 
     @password.setter
     def password(self, value):
-        self.set_password(value)
+        self.UserPasswordHash = value
 
-    # Map last_login field
     @property
     def last_login(self):
         return self.UserLastLogin
@@ -176,3 +158,27 @@ class User(AbstractBaseUser, PermissionsMixin):
     @last_login.setter
     def last_login(self, value):
         self.UserLastLogin = value
+
+    @property
+    def is_superuser(self):
+        return self.isUserAdmin
+
+    @is_superuser.setter
+    def is_superuser(self, value):
+        self.isUserAdmin = value
+
+    @property
+    def is_staff(self):
+        return self.isUserStaff
+
+    @is_staff.setter
+    def is_staff(self, value):
+        self.isUserStaff = value
+
+    @property
+    def is_active(self):
+        return self.isUserActive
+
+    @is_active.setter
+    def is_active(self, value):
+        self.isUserActive = value

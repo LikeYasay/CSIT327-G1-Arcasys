@@ -16,8 +16,19 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-only')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-CSRF_TRUSTED_ORIGINS = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost').split(',')
+# FIXED: Use your actual Render URL
+ALLOWED_HOSTS = [
+    'marketingarcasysdemo.onrender.com',
+    'localhost',
+    '127.0.0.1'
+]
+
+# FIXED: CRITICAL - Add your exact Render URL with https://
+CSRF_TRUSTED_ORIGINS = [
+    'https://marketingarcasysdemo.onrender.com',
+    'http://localhost',
+    'http://127.0.0.1'
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -103,9 +114,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
-# Authentication Backends - ADD THIS SECTION
+# FIXED: Use only default Django authentication
 AUTHENTICATION_BACKENDS = [
-    'apps.users.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
@@ -127,8 +137,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '')
 SESSION_COOKIE_AGE = 600
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Security Settings (Production)
-if os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'True').lower() == 'true':
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+# Security Settings (Production) - Always enable for Render
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True

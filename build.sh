@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-set -o errexit
+set -euo pipefail
 
-# Upgrade pip to latest version
+echo "==> Installing dependencies"
 python -m pip install --upgrade pip
-
-# Install requirements
 pip install -r requirements.txt
 
-# Collect static files
+echo "==> Running database migrations"
+python manage.py makemigrations
+python manage.py migrate --noinput
+
+echo "==> Collecting static files"
 python manage.py collectstatic --noinput
 
-# Run database migrations
-python manage.py migrate
+echo "==> Build complete"

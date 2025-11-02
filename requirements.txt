@@ -1,21 +1,7 @@
-# --- Core Framework ---
 Django>=4.2.0,<5.0.0
 asgiref>=3.6.0,<4.0.0
-
-# --- Database (PostgreSQL) ---
 psycopg2-binary>=2.9.0,<3.0.0
-psycopg2>=2.9.0,<3.0.0
-dj-database-url>=1.3.0,<2.0.0
-
-# --- Environment Variables ---
+dj-database-url>=2.0.0
 python-dotenv>=1.0.0,<2.0.0
-
-# --- Static Files (for production) ---
 whitenoise>=6.5.0,<7.0.0
-
-# --- Deployment / Server ---
 gunicorn>=21.2.0,<24.0.0
-
-# --- Dependencies ---
-packaging>=23.0,<25.0
-tzdata>=2024.1

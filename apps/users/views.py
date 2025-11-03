@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib.auth.views import (
-    PasswordResetView, PasswordResetDoneView, 
+    PasswordResetView, PasswordResetDoneView,
     PasswordResetConfirmView, PasswordResetCompleteView
 )
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
@@ -18,6 +18,7 @@ from django.urls import reverse_lazy
 import re
 
 from .models import User, Role
+
 
 # -----------------------------
 # Email Validation Helper Function
@@ -27,25 +28,26 @@ def is_valid_email(email):
     Strict email validation - only allow specific domains
     """
     # Basic email regex pattern
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    
+    pattern = r'^[a-zA-Z0x0.9._%+-]+@[a-zA-Z0x0.9.-]+\.[a-zA-Z]{2,}$'
+
     if not re.match(pattern, email):
         return False
-    
+
     domain = email.split('@')[1].lower()
-    
+
     # ONLY allow these specific domains
     allowed_domains = [
         'gmail.com',
-        'yahoo.com', 
+        'yahoo.com',
         'outlook.com',
         'hotmail.com',
         'icloud.com',
         'cit.edu',  # Your organization
         # Add other specific domains you want to allow
     ]
-    
+
     return domain in allowed_domains
+
 
 # -----------------------------
 # Login View
@@ -75,8 +77,8 @@ def login_view(request):
         if email and not is_valid_email(email):
             field_errors['email'] = "Please enter a valid email address with proper domain (e.g., example@gmail.com)."
             # FORMAT ERROR: Keep both fields filled
-            clear_fields['email'] = False    # Keep email
-            clear_fields['password'] = True # Keep password
+            clear_fields['email'] = False  # Keep email
+            clear_fields['password'] = True  # Keep password
             return render(request, "users/login.html", {
                 'form_data': form_data,
                 'clear_fields': clear_fields,
@@ -113,11 +115,13 @@ def login_view(request):
                 user_exists = True
                 # Account exists but is pending
                 if pending_user.check_password(password):
-                    messages.error(request, "Your account is pending administrator approval. Please wait for approval email.", extra_tags='auth_error')
+                    messages.error(request,
+                                   "Your account is pending administrator approval. Please wait for approval email.",
+                                   extra_tags='auth_error')
                 else:
                     # AUTH ERROR: Generic message, keep email, clear password
                     messages.error(request, "Invalid email or password.", extra_tags='auth_error')
-                clear_fields['email'] = False    # Keep email
+                clear_fields['email'] = False  # Keep email
                 clear_fields['password'] = True  # Clear password
                 return render(request, "users/login.html", {
                     'form_data': form_data,
@@ -127,7 +131,7 @@ def login_view(request):
             except User.DoesNotExist:
                 # No account found at all - AUTH ERROR
                 messages.error(request, "Invalid email or password.", extra_tags='auth_error')
-                clear_fields['email'] = False    # Keep email
+                clear_fields['email'] = False  # Keep email
                 clear_fields['password'] = True  # Clear password
                 return render(request, "users/login.html", {
                     'form_data': form_data,
@@ -136,7 +140,7 @@ def login_view(request):
                 })
 
         # 4. Authenticate with password (account exists and is active)
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, username=email, password=password)  # ← CHANGED THIS LINE
 
         if user is not None:
             login(request, user)
@@ -149,8 +153,8 @@ def login_view(request):
 
             # Remember Me
             if remember_me:
-                response.set_cookie('remembered_email', email, max_age=30*24*60*60)
-                response.set_cookie('remembered_password', password, max_age=30*24*60*60)
+                response.set_cookie('remembered_email', email, max_age=30 * 24 * 60 * 60)
+                response.set_cookie('remembered_password', password, max_age=30 * 24 * 60 * 60)
             else:
                 response.delete_cookie('remembered_email')
                 response.delete_cookie('remembered_password')
@@ -159,7 +163,7 @@ def login_view(request):
         else:
             # Password is incorrect but email exists - AUTH ERROR
             messages.error(request, "Invalid email or password.", extra_tags='auth_error')
-            clear_fields['email'] = False    # Keep email
+            clear_fields['email'] = False  # Keep email
             clear_fields['password'] = True  # Clear only password
             return render(request, "users/login.html", {
                 'form_data': form_data,
@@ -168,6 +172,7 @@ def login_view(request):
             })
 
     return render(request, "users/login.html")
+
 
 # -----------------------------
 # Register View
@@ -243,7 +248,7 @@ def register_view(request):
             validate_password(password)
         except DjangoValidationError as e:
             password_errors = list(e.messages)
-        
+
         # Show password errors sequentially (only the first one)
         if password_errors:
             field_errors['password'] = password_errors[0]  # Show only the first error
@@ -287,7 +292,10 @@ def register_view(request):
 
         try:
             # Get or create the Staff role
-            staff_role, created = Role.objects.get_or_create(RoleName='Staff')
+            staff_role, created = Role.objects.get_or_create(
+                RoleName='Staff',
+                defaults={'RoleDescription': 'Staff role with event management permissions'}
+            )
             user = User.objects.create_user(
                 UserEmail=email,
                 UserFullName=f"{first_name} {last_name}".strip(),
@@ -332,6 +340,7 @@ Marketing Archive Team"""
 
     return render(request, "users/register.html")
 
+
 # -----------------------------
 # Logout View
 # -----------------------------
@@ -340,6 +349,7 @@ def logout_view(request):
         logout(request)
         return redirect("users:login")
     return render(request, "users/logout.html")
+
 
 # -----------------------------
 # Custom Password Reset Form
@@ -353,6 +363,7 @@ class CustomPasswordResetForm(PasswordResetForm):
         )
         return (u for u in active_users if u.has_usable_password())
 
+
 # -----------------------------
 # Custom Set Password Form for Clean Validation (EXACTLY like register view)
 # -----------------------------
@@ -362,10 +373,10 @@ class CustomSetPasswordForm(SetPasswordForm):
         cleaned_data = self.cleaned_data
         new_password1 = cleaned_data.get("new_password1")
         new_password2 = cleaned_data.get("new_password2")
-        
+
         # Clear ALL existing errors
         self._errors = {}
-        
+
         # A. Password strength validation FIRST (like register view)
         if new_password1:
             password_errors = []
@@ -373,7 +384,7 @@ class CustomSetPasswordForm(SetPasswordForm):
                 validate_password(new_password1, self.user)
             except DjangoValidationError as e:
                 password_errors = list(e.messages)
-            
+
             # Show only the first password error
             if password_errors:
                 self.add_error('new_password1', password_errors[0])
@@ -383,7 +394,7 @@ class CustomSetPasswordForm(SetPasswordForm):
         if new_password1 and new_password2 and new_password1 != new_password2:
             self.add_error('new_password2', "Passwords do not match.")
             return cleaned_data
-        
+
         # If we get here, validation passed
         return cleaned_data
 
@@ -393,6 +404,7 @@ class CustomSetPasswordForm(SetPasswordForm):
 
     def clean_new_password2(self):
         return self.cleaned_data.get('new_password2')
+
 
 # -----------------------------
 # Password Reset Views
@@ -406,17 +418,17 @@ class CustomPasswordResetView(PasswordResetView):
 
     def form_valid(self, form):
         email = form.cleaned_data['email']
-        
+
         # Check for pending accounts
         try:
             pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
-            
+
             # Send pending account email
             html_message = render_to_string('users/pending_reset_email.html', {
                 'user_name': pending_user.UserFullName,
                 'registration_date': pending_user.UserCreatedAt.strftime('%B %d, %Y'),
             })
-            
+
             plain_message = f"""Hello {pending_user.UserFullName},
 
 You requested a password reset for your Marketing Archive staff account.
@@ -441,17 +453,17 @@ Marketing Archive Team"""
                 html_message=html_message,
                 fail_silently=False,
             )
-            
+
             return self.render_success_response()
-            
+
         except User.DoesNotExist:
             pass
-        
+
         # For active users - send HTML email only
         from django.contrib.auth.tokens import default_token_generator
         from django.utils.http import urlsafe_base64_encode
         from django.utils.encoding import force_bytes
-        
+
         users = form.get_users(email)
         for user in users:
             context = {
@@ -463,10 +475,10 @@ Marketing Archive Team"""
                 'token': default_token_generator.make_token(user),
                 'protocol': 'https' if self.request.is_secure() else 'http',
             }
-            
+
             subject = 'Password Reset Request - Marketing Archive'
             html_message = render_to_string('users/password_reset_email.html', context)
-            
+
             send_mail(
                 subject,
                 'Please view this email in HTML format.',
@@ -475,15 +487,17 @@ Marketing Archive Team"""
                 html_message=html_message,
                 fail_silently=False,
             )
-        
+
         return self.render_success_response()
 
     def render_success_response(self):
         """Render the success page without triggering default email sending"""
         return render(self.request, 'users/password_reset_done.html')
 
+
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'users/password_reset_done.html'
+
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'users/password_reset_confirm.html'
@@ -493,6 +507,7 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     def form_invalid(self, form):
         # This ensures our custom form errors are displayed properly
         return self.render_to_response(self.get_context_data(form=form))
+
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'users/password_reset_complete.html'

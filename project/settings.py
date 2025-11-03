@@ -15,19 +15,17 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-only')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-# FIXED: Add ALL your Render URLs here
+# FIXED: Add your exact Render URL here
 ALLOWED_HOSTS = [
-    'marketingarcasysdemo.onrender.com',  # OLD URL
-    'csit327-g1-arcasys.onrender.com',    # NEW URL
+    'marketingarcasysdemo.onrender.com',
     'localhost',
     '127.0.0.1',
-    '.onrender.com'  # Wildcard for any Render subdomain
+    '.onrender.com'
 ]
 
-# FIXED: CRITICAL - Add ALL your Render URLs with https://
+# FIXED: CRITICAL - Add your Render URL with https://
 CSRF_TRUSTED_ORIGINS = [
-    'https://marketingarcasysdemo.onrender.com',  # OLD URL
-    'https://csit327-g1-arcasys.onrender.com',    # NEW URL
+    'https://marketingarcasysdemo.onrender.com',
     'http://localhost',
     'http://127.0.0.1'
 ]
@@ -116,7 +114,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
-# FIXED: Use ONLY default Django authentication - NO custom backend needed
+# FIXED: Use ONLY default Django authentication
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -126,7 +124,7 @@ LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'events:events'
 LOGOUT_REDIRECT_URL = 'marketing:landing'
 
-# Email Configuration
+# Email Configuration - FIXED
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -134,10 +132,42 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '')
+EMAIL_TIMEOUT = 30  # 30 seconds timeout
+
+# If in development, use console backend
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Session Settings
 SESSION_COOKIE_AGE = 600
 SESSION_SAVE_EVERY_REQUEST = True
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
 
 # FIXED: Security Settings - Only enable HTTPS in production, not development
 if not DEBUG:

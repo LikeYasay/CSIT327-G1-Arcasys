@@ -16,8 +16,11 @@ from django.contrib.auth.views import (
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.urls import reverse_lazy
 import re
+import logging
 
 from .models import User, Role
+
+logger = logging.getLogger(__name__)
 
 
 # -----------------------------
@@ -28,7 +31,7 @@ def is_valid_email(email):
     Strict email validation - only allow specific domains
     """
     # Basic email regex pattern
-    pattern = r'^[a-zA-Z0x0.9._%+-]+@[a-zA-Z0x0.9.-]+\.[a-zA-Z]{2,}$'
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
     if not re.match(pattern, email):
         return False
@@ -43,7 +46,6 @@ def is_valid_email(email):
         'hotmail.com',
         'icloud.com',
         'cit.edu',  # Your organization
-        # Add other specific domains you want to allow
     ]
 
     return domain in allowed_domains
@@ -140,7 +142,7 @@ def login_view(request):
                 })
 
         # 4. Authenticate with password (account exists and is active)
-        user = authenticate(request, username=email, password=password)  # ← CHANGED THIS LINE
+        user = authenticate(request, username=email, password=password)
 
         if user is not None:
             login(request, user)
@@ -175,7 +177,7 @@ def login_view(request):
 
 
 # -----------------------------
-# Register View
+# Register View - FIXED
 # -----------------------------
 def register_view(request):
     if request.user.is_authenticated:
@@ -293,21 +295,23 @@ def register_view(request):
         try:
             # Get or create the Staff role
             staff_role, created = Role.objects.get_or_create(
-                RoleName='Staff',
-                defaults={'RoleDescription': 'Staff role with event management permissions'}
+                RoleName='Staff'
             )
+
+            # FIXED: Use the correct parameter names
             user = User.objects.create_user(
                 UserEmail=email,
                 UserFullName=f"{first_name} {last_name}".strip(),
-                password=password,
+                password=password,  # This is the correct parameter name
                 RoleID=staff_role,
                 isUserActive=False,
                 isUserStaff=True
             )
 
-            # Send registration email
-            html_message = render_to_string('users/registration_notification.html', {'first_name': first_name})
-            plain_message = f"""Hello {first_name},
+            # Send registration email with error handling
+            try:
+                html_message = render_to_string('users/registration_notification.html', {'first_name': first_name})
+                plain_message = f"""Hello {first_name},
 
 Your staff account has been created successfully and is pending administrator approval.
 
@@ -316,14 +320,17 @@ You will receive another email once your account has been approved.
 Best regards,
 Marketing Archive Team"""
 
-            send_mail(
-                'Account Registration Received - Marketing Archive',
-                plain_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                html_message=html_message,
-                fail_silently=False,
-            )
+                send_mail(
+                    'Account Registration Received - Marketing Archive',
+                    plain_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+            except Exception as email_error:
+                logger.error(f"Email sending failed: {email_error}")
+                # Continue with registration success even if email fails
 
             return render(request, "users/registration_success.html", {
                 'user_name': f"{first_name} {last_name}",
@@ -331,7 +338,8 @@ Marketing Archive Team"""
             })
 
         except Exception as e:
-            messages.error(request, f"Registration error: {str(e)}", extra_tags='server_error')
+            logger.error(f"Registration error: {e}")
+            messages.error(request, "Registration failed. Please try again.", extra_tags='server_error')
             return render(request, "users/register.html", {
                 'form_data': form_data,
                 'clear_fields': clear_fields,
@@ -365,11 +373,10 @@ class CustomPasswordResetForm(PasswordResetForm):
 
 
 # -----------------------------
-# Custom Set Password Form for Clean Validation (EXACTLY like register view)
+# Custom Set Password Form
 # -----------------------------
 class CustomSetPasswordForm(SetPasswordForm):
     def clean(self):
-        # Don't call super().clean() at all - we handle everything
         cleaned_data = self.cleaned_data
         new_password1 = cleaned_data.get("new_password1")
         new_password2 = cleaned_data.get("new_password2")
@@ -377,7 +384,7 @@ class CustomSetPasswordForm(SetPasswordForm):
         # Clear ALL existing errors
         self._errors = {}
 
-        # A. Password strength validation FIRST (like register view)
+        # A. Password strength validation FIRST
         if new_password1:
             password_errors = []
             try:
@@ -390,15 +397,13 @@ class CustomSetPasswordForm(SetPasswordForm):
                 self.add_error('new_password1', password_errors[0])
                 return cleaned_data
 
-        # B. Password confirmation mismatch (ONLY if password is valid)
+        # B. Password confirmation mismatch
         if new_password1 and new_password2 and new_password1 != new_password2:
             self.add_error('new_password2', "Passwords do not match.")
             return cleaned_data
 
-        # If we get here, validation passed
         return cleaned_data
 
-    # Override the default validation methods to prevent duplicate checks
     def clean_new_password1(self):
         return self.cleaned_data.get('new_password1')
 
@@ -407,7 +412,7 @@ class CustomSetPasswordForm(SetPasswordForm):
 
 
 # -----------------------------
-# Password Reset Views
+# Password Reset Views - FIXED
 # -----------------------------
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
@@ -417,19 +422,20 @@ class CustomPasswordResetView(PasswordResetView):
     form_class = CustomPasswordResetForm
 
     def form_valid(self, form):
-        email = form.cleaned_data['email']
-
-        # Check for pending accounts
         try:
-            pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
+            email = form.cleaned_data['email']
 
-            # Send pending account email
-            html_message = render_to_string('users/pending_reset_email.html', {
-                'user_name': pending_user.UserFullName,
-                'registration_date': pending_user.UserCreatedAt.strftime('%B %d, %Y'),
-            })
+            # Check for pending accounts
+            try:
+                pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
 
-            plain_message = f"""Hello {pending_user.UserFullName},
+                # Send pending account email
+                html_message = render_to_string('users/pending_reset_email.html', {
+                    'user_name': pending_user.UserFullName,
+                    'registration_date': pending_user.UserCreatedAt.strftime('%B %d, %Y'),
+                })
+
+                plain_message = f"""Hello {pending_user.UserFullName},
 
 You requested a password reset for your Marketing Archive staff account.
 
@@ -445,53 +451,29 @@ Please try again after your account has been approved.
 Best regards,
 Marketing Archive Team"""
 
-            send_mail(
-                'Password Reset Request - Pending Account - Marketing Archive',
-                plain_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [pending_user.UserEmail],
-                html_message=html_message,
-                fail_silently=False,
-            )
+                send_mail(
+                    'Password Reset Request - Pending Account - Marketing Archive',
+                    plain_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [pending_user.UserEmail],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
 
-            return self.render_success_response()
+                return self.render_success_response()
 
-        except User.DoesNotExist:
-            pass
+            except User.DoesNotExist:
+                pass
 
-        # For active users - send HTML email only
-        from django.contrib.auth.tokens import default_token_generator
-        from django.utils.http import urlsafe_base64_encode
-        from django.utils.encoding import force_bytes
+            # For active users - proceed with normal password reset
+            return super().form_valid(form)
 
-        users = form.get_users(email)
-        for user in users:
-            context = {
-                'email': user.UserEmail,
-                'domain': self.request.get_host(),
-                'site_name': 'Marketing Archive',
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'user': user,
-                'token': default_token_generator.make_token(user),
-                'protocol': 'https' if self.request.is_secure() else 'http',
-            }
-
-            subject = 'Password Reset Request - Marketing Archive'
-            html_message = render_to_string('users/password_reset_email.html', context)
-
-            send_mail(
-                subject,
-                'Please view this email in HTML format.',
-                settings.DEFAULT_FROM_EMAIL,
-                [user.UserEmail],
-                html_message=html_message,
-                fail_silently=False,
-            )
-
-        return self.render_success_response()
+        except Exception as e:
+            logger.error(f"Password reset error: {e}")
+            messages.error(self.request, "An error occurred while processing your request. Please try again.")
+            return self.form_invalid(form)
 
     def render_success_response(self):
-        """Render the success page without triggering default email sending"""
         return render(self.request, 'users/password_reset_done.html')
 
 
@@ -502,10 +484,9 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'users/password_reset_confirm.html'
     success_url = reverse_lazy('users:password_reset_complete')
-    form_class = CustomSetPasswordForm  # Use our custom form with clean validation
+    form_class = CustomSetPasswordForm
 
     def form_invalid(self, form):
-        # This ensures our custom form errors are displayed properly
         return self.render_to_response(self.get_context_data(form=form))
 
 

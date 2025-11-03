@@ -1,5 +1,6 @@
 import datetime
 import logging
+import threading
 from django.db import OperationalError, ProgrammingError
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -20,6 +21,75 @@ from .forms import AdminEditEventForm
 
 # Set up logger
 logger = logging.getLogger(__name__)
+
+
+# Email sending functions (threaded)
+def send_approval_email_async(user_email, user_name, login_url):
+    """Send approval email in background thread"""
+    try:
+        html_message = render_to_string('events/account_approved.html', {
+            'user_name': user_name,
+            'login_url': login_url,
+        })
+
+        plain_message = f"""Hello {user_name},
+
+Congratulations! Your Marketing Archive staff account has been approved.
+
+You can now login to the system using your registered email and password.
+
+LOGIN HERE: {login_url}
+
+Next Steps:
+• Use your registered email and password to login
+• Access the event management system
+• Start creating and managing events
+
+If you have any questions, please contact the system administrator.
+
+Best regards,
+Marketing Archive Team"""
+
+        send_mail(
+            'Account Approved - Welcome to Marketing Archive!',
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user_email],
+            html_message=html_message,
+            fail_silently=True,  # Prevent crashes if email fails
+        )
+        logger.info(f"Approval email sent successfully to {user_email}")
+    except Exception as email_error:
+        logger.error(f"Approval email failed for {user_email}: {str(email_error)}")
+
+
+def send_rejection_email_async(user_email, user_name):
+    """Send rejection email in background thread"""
+    try:
+        html_message = render_to_string('events/account_rejected.html', {
+            'user_name': user_name,
+        })
+
+        plain_message = f"""Hello {user_name},
+
+Unfortunately your account application has not been approved at this time.
+
+You may contact the administrator if you have questions about this decision.
+
+Best regards,
+Marketing Archive Team"""
+
+        send_mail(
+            'Account Application Status - Marketing Archive',
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user_email],
+            html_message=html_message,
+            fail_silently=True,  # Prevent crashes if email fails
+        )
+        logger.info(f"Rejection email sent successfully to {user_email}")
+    except Exception as email_error:
+        logger.error(f"Rejection email failed for {user_email}: {str(email_error)}")
 
 
 # -----------------------------
@@ -74,8 +144,8 @@ def events_view(request):
         except ValueError:
             pass
 
-    # Pagination - FIXED THIS LINE (was missing # for comment)
-    paginator = Paginator(events, 10)  # Show 10 events per page
+    # Pagination
+    paginator = Paginator(events, 10)
     page_number = request.GET.get('page')
     events_page = paginator.get_page(page_number)
 
@@ -104,7 +174,7 @@ def events_search_ajax(request):
         events = Event.objects.filter(
             Q(EventTitle__icontains=query) |
             Q(EventLocation__icontains=query)
-        ).order_by('-EventDate')[:5]  # show top 5 most recent matches
+        ).order_by('-EventDate')[:5]
 
         results = [
             {
@@ -387,7 +457,7 @@ def admin_approval_view(request):
 
 
 # -----------------------------
-# Approval/Reject Views - FIXED WITH ERROR HANDLING
+# Approval/Reject Views - FIXED WITH THREADING
 # -----------------------------
 @login_required
 def approve_application(request, user_id):
@@ -404,47 +474,18 @@ def approve_application(request, user_id):
         user.UserApprovedAt = timezone.now()
         user.save()
 
-        # Send approval email with error handling
+        # Start email in background thread
         login_url = request.build_absolute_uri("/users/login/")
+        email_thread = threading.Thread(
+            target=send_approval_email_async,
+            args=(user.UserEmail, user.UserFullName, login_url)
+        )
+        email_thread.daemon = True
+        email_thread.start()
 
-        html_message = render_to_string('events/account_approved.html', {
-            'user_name': user.UserFullName,
-            'login_url': login_url,
-        })
-
-        plain_message = f"""Hello {user.UserFullName},
-
-Congratulations! Your Marketing Archive staff account has been approved.
-
-You can now login to the system using your registered email and password.
-
-LOGIN HERE: {login_url}
-
-Next Steps:
-• Use your registered email and password to login
-• Access the event management system
-• Start creating and managing events
-
-If you have any questions, please contact the system administrator.
-
-Best regards,
-Marketing Archive Team"""
-
-        try:
-            send_mail(
-                'Account Approved - Welcome to Marketing Archive!',
-                plain_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.UserEmail],
-                html_message=html_message,
-                fail_silently=False,
-            )
-            messages.success(request, f"Account for {user.UserFullName} approved successfully. Approval email sent.")
-            logger.info(f"Approval email sent successfully to {user.UserEmail}")
-        except Exception as email_error:
-            logger.error(f"Approval email failed for {user.UserEmail}: {str(email_error)}")
-            messages.warning(request,
-                             f"Account approved but email notification failed. User can still login with their credentials.")
+        messages.success(request,
+                         f"Account for {user.UserFullName} approved successfully. Approval email has been queued.")
+        logger.info(f"User {user.UserFullName} approved successfully - email queued in background")
 
     except User.DoesNotExist:
         messages.error(request, "User not found or already approved.")
@@ -466,42 +507,19 @@ def reject_application(request, user_id):
         user_name = user.UserFullName
         user_email = user.UserEmail
 
-        # Send rejection email with error handling
-        html_message = render_to_string('events/account_rejected.html', {
-            'user_name': user_name,
-        })
+        # Start email in background thread
+        email_thread = threading.Thread(
+            target=send_rejection_email_async,
+            args=(user_email, user_name)
+        )
+        email_thread.daemon = True
+        email_thread.start()
 
-        plain_message = f"""Hello {user_name},
-
-Unfortunately your account application has not been approved at this time.
-
-You may contact the administrator if you have questions about this decision.
-
-Best regards,
-Marketing Archive Team"""
-
-        email_sent = False
-        try:
-            send_mail(
-                'Account Application Status - Marketing Archive',
-                plain_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user_email],
-                html_message=html_message,
-                fail_silently=False,
-            )
-            email_sent = True
-            logger.info(f"Rejection email sent successfully to {user_email}")
-        except Exception as email_error:
-            logger.error(f"Rejection email failed for {user_email}: {str(email_error)}")
-
-        # Delete user after sending email (or attempting to)
+        # Delete user after queuing email
         user.delete()
 
-        if email_sent:
-            messages.success(request, f"Account for {user_name} rejected. Rejection email sent.")
-        else:
-            messages.warning(request, f"Account for {user_name} rejected, but email notification failed.")
+        messages.success(request, f"Account for {user_name} rejected. Rejection email has been queued.")
+        logger.info(f"User {user_name} rejected successfully - email queued in background")
 
     except User.DoesNotExist:
         messages.error(request, "User not found or already processed.")

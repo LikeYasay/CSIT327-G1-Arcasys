@@ -124,7 +124,7 @@ LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'events:events'
 LOGOUT_REDIRECT_URL = 'marketing:landing'
 
-# Email Configuration - FIXED
+# Email Configuration - OPTIMIZED FOR RENDER WITH THREADING
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -135,6 +135,13 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '')
 EMAIL_TIMEOUT = 30  # 30 seconds timeout
 
 # If in development, use console backend
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# CRITICAL: Reduced timeout for Render environment
+EMAIL_TIMEOUT = 10  # Reduced from 30 to 10 seconds
+
+# Use console backend in development
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

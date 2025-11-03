@@ -1,3 +1,5 @@
+import threading
+import logging
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -20,8 +22,72 @@ import logging
 
 from .models import User, Role
 
+# Set up logger
 logger = logging.getLogger(__name__)
 
+# -----------------------------
+# Email Sending Functions (Threaded)
+# -----------------------------
+def send_registration_email_async(email, first_name):
+    """Send registration email in background thread"""
+    try:
+        html_message = render_to_string('users/registration_notification.html', {'first_name': first_name})
+        plain_message = f"""Hello {first_name},
+
+Your staff account has been created successfully and is pending administrator approval.
+
+You will receive another email once your account has been approved.
+
+Best regards,
+Marketing Archive Team"""
+
+        send_mail(
+            'Account Registration Received - Marketing Archive',
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            html_message=html_message,
+            fail_silently=True,  # Changed to True to prevent crashes
+        )
+        logger.info(f"Registration email sent successfully to {email}")
+    except Exception as email_error:
+        logger.error(f"Registration email failed for {email}: {email_error}")
+
+def send_password_reset_pending_email_async(user_email, user_name, registration_date):
+    """Send pending account password reset email in background thread"""
+    try:
+        html_message = render_to_string('users/pending_reset_email.html', {
+            'user_name': user_name,
+            'registration_date': registration_date,
+        })
+
+        plain_message = f"""Hello {user_name},
+
+You requested a password reset for your Marketing Archive staff account.
+
+ACCOUNT STATUS: PENDING APPROVAL
+Your account is still waiting for administrator approval. You cannot reset your password until your account is approved.
+
+Your account registration was received on {registration_date} and is currently awaiting administrator approval.
+
+Once your account is approved, you will receive an approval email and will be able to use the regular password reset feature.
+
+Please try again after your account has been approved.
+
+Best regards,
+Marketing Archive Team"""
+
+        send_mail(
+            'Password Reset Request - Pending Account - Marketing Archive',
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user_email],
+            html_message=html_message,
+            fail_silently=True,  # Changed to True to prevent crashes
+        )
+        logger.info(f"Pending reset email sent successfully to {user_email}")
+    except Exception as email_error:
+        logger.error(f"Pending reset email failed for {user_email}: {email_error}")
 
 # -----------------------------
 # Email Validation Helper Function
@@ -30,7 +96,7 @@ def is_valid_email(email):
     """
     Strict email validation - only allow specific domains
     """
-    # Basic email regex pattern
+    # Fixed regex pattern (was x0 instead of 0-9)
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
     if not re.match(pattern, email):
@@ -177,7 +243,7 @@ def login_view(request):
 
 
 # -----------------------------
-# Register View - FIXED
+# Register View - FIXED WITH THREADED EMAIL
 # -----------------------------
 def register_view(request):
     if request.user.is_authenticated:
@@ -308,29 +374,15 @@ def register_view(request):
                 isUserStaff=True
             )
 
-            # Send registration email with error handling
-            try:
-                html_message = render_to_string('users/registration_notification.html', {'first_name': first_name})
-                plain_message = f"""Hello {first_name},
+            # Send registration email in background thread
+            email_thread = threading.Thread(
+                target=send_registration_email_async,
+                args=(email, first_name)
+            )
+            email_thread.daemon = True
+            email_thread.start()
 
-Your staff account has been created successfully and is pending administrator approval.
-
-You will receive another email once your account has been approved.
-
-Best regards,
-Marketing Archive Team"""
-
-                send_mail(
-                    'Account Registration Received - Marketing Archive',
-                    plain_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email],
-                    html_message=html_message,
-                    fail_silently=False,
-                )
-            except Exception as email_error:
-                logger.error(f"Email sending failed: {email_error}")
-                # Continue with registration success even if email fails
+            logger.info(f"User {first_name} {last_name} registered successfully - email queued in background")
 
             return render(request, "users/registration_success.html", {
                 'user_name': f"{first_name} {last_name}",
@@ -412,7 +464,7 @@ class CustomSetPasswordForm(SetPasswordForm):
 
 
 # -----------------------------
-# Password Reset Views - FIXED
+# Password Reset Views - FIXED WITH THREADED EMAIL
 # -----------------------------
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
@@ -429,43 +481,26 @@ class CustomPasswordResetView(PasswordResetView):
             try:
                 pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
 
-                # Send pending account email
-                html_message = render_to_string('users/pending_reset_email.html', {
-                    'user_name': pending_user.UserFullName,
-                    'registration_date': pending_user.UserCreatedAt.strftime('%B %d, %Y'),
-                })
-
-                plain_message = f"""Hello {pending_user.UserFullName},
-
-You requested a password reset for your Marketing Archive staff account.
-
-ACCOUNT STATUS: PENDING APPROVAL
-Your account is still waiting for administrator approval. You cannot reset your password until your account is approved.
-
-Your account registration was received on {pending_user.UserCreatedAt.strftime('%B %d, %Y')} and is currently awaiting administrator approval.
-
-Once your account is approved, you will receive an approval email and will be able to use the regular password reset feature.
-
-Please try again after your account has been approved.
-
-Best regards,
-Marketing Archive Team"""
-
-                send_mail(
-                    'Password Reset Request - Pending Account - Marketing Archive',
-                    plain_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [pending_user.UserEmail],
-                    html_message=html_message,
-                    fail_silently=False,
+                # Send pending account email in background thread
+                email_thread = threading.Thread(
+                    target=send_password_reset_pending_email_async,
+                    args=(
+                        pending_user.UserEmail,
+                        pending_user.UserFullName,
+                        pending_user.UserCreatedAt.strftime('%B %d, %Y')
+                    )
                 )
+                email_thread.daemon = True
+                email_thread.start()
+
+                logger.info(f"Pending reset email queued for {pending_user.UserEmail}")
 
                 return self.render_success_response()
 
             except User.DoesNotExist:
                 pass
 
-            # For active users - proceed with normal password reset
+            # For active users - proceed with normal password reset (Django handles this)
             return super().form_valid(form)
 
         except Exception as e:

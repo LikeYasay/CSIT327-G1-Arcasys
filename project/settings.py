@@ -15,16 +15,19 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-only')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-# FIXED: Add your exact Render URL here
+# FIXED: Add ALL your Render URLs here
 ALLOWED_HOSTS = [
-    'marketingarcasysdemo.onrender.com',
+    'marketingarcasysdemo.onrender.com',  # OLD URL
+    'csit327-g1-arcasys.onrender.com',    # NEW URL
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    '.onrender.com'  # Wildcard for any Render subdomain
 ]
 
-# FIXED: CRITICAL - Add your Render URL with https://
+# FIXED: CRITICAL - Add ALL your Render URLs with https://
 CSRF_TRUSTED_ORIGINS = [
-    'https://marketingarcasysdemo.onrender.com',
+    'https://marketingarcasysdemo.onrender.com',  # OLD URL
+    'https://csit327-g1-arcasys.onrender.com',    # NEW URL
     'http://localhost',
     'http://127.0.0.1'
 ]

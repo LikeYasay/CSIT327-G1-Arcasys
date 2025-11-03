@@ -3,9 +3,8 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-# Load environment variables from .env file (local development only)
-if os.environ.get("RENDER", "") != "true":
-    load_dotenv()
+# Load environment variables
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,14 +15,14 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-only')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-# FIXED: Use your actual Render URL
+# FIXED: Add your exact Render URL here
 ALLOWED_HOSTS = [
     'marketingarcasysdemo.onrender.com',
     'localhost',
     '127.0.0.1'
 ]
 
-# FIXED: CRITICAL - Add your exact Render URL with https://
+# FIXED: CRITICAL - Add your Render URL with https://
 CSRF_TRUSTED_ORIGINS = [
     'https://marketingarcasysdemo.onrender.com',
     'http://localhost',
@@ -114,7 +113,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
-# FIXED: Use only default Django authentication
+# FIXED: Use ONLY default Django authentication - NO custom backend needed
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -137,7 +136,16 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '')
 SESSION_COOKIE_AGE = 600
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Security Settings (Production) - Always enable for Render
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# FIXED: Security Settings - Only enable HTTPS in production, not development
+if not DEBUG:
+    # Production settings (Render)
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+else:
+    # Development settings (local)
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False

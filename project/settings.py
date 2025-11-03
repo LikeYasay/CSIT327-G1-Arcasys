@@ -3,9 +3,8 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-# Load environment variables from .env file (local development only)
-if os.environ.get("RENDER", "") != "true":
-    load_dotenv()
+# Load environment variables
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,8 +15,22 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-only')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-CSRF_TRUSTED_ORIGINS = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost').split(',')
+# FIXED: Add ALL your Render URLs here
+ALLOWED_HOSTS = [
+    'marketingarcasysdemo.onrender.com',  # OLD URL
+    'csit327-g1-arcasys.onrender.com',    # NEW URL
+    'localhost',
+    '127.0.0.1',
+    '.onrender.com'  # Wildcard for any Render subdomain
+]
+
+# FIXED: CRITICAL - Add ALL your Render URLs with https://
+CSRF_TRUSTED_ORIGINS = [
+    'https://marketingarcasysdemo.onrender.com',  # OLD URL
+    'https://csit327-g1-arcasys.onrender.com',    # NEW URL
+    'http://localhost',
+    'http://127.0.0.1'
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -27,11 +40,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Modular apps
     'apps.shared',
     'apps.users',
-    'apps.events', 
+    'apps.events',
     'apps.marketing',
 ]
 
@@ -103,6 +116,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
+# FIXED: Use ONLY default Django authentication - NO custom backend needed
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # Authentication Redirects
 LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'events:events'
@@ -121,8 +139,16 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '')
 SESSION_COOKIE_AGE = 600
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Security Settings (Production)
-if os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'True').lower() == 'true':
+# FIXED: Security Settings - Only enable HTTPS in production, not development
+if not DEBUG:
+    # Production settings (Render)
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+else:
+    # Development settings (local)
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False

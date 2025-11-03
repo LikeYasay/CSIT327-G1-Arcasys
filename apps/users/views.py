@@ -28,7 +28,7 @@ def is_valid_email(email):
     Strict email validation - only allow specific domains
     """
     # Basic email regex pattern
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    pattern = r'^[a-zA-Z0x0.9._%+-]+@[a-zA-Z0x0.9.-]+\.[a-zA-Z]{2,}$'
 
     if not re.match(pattern, email):
         return False
@@ -140,7 +140,7 @@ def login_view(request):
                 })
 
         # 4. Authenticate with password (account exists and is active)
-        user = authenticate(request, UserEmail=email, password=password)
+        user = authenticate(request, username=email, password=password)  # ← CHANGED THIS LINE
 
             if user is not None:
                 login(request, user)

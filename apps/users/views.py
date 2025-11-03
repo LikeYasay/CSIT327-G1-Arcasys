@@ -18,6 +18,7 @@ from django.contrib.auth.views import (
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.urls import reverse_lazy
 import re
+import logging
 
 from .models import User, Role
 
@@ -367,7 +368,7 @@ def register_view(request):
             user = User.objects.create_user(
                 UserEmail=email,
                 UserFullName=f"{first_name} {last_name}".strip(),
-                password=password,
+                password=password,  # This is the correct parameter name
                 RoleID=staff_role,
                 isUserActive=False,
                 isUserStaff=True

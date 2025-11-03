@@ -115,9 +115,7 @@ def login_view(request):
                 user_exists = True
                 # Account exists but is pending
                 if pending_user.check_password(password):
-                    messages.error(request,
-                                   "Your account is pending administrator approval. Please wait for approval email.",
-                                   extra_tags='auth_error')
+                    messages.error(request, "Your account is pending administrator approval. Please wait for approval email.", extra_tags='auth_error')
                 else:
                     # AUTH ERROR: Generic message, keep email, clear password
                     messages.error(request, "Invalid email or password.", extra_tags='auth_error')
@@ -140,39 +138,24 @@ def login_view(request):
                 })
 
         # 4. Authenticate with password (account exists and is active)
-        user = authenticate(request, username=email, password=password)  # ← CHANGED THIS LINE
+        user = authenticate(request, username=email, password=password)
 
-            if user is not None:
-                login(request, user)
+        if user is not None:
+            login(request, user)
 
-                # Redirect based on role
-                if user.isUserAdmin or user.is_superuser:
-                    response = redirect("events:admin_approval")
-                else:
-                    response = redirect("events:events")
-
-                # Remember Me
-                if remember_me:
-                    response.set_cookie('remembered_email', email, max_age=30 * 24 * 60 * 60)
-                    response.set_cookie('remembered_password', password, max_age=30 * 24 * 60 * 60)
-                else:
-                    response.delete_cookie('remembered_email')
-                    response.delete_cookie('remembered_password')
+            # Redirect based on role
+            if user.isUserAdmin or user.is_superuser:
+                response = redirect("events:admin_approval")
+            else:
+                response = redirect("events:events")
 
             # Remember Me
             if remember_me:
                 response.set_cookie('remembered_email', email, max_age=30 * 24 * 60 * 60)
                 response.set_cookie('remembered_password', password, max_age=30 * 24 * 60 * 60)
             else:
-                # Password is incorrect but email exists - AUTH ERROR
-                messages.error(request, "Invalid email or password.", extra_tags='auth_error')
-                clear_fields['email'] = False  # Keep email
-                clear_fields['password'] = True  # Clear only password
-                return render(request, "users/login.html", {
-                    'form_data': form_data,
-                    'clear_fields': clear_fields,
-                    'field_errors': field_errors
-                })
+                response.delete_cookie('remembered_email')
+                response.delete_cookie('remembered_password')
 
             return response
         else:

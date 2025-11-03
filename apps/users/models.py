@@ -34,9 +34,7 @@ class UserManager(BaseUserManager):
 
         # Get or create Staff role for regular users
         if 'RoleID' not in extra_fields:
-            staff_role, created = Role.objects.get_or_create(
-                RoleName='Staff'
-            )
+            staff_role, created = Role.objects.get_or_create(RoleName='Staff')
             extra_fields['RoleID'] = staff_role
 
         user = self.model(UserEmail=email, **extra_fields)
@@ -78,11 +76,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         db_column='UserEmail'
     )
-    UserPasswordHash = models.CharField(
+
+    # ✅ REQUIRED: Django AbstractBaseUser needs this exact field name
+    password = models.CharField(
         max_length=128,
-        blank=True,
-        db_column='UserPasswordHash'
+        db_column='UserPasswordHash'  # Maps to your existing database column
     )
+
     UserCreatedAt = models.DateTimeField(
         default=timezone.now,
         db_column='UserCreatedAt'
@@ -98,6 +98,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         db_column='isUserActive'
     )
+    isUserAdmin = models.BooleanField(
+        default=False,
+        db_column='isUserAdmin'
+    )
+    isUserStaff = models.BooleanField(
+        default=False,
+        db_column='isUserStaff'
+    )
+
     UserApprovedBy = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,

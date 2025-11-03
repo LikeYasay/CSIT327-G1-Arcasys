@@ -142,22 +142,37 @@ def login_view(request):
         # 4. Authenticate with password (account exists and is active)
         user = authenticate(request, UserEmail=email, password=password)
 
-        if user is not None:
-            login(request, user)
+            if user is not None:
+                login(request, user)
 
-            # Redirect based on role
-            if user.isUserAdmin or user.is_superuser:
-                response = redirect("events:admin_approval")
-            else:
-                response = redirect("events:events")
+                # Redirect based on role
+                if user.isUserAdmin or user.is_superuser:
+                    response = redirect("events:admin_approval")
+                else:
+                    response = redirect("events:events")
+
+                # Remember Me
+                if remember_me:
+                    response.set_cookie('remembered_email', email, max_age=30 * 24 * 60 * 60)
+                    response.set_cookie('remembered_password', password, max_age=30 * 24 * 60 * 60)
+                else:
+                    response.delete_cookie('remembered_email')
+                    response.delete_cookie('remembered_password')
 
             # Remember Me
             if remember_me:
                 response.set_cookie('remembered_email', email, max_age=30 * 24 * 60 * 60)
                 response.set_cookie('remembered_password', password, max_age=30 * 24 * 60 * 60)
             else:
-                response.delete_cookie('remembered_email')
-                response.delete_cookie('remembered_password')
+                # Password is incorrect but email exists - AUTH ERROR
+                messages.error(request, "Invalid email or password.", extra_tags='auth_error')
+                clear_fields['email'] = False  # Keep email
+                clear_fields['password'] = True  # Clear only password
+                return render(request, "users/login.html", {
+                    'form_data': form_data,
+                    'clear_fields': clear_fields,
+                    'field_errors': field_errors
+                })
 
             return response
         else:

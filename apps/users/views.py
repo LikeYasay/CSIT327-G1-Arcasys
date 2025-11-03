@@ -115,7 +115,9 @@ def login_view(request):
                 user_exists = True
                 # Account exists but is pending
                 if pending_user.check_password(password):
-                    messages.error(request, "Your account is pending administrator approval. Please wait for approval email.", extra_tags='auth_error')
+                    messages.error(request,
+                                   "Your account is pending administrator approval. Please wait for approval email.",
+                                   extra_tags='auth_error')
                 else:
                     # AUTH ERROR: Generic message, keep email, clear password
                     messages.error(request, "Invalid email or password.", extra_tags='auth_error')
@@ -138,7 +140,7 @@ def login_view(request):
                 })
 
         # 4. Authenticate with password (account exists and is active)
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, username=email, password=password)  # ← CHANGED THIS LINE
 
         if user is not None:
             login(request, user)

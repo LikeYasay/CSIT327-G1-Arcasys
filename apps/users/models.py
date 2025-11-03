@@ -17,8 +17,6 @@ class Role(models.Model):
         db_column='RoleName'
     )
 
-    # RoleDescription REMOVED - keep everything else the same
-
     class Meta:
         db_table = 'Role'
 
@@ -27,7 +25,7 @@ class Role(models.Model):
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, UserEmail, password=None, **extra_fields):
+    def create_user(self, UserEmail, UserPasswordHash=None, **extra_fields):
         if not UserEmail:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(UserEmail)
@@ -38,11 +36,12 @@ class UserManager(BaseUserManager):
             extra_fields['RoleID'] = staff_role
 
         user = self.model(UserEmail=email, **extra_fields)
-        user.set_password(password)
+        if UserPasswordHash:
+            user.set_password(UserPasswordHash)  # This handles hashing
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, UserEmail, password=None, **extra_fields):
+    def create_superuser(self, UserEmail, UserPasswordHash=None, **extra_fields):
         extra_fields.setdefault('isUserAdmin', True)
         extra_fields.setdefault('isUserActive', True)
         extra_fields.setdefault('isUserStaff', False)
@@ -53,7 +52,8 @@ class UserManager(BaseUserManager):
         )
         extra_fields['RoleID'] = admin_role
 
-        return self.create_user(UserEmail, password, **extra_fields)
+        return self.create_user(UserEmail, UserPasswordHash, **extra_fields)
+
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -77,8 +77,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_column='UserEmail'
     )
 
-    # ✅ REQUIRED: Django AbstractBaseUser needs this exact field name
-    password = models.CharField(
+    # CUSTOM PASSWORD FIELD NAME - This is the key change!
+    UserPasswordHash = models.CharField(
         max_length=128,
         db_column='UserPasswordHash'  # Maps to your existing database column
     )
@@ -93,7 +93,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_column='UserLastLogin'
     )
 
-    # KEEP YOUR ORIGINAL FIELD NAMES
     isUserActive = models.BooleanField(
         default=False,
         db_column='isUserActive'
@@ -142,7 +141,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.UserFullName} ({self.UserEmail})"
 
-    # KEEP YOUR PROPERTY MAPPINGS
+    # CRITICAL: Map Django's expected properties to your custom fields
     @property
     def password(self):
         return self.UserPasswordHash
@@ -182,3 +181,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     @is_active.setter
     def is_active(self, value):
         self.isUserActive = value
+
+    # Override the save method to ensure password is hashed
+    def save(self, *args, **kwargs):
+        if self.UserPasswordHash and not self.UserPasswordHash.startswith('pbkdf2_sha256$'):
+            # If password is not hashed, hash it
+            self.set_password(self.UserPasswordHash)
+        super().save(*args, **kwargs)

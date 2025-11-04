@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Marketing Archive{% endblock title %}</title>
-    <link rel="stylesheet" href="{% static 'shared/css/style.css' %}" />
+    {% load tz %}
+    <link rel="stylesheet" href="{% static 'shared/css/style.css' %}?v={{ now|date:'U' }}">
     {% block extra_css %}{% endblock extra_css %}
     <link
       rel="icon"
@@ -96,7 +97,19 @@
           {% endif %}
         </div>
       </footer>
-
     </div>
+
+    <!-- ✅ Active Navbar Link Script -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const currentPath = window.location.pathname;
+        document.querySelectorAll(".nav-links a").forEach(link => {
+          if (link.pathname === currentPath) {
+            link.classList.add("active");
+            console.log(link.pathname, currentPath)
+          }
+        })
+      });
+    </script>
   </body>
 </html>

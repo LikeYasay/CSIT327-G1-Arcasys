@@ -1,7 +1,4 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block content %}
+{% extends "base.html" %} {% load static %} {% block content %}
 <section class="hero">
   <br />
   <div class="hero-content">
@@ -19,7 +16,7 @@
 
 <section class="desc">
   <div class="desc-content">
-    <h3> What is ARCASYS?</h3>
+    <h3>What is ARCASYS?</h3>
     <p>
       ARCASYS is a Marketing Archive Manager it is a web-based system designed
       to <br />
@@ -83,25 +80,155 @@
     for a modern event management solution.
   </p>
 
-  <div class="problem-cards">
-    <div class="problem-card">
-      <h3>Current Challenges</h3>
-      <ul>
-        <li>⚠️ Lost or misplaced event links.</li>
-        <li>⚠️ No centralized platform.</li>
-        <li>⚠️ Hard to separate past vs. upcoming events.</li>
-        <li>⚠️ Inefficient manual announcements.</li>
-      </ul>
+  <div
+    class="problem-cards"
+    style="
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 60px;
+      flex-wrap: wrap;
+      text-align: left;
+    "
+  >
+    <!-- Current Challenges -->
+    <div
+      class="problem-card"
+      style="
+        background: #fff;
+        padding: 30px 25px;
+        border-radius: 12px;
+        width: 350px;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="display: flex; flex-direction: column; justify-content: center"
+      >
+        <h3
+          style="
+            font-size: 20px;
+            color: #8a252c;
+            margin-bottom: 20px;
+            text-align: center;
+          "
+        >
+          Current Challenges
+        </h3>
+        <ul style="list-style: none; padding: 0; margin: 0">
+          <li
+            style="
+              display: flex;
+              align-items: flex-start;
+              gap: 8px;
+              margin-bottom: 10px;
+            "
+          >
+            <span style="flex-shrink: 0">⚠️</span>
+            <span>Lost or misplaced event links.</span>
+          </li>
+          <li
+            style="
+              display: flex;
+              align-items: flex-start;
+              gap: 8px;
+              margin-bottom: 10px;
+            "
+          >
+            <span style="flex-shrink: 0">⚠️</span>
+            <span>No centralized platform.</span>
+          </li>
+          <li
+            style="
+              display: flex;
+              align-items: flex-start;
+              gap: 8px;
+              margin-bottom: 10px;
+            "
+          >
+            <span style="flex-shrink: 0">⚠️</span>
+            <span style="display: inline-block; line-height: 1.4"
+              >Hard to track past vs. upcoming events.</span
+            >
+          </li>
+          <li style="display: flex; align-items: flex-start; gap: 8px">
+            <span style="flex-shrink: 0">⚠️</span>
+            <span>Inefficient manual announcements.</span>
+          </li>
+        </ul>
+      </div>
     </div>
 
-    <div class="problem-card">
-      <h3>Opportunities Ahead</h3>
-      <ul>
-        <li>✅ Real-time access to events.</li>
-        <li>✅ Reliable, secure archive.</li>
-        <li>✅ Streamlined coordination.</li>
-        <li>✅ Improved transparency.</li>
-      </ul>
+    <!-- Opportunities Ahead -->
+    <div
+      class="problem-card"
+      style="
+        background: #fff;
+        padding: 30px 25px;
+        border-radius: 12px;
+        width: 350px;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="display: flex; flex-direction: column; justify-content: center"
+      >
+        <h3
+          style="
+            font-size: 20px;
+            color: #8a252c;
+            margin-bottom: 20px;
+            text-align: center;
+          "
+        >
+          Opportunities Ahead
+        </h3>
+        <ul style="list-style: none; padding: 0; margin: 0">
+          <li
+            style="
+              display: flex;
+              align-items: flex-start;
+              gap: 8px;
+              margin-bottom: 10px;
+            "
+          >
+            <span style="flex-shrink: 0">✅</span>
+            <span>Real-time access to events.</span>
+          </li>
+          <li
+            style="
+              display: flex;
+              align-items: flex-start;
+              gap: 8px;
+              margin-bottom: 10px;
+            "
+          >
+            <span style="flex-shrink: 0">✅</span>
+            <span>Reliable, secure archive.</span>
+          </li>
+          <li
+            style="
+              display: flex;
+              align-items: flex-start;
+              gap: 8px;
+              margin-bottom: 10px;
+            "
+          >
+            <span style="flex-shrink: 0">✅</span>
+            <span>Streamlined coordination.</span>
+          </li>
+          <li style="display: flex; align-items: flex-start; gap: 8px">
+            <span style="flex-shrink: 0">✅</span>
+            <span>Improved transparency.</span>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>

@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 def send_registration_email_async(email, first_name):
     """Send registration email using SendGrid Web API"""
     try:
+        from django.core.mail import send_mail
+        from django.conf import settings
+
         html_message = render_to_string('users/registration_notification.html', {'first_name': first_name})
         plain_message = f"""Arcasys System - Registration Received
 

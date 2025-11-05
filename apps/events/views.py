@@ -61,7 +61,6 @@ This is an automated message from the Arcasys System."""
         logger.error(f"Approval email failed for {user_email}: {str(email_error)}")
         return False
 
-
 def send_rejection_email_async(user_email, user_name):
     """Send rejection email using SendGrid Web API"""
     try:
@@ -97,7 +96,6 @@ This is an automated message from the Arcasys System."""
     except Exception as email_error:
         logger.error(f"Rejection email failed for {user_email}: {str(email_error)}")
         return False
-
 
 # -----------------------------
 # Events View - FOR ALL USERS

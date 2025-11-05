@@ -15,22 +15,24 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-only')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-# FIXED: Add your exact Render URL here
+# ALL DOMAINS
 ALLOWED_HOSTS = [
     'marketingarcasysdemo.onrender.com',
+    'csit327-g1-arcasys.onrender.com',
     'localhost',
     '127.0.0.1',
     '.onrender.com'
 ]
 
-# FIXED: CRITICAL - Add your Render URL with https://
+# SECURITY FORMS
 CSRF_TRUSTED_ORIGINS = [
     'https://marketingarcasysdemo.onrender.com',
+    'https://csit327-g1-arcasys.onrender.com',
     'http://localhost',
     'http://127.0.0.1'
 ]
 
-# Application definition
+# APPS
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -80,7 +82,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'project.wsgi.application'
 
-# Database Configuration for Render + Supabase
+# DATABASE
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DATABASES = {
     "default": dj_database_url.config(
@@ -90,7 +92,7 @@ DATABASES = {
     )
 }
 
-# Password validation
+# PASSWORD VALIDATION
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -98,97 +100,58 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
+# INTERNATIONALIZATION
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Manila'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (WhiteNoise)
+# STATIC FILES
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom User Model
+# CUSTOM USER MODEL
 AUTH_USER_MODEL = 'users.User'
 
-# FIXED: Use ONLY default Django authentication
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# Authentication Redirects
+# REDIRECTS
 LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'events:events'
 LOGOUT_REDIRECT_URL = 'marketing:landing'
 
-# Email Configuration - SENDGRID SMTP
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 587  # Recommended for TLS
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'apikey'  # This is ALWAYS 'apikey' for SendGrid
-EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'arcasys.marketing.archive@gmail.com')
-EMAIL_TIMEOUT = 30  # Increased timeout for better reliability
+# SIMPLE EMAIL SETUP - SENDGRID API
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
 
-# Enhanced email backend configuration with better debugging
-if DEBUG:
-    if not os.environ.get('SENDGRID_API_KEY'):
-        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-        print("DEBUG: Using console email backend - no SENDGRID_API_KEY set")
-    else:
-        print("DEBUG: SendGrid SMTP configured with API key")
+if SENDGRID_API_KEY:
+    # USE SENDGRID API
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.sendgrid.net'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'apikey'
+    EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
 else:
-    # Production - always use SMTP
-    if os.environ.get('SENDGRID_API_KEY'):
-        print("PRODUCTION: SendGrid SMTP configured")
-    else:
-        print("PRODUCTION WARNING: No SENDGRID_API_KEY set!")
+    # FALLBACK TO CONSOLE
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Session Settings
+DEFAULT_FROM_EMAIL = 'Arcasys System <arcasys.marketing.archive@gmail.com>'
+
+# SESSION
 SESSION_COOKIE_AGE = 600
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Logging configuration
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'apps': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-    },
-}
-
-# FIXED: Security Settings - Only enable HTTPS in production, not development
+# SECURITY
 if not DEBUG:
-    # Production settings (Render)
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
 else:
-    # Development settings (local)
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False

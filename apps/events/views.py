@@ -32,36 +32,29 @@ def send_approval_email_async(user_email, user_name, login_url):
             'login_url': login_url,
         })
 
-        plain_message = f"""Hello {user_name},
+        plain_message = f"""Arcasys System - Account Approved
 
-Congratulations! Your Marketing Archive staff account has been approved.
+Dear {user_name},
 
-You can now login to the system using your registered email and password.
+Your staff account has been approved.
 
-LOGIN HERE: {login_url}
+You can now login to the system.
 
-Next Steps:
-• Use your registered email and password to login
-• Access the event management system
-• Start creating and managing events
+Login: {login_url}
 
-If you have any questions, please contact the system administrator.
-
-Best regards,
-Marketing Archive Team"""
+This is an automated message from the Arcasys System."""
 
         send_mail(
-            'Account Approved - Welcome to Marketing Archive!',
+            'Arcasys System - Account Approved',
             plain_message,
-            settings.DEFAULT_FROM_EMAIL,
+            'Arcasys System <arcasys.marketing.archive@gmail.com>',
             [user_email],
             html_message=html_message,
-            fail_silently=True,  # Prevent crashes if email fails
+            fail_silently=False
         )
         logger.info(f"Approval email sent successfully to {user_email}")
     except Exception as email_error:
         logger.error(f"Approval email failed for {user_email}: {str(email_error)}")
-
 
 def send_rejection_email_async(user_email, user_name):
     """Send rejection email in background thread"""
@@ -70,27 +63,27 @@ def send_rejection_email_async(user_email, user_name):
             'user_name': user_name,
         })
 
-        plain_message = f"""Hello {user_name},
+        plain_message = f"""Arcasys System - Application Status
 
-Unfortunately your account application has not been approved at this time.
+Dear {user_name},
 
-You may contact the administrator if you have questions about this decision.
+Your account application could not be approved at this time.
 
-Best regards,
-Marketing Archive Team"""
+Please contact the system administrator if you have questions.
+
+This is an automated message from the Arcasys System."""
 
         send_mail(
-            'Account Application Status - Marketing Archive',
+            'Arcasys System - Application Status',
             plain_message,
-            settings.DEFAULT_FROM_EMAIL,
+            'Arcasys System <arcasys.marketing.archive@gmail.com>',
             [user_email],
             html_message=html_message,
-            fail_silently=True,  # Prevent crashes if email fails
+            fail_silently=False
         )
         logger.info(f"Rejection email sent successfully to {user_email}")
     except Exception as email_error:
         logger.error(f"Rejection email failed for {user_email}: {str(email_error)}")
-
 
 # -----------------------------
 # Events View - FOR ALL USERS

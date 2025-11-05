@@ -26,32 +26,47 @@ from .models import User, Role
 logger = logging.getLogger(__name__)
 
 # -----------------------------
-# Email Sending Functions (Threaded)
+# Email Sending Functions (Threaded) - FIXED VERSION
 # -----------------------------
 def send_registration_email_async(email, first_name):
     """Send registration email in background thread"""
     try:
+        from django.core.mail import send_mail
+        from django.conf import settings
+
         html_message = render_to_string('users/registration_notification.html', {'first_name': first_name})
-        plain_message = f"""Hello {first_name},
 
-Your staff account has been created successfully and is pending administrator approval.
+        # ULTIMATE ANTI-SPAM CONTENT
+        plain_message = f"""Arcasys System - Registration Received
 
-You will receive another email once your account has been approved.
+Dear {first_name},
 
-Best regards,
-Marketing Archive Team"""
+Your request for a staff account has been received.
 
-        send_mail(
-            'Account Registration Received - Marketing Archive',
+Status: Pending Approval
+
+The system administrator will review your application. You will receive a notification once your account has been approved.
+
+This is an automated message from the Arcasys System.
+
+Thank you."""
+
+        result = send_mail(
+            'Arcasys System - Registration Received',
             plain_message,
-            settings.DEFAULT_FROM_EMAIL,
+            'Arcasys System <arcasys.marketing.archive@gmail.com>',
             [email],
             html_message=html_message,
-            fail_silently=True,  # Changed to True to prevent crashes
+            fail_silently=False
         )
+
         logger.info(f"Registration email sent successfully to {email}")
+        return True
+
     except Exception as email_error:
         logger.error(f"Registration email failed for {email}: {email_error}")
+        return False
+
 
 def send_password_reset_pending_email_async(user_email, user_name, registration_date):
     """Send pending account password reset email in background thread"""
@@ -61,29 +76,23 @@ def send_password_reset_pending_email_async(user_email, user_name, registration_
             'registration_date': registration_date,
         })
 
-        plain_message = f"""Hello {user_name},
+        plain_message = f"""Arcasys System - Password Reset
 
-You requested a password reset for your Marketing Archive staff account.
+Dear {user_name},
 
-ACCOUNT STATUS: PENDING APPROVAL
-Your account is still waiting for administrator approval. You cannot reset your password until your account is approved.
+A password reset was requested for your account.
 
-Your account registration was received on {registration_date} and is currently awaiting administrator approval.
+Note: Your account registration from {registration_date} is pending approval. Password reset is available after approval.
 
-Once your account is approved, you will receive an approval email and will be able to use the regular password reset feature.
-
-Please try again after your account has been approved.
-
-Best regards,
-Marketing Archive Team"""
+This is an automated message from the Arcasys System."""
 
         send_mail(
-            'Password Reset Request - Pending Account - Marketing Archive',
+            'Arcasys System - Password Reset',
             plain_message,
-            settings.DEFAULT_FROM_EMAIL,
+            'Arcasys System <arcasys.marketing.archive@gmail.com>',
             [user_email],
             html_message=html_message,
-            fail_silently=True,  # Changed to True to prevent crashes
+            fail_silently=False
         )
         logger.info(f"Pending reset email sent successfully to {user_email}")
     except Exception as email_error:

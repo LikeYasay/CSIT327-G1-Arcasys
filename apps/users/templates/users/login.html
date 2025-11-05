@@ -4,13 +4,19 @@
 <link rel="stylesheet" href="{% static 'users/css/login.css' %}" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
-    /* Server-side auth error styling */
+    /* Server-side auth error styling - MATCHES REGISTRATION */
     .auth-error {
-        color: #dc3545;
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 20px;
         text-align: center;
+        font-weight: 600;
     }
 
-    /* Field error styling */
+    /* Field error styling - KEPT SAME */
     .field-error {
         color: #dc3545;
         font-size: 14px;
@@ -44,7 +50,7 @@
       <h1>Welcome Back</h1>
       <p class="description">Enter your details to proceed.</p>
 
-      <!-- Server-side authentication errors (non-bulleted) -->
+      <!-- Server-side authentication errors (now with borders like registration) -->
       {% for message in messages %}
         {% if 'auth_error' in message.tags %}
           <div class="auth-error">

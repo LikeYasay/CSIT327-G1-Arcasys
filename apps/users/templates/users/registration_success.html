@@ -5,8 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registration Successful | Marketing Archive</title>
-  <link rel="stylesheet" href="{% static 'users/css/register.css' %}" />  <!-- ✅ Fixed -->
-  <link rel="icon" type="image/png" href="{% static 'shared/images/CIT_LOGO.png' %}" />  <!-- ✅ Fixed -->
+  <link rel="stylesheet" href="{% static 'users/css/register.css' %}" />
+  <link rel="icon" type="image/png" href="{% static 'shared/images/CIT_LOGO.png' %}" />
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -14,7 +14,6 @@
     referrerpolicy="no-referrer"
   />
   <style>
-    /* Success-specific styles */
     .success-card {
       background: #fff;
       min-width: 400px;
@@ -68,6 +67,23 @@
       text-align: left;
     }
 
+    /* SIMPLE RED SPAM WARNING */
+    .spam-alert {
+      background: #ffebee;
+      border: 1px solid #f44336;
+      border-radius: 6px;
+      padding: 10px 15px;
+      margin: 20px 0 10px 0;
+      text-align: center;
+    }
+
+    .spam-alert p {
+      color: #d32f2f;
+      margin: 0;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
     .status-title {
       color: #856404;
       font-weight: 700;
@@ -88,7 +104,7 @@
       display: flex;
       gap: 15px;
       justify-content: center;
-      margin-top: 30px;
+      margin-top: 15px;
     }
 
     .btn-success {
@@ -136,7 +152,6 @@
       text-decoration: none;
     }
 
-    /* Messages styling */
     .messages {
       list-style: none;
       padding: 0;
@@ -169,30 +184,27 @@
     <div class="register-left">
       <header class="register-header">
         <div class="logo-section">
-          <img src="{% static 'shared/images/CIT_LOGO.png' %}" alt="CIT Logo" class="logo" />  <!-- ✅ Fixed -->
+          <img src="{% static 'shared/images/CIT_LOGO.png' %}" alt="CIT Logo" class="logo" />
           <div class="logo-text">
             <h1>MARKETING ARCHIVE</h1>
             <p>Event Management System</p>
           </div>
         </div>
-        <a href="{% url 'marketing:landing' %}" class="back-link">← Back to Home</a>  <!-- ✅ Fixed -->
+        <a href="{% url 'marketing:landing' %}" class="back-link">← Back to Home</a>
       </header>
 
       <div class="success-card">
-        <!-- Success Icon -->
         <div class="success-icon">
           <i class="fas fa-check-circle"></i>
         </div>
 
         <h1>Registration Successful!</h1>
-        
-        <!-- User Information -->
+
         <div class="user-info">
           <div class="user-name">Welcome, {{ user_name }}!</div>
           <div class="user-email">{{ email }}</div>
         </div>
 
-        <!-- Django Messages -->
         {% if messages %}
           <ul class="messages">
             {% for message in messages %}
@@ -201,29 +213,32 @@
           </ul>
         {% endif %}
 
-        <!-- Status Message -->
         <div class="status-message">
           <div class="status-title">
             <i class="fas fa-clock"></i>
             Account Status: Pending Approval
           </div>
           <p class="status-details">
-            Your staff account has been created successfully and is currently awaiting administrator approval. 
-            You will receive an email notification once your account has been reviewed and approved. 
+            Your staff account has been created successfully and is currently awaiting administrator approval.
+            You will receive an email notification once your account has been reviewed and approved.
             After approval, you'll be able to login and access the event management system.
           </p>
         </div>
 
-        <!-- Action Buttons -->
+        <!-- SIMPLE RED SPAM WARNING ABOVE BUTTONS -->
+        <div class="spam-alert">
+          <p>🚨 Check your spam folder for the confirmation email!</p>
+        </div>
+
         <div class="action-buttons">
-          <a href="{% url 'users:login' %}" class="btn-success">Back to Login</a>  <!-- ✅ Fixed -->
-          <a href="{% url 'marketing:landing' %}" class="btn-secondary">Return to Home</a>  <!-- ✅ Fixed -->
+          <a href="{% url 'users:login' %}" class="btn-success">Back to Login</a>
+          <a href="{% url 'marketing:landing' %}" class="btn-secondary">Return to Home</a>
         </div>
       </div>
     </div>
 
     <div class="register-right">
-      <img src="{% static 'marketing/images/Library.jpg' %}" alt="Campus Building">  <!-- ✅ Fixed -->
+      <img src="{% static 'marketing/images/Library.jpg' %}" alt="Campus Building">
     </div>
   </div>
 </body>

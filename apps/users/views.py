@@ -1,4 +1,3 @@
-import threading
 import logging
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
@@ -6,8 +5,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
-from django.conf import settings
 from django.template.loader import render_to_string
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -18,76 +15,92 @@ from django.contrib.auth.views import (
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.urls import reverse_lazy
 import re
-import logging
 
 from .models import User, Role
+from apps.shared.email_utils import send_sendgrid_email  # ADD THIS IMPORT
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
+
 # -----------------------------
-# Email Sending Functions (Threaded)
+# Email Sending Functions - SENDGRID WEB API
 # -----------------------------
 def send_registration_email_async(email, first_name):
-    """Send registration email in background thread"""
+    """Send registration email using SendGrid Web API"""
     try:
         html_message = render_to_string('users/registration_notification.html', {'first_name': first_name})
-        plain_message = f"""Hello {first_name},
+        plain_message = f"""Arcasys System - Registration Received
 
-Your staff account has been created successfully and is pending administrator approval.
+Dear {first_name},
 
-You will receive another email once your account has been approved.
+Your request for a staff account has been received.
 
-Best regards,
-Marketing Archive Team"""
+Status: Pending Approval
 
-        send_mail(
-            'Account Registration Received - Marketing Archive',
-            plain_message,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            html_message=html_message,
-            fail_silently=True,  # Changed to True to prevent crashes
+The system administrator will review your application. You will receive a notification once your account has been approved.
+
+This is an automated message from the Arcasys System.
+
+Thank you."""
+
+        # Use SendGrid Web API
+        success = send_sendgrid_email(
+            to_email=email,
+            subject='Arcasys System - Registration Received',
+            plain_message=plain_message,
+            html_message=html_message
         )
-        logger.info(f"Registration email sent successfully to {email}")
+
+        if success:
+            logger.info(f"Registration email sent successfully to {email}")
+        else:
+            logger.error(f"Registration email failed for {email}")
+
+        return success
+
     except Exception as email_error:
         logger.error(f"Registration email failed for {email}: {email_error}")
+        return False
+
 
 def send_password_reset_pending_email_async(user_email, user_name, registration_date):
-    """Send pending account password reset email in background thread"""
+    """Send pending account password reset email using SendGrid Web API"""
     try:
         html_message = render_to_string('users/pending_reset_email.html', {
             'user_name': user_name,
             'registration_date': registration_date,
         })
 
-        plain_message = f"""Hello {user_name},
+        plain_message = f"""Arcasys System - Password Reset
 
-You requested a password reset for your Marketing Archive staff account.
+Dear {user_name},
 
-ACCOUNT STATUS: PENDING APPROVAL
-Your account is still waiting for administrator approval. You cannot reset your password until your account is approved.
+A password reset was requested for your account.
 
-Your account registration was received on {registration_date} and is currently awaiting administrator approval.
+Note: Your account registration from {registration_date} is pending approval. Password reset is available after approval.
 
-Once your account is approved, you will receive an approval email and will be able to use the regular password reset feature.
+This is an automated message from the Arcasys System."""
 
-Please try again after your account has been approved.
-
-Best regards,
-Marketing Archive Team"""
-
-        send_mail(
-            'Password Reset Request - Pending Account - Marketing Archive',
-            plain_message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user_email],
-            html_message=html_message,
-            fail_silently=True,  # Changed to True to prevent crashes
+        # Use SendGrid Web API
+        success = send_sendgrid_email(
+            to_email=user_email,
+            subject='Arcasys System - Password Reset',
+            plain_message=plain_message,
+            html_message=html_message
         )
-        logger.info(f"Pending reset email sent successfully to {user_email}")
+
+        if success:
+            logger.info(f"Pending reset email sent successfully to {user_email}")
+        else:
+            logger.error(f"Pending reset email failed for {user_email}")
+
+        return success
+
     except Exception as email_error:
         logger.error(f"Pending reset email failed for {user_email}: {email_error}")
+        return False
+
 
 # -----------------------------
 # Email Validation Helper Function
@@ -118,14 +131,13 @@ def is_valid_email(email):
 
 
 # -----------------------------
-# Login View
+# Login View - WITH AUTO LOGOUT FIX
 # -----------------------------
 def login_view(request):
+    # AUTO-LOGOUT FIX: Log out any currently logged-in user when accessing login page
     if request.user.is_authenticated:
-        if request.user.isUserAdmin or request.user.is_superuser:
-            return redirect("events:admin_approval")
-        else:
-            return redirect("events:events")
+        logout(request)
+        messages.info(request, "You have been logged out from your previous session.")
 
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
@@ -243,7 +255,7 @@ def login_view(request):
 
 
 # -----------------------------
-# Register View - FIXED WITH THREADED EMAIL
+# Register View - FIXED WITH SENDGRID WEB API
 # -----------------------------
 def register_view(request):
     if request.user.is_authenticated:
@@ -374,15 +386,10 @@ def register_view(request):
                 isUserStaff=True
             )
 
-            # Send registration email in background thread
-            email_thread = threading.Thread(
-                target=send_registration_email_async,
-                args=(email, first_name)
-            )
-            email_thread.daemon = True
-            email_thread.start()
+            # Send registration email using SendGrid Web API (NO THREADING)
+            send_registration_email_async(email, first_name)
 
-            logger.info(f"User {first_name} {last_name} registered successfully - email queued in background")
+            logger.info(f"User {first_name} {last_name} registered successfully - email sent via SendGrid API")
 
             return render(request, "users/registration_success.html", {
                 'user_name': f"{first_name} {last_name}",
@@ -464,44 +471,94 @@ class CustomSetPasswordForm(SetPasswordForm):
 
 
 # -----------------------------
-# Password Reset Views - FIXED WITH THREADED EMAIL
+# Password Reset Views - FIXED WITH SENDGRID WEB API
 # -----------------------------
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
-    email_template_name = 'users/password_reset_email.html'
-    subject_template_name = 'users/password_reset_subject.txt'
     success_url = reverse_lazy('users:password_reset_done')
     form_class = CustomPasswordResetForm
 
     def form_valid(self, form):
         try:
             email = form.cleaned_data['email']
+            logger.info(f"Password reset requested for: {email}")
 
             # Check for pending accounts
             try:
                 pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
-
-                # Send pending account email in background thread
-                email_thread = threading.Thread(
-                    target=send_password_reset_pending_email_async,
-                    args=(
-                        pending_user.UserEmail,
-                        pending_user.UserFullName,
-                        pending_user.UserCreatedAt.strftime('%B %d, %Y')
-                    )
+                send_password_reset_pending_email_async(
+                    pending_user.UserEmail,
+                    pending_user.UserFullName,
+                    pending_user.UserCreatedAt.strftime('%B %d, %Y')
                 )
-                email_thread.daemon = True
-                email_thread.start()
-
-                logger.info(f"Pending reset email queued for {pending_user.UserEmail}")
-
+                logger.info(f"Pending reset email sent for {email}")
                 return self.render_success_response()
-
             except User.DoesNotExist:
                 pass
 
-            # For active users - proceed with normal password reset (Django handles this)
-            return super().form_valid(form)
+            # Check for active users and use OUR email function
+            try:
+                user = User.objects.get(UserEmail__iexact=email, isUserActive=True, isUserStaff=True)
+
+                # Generate the token and UID like Django would
+                from django.contrib.auth.tokens import default_token_generator
+                from django.utils.encoding import force_bytes
+                from django.utils.http import urlsafe_base64_encode
+                from django.template.loader import render_to_string
+
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+                # Build the context for the email template
+                context = {
+                    'email': user.UserEmail,
+                    'domain': 'marketingarcasysdemo.onrender.com',
+                    'site_name': 'Marketing Archive',
+                    'uid': uid,
+                    'user': user,
+                    'token': token,
+                    'protocol': 'https',
+                }
+
+                # Render the email content
+                subject = "Password Reset Request - Marketing Archive"
+                html_message = render_to_string('users/password_reset_email.html', context)
+                plain_message = f"""Password Reset Request
+
+Hello,
+
+You're receiving this email because you requested a password reset for your Marketing Archive account.
+
+Please go to the following page to reset your password:
+https://marketingarcasysdemo.onrender.com/users/reset/{uid}/{token}/
+
+If you didn't request this, please ignore this email.
+
+This link will expire in 24 hours.
+
+Best regards,
+Marketing Archive Team"""
+
+                # Use your SendGrid function directly
+                email_sent = send_sendgrid_email(
+                    to_email=user.UserEmail,
+                    subject=subject,
+                    plain_message=plain_message,
+                    html_message=html_message
+                )
+
+                if email_sent:
+                    logger.info(f"Password reset email sent successfully to {user.UserEmail}")
+                    return self.render_success_response()
+                else:
+                    logger.error(f"Failed to send password reset email to {user.UserEmail}")
+                    messages.error(self.request, "Failed to send password reset email. Please try again.")
+                    return self.form_invalid(form)
+
+            except User.DoesNotExist:
+                # No user found - but show success for security
+                logger.warning(f"No user found for password reset: {email}")
+                return self.render_success_response()
 
         except Exception as e:
             logger.error(f"Password reset error: {e}")

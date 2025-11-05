@@ -124,29 +124,29 @@ LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'events:events'
 LOGOUT_REDIRECT_URL = 'marketing:landing'
 
-# Email Configuration - UPDATED FOR SENDGRID
+# Email Configuration - SENDGRID SMTP
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
-# Try SendGrid first (works on Render)
 EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 587
+EMAIL_PORT = 587  # Recommended for TLS
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'apikey'  # This is ALWAYS 'apikey' for SendGrid
-EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', '')  # Your SendGrid API key
+EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'arcasys.marketing.archive@gmail.com')
+EMAIL_TIMEOUT = 30  # Increased timeout for better reliability
 
-# Fallback to Gmail only if SendGrid API key is not available (for local testing)
-if not os.environ.get('SENDGRID_API_KEY') and DEBUG:
-    EMAIL_HOST = 'smtp.gmail.com'
-    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-
-# CRITICAL: Reduced timeout for Render environment
-EMAIL_TIMEOUT = 10
-
-# Use console backend in development if no email credentials are set
-if DEBUG and not any([os.environ.get('SENDGRID_API_KEY'), os.environ.get('EMAIL_HOST_PASSWORD')]):
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Enhanced email backend configuration with better debugging
+if DEBUG:
+    if not os.environ.get('SENDGRID_API_KEY'):
+        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+        print("DEBUG: Using console email backend - no SENDGRID_API_KEY set")
+    else:
+        print("DEBUG: SendGrid SMTP configured with API key")
+else:
+    # Production - always use SMTP
+    if os.environ.get('SENDGRID_API_KEY'):
+        print("PRODUCTION: SendGrid SMTP configured")
+    else:
+        print("PRODUCTION WARNING: No SENDGRID_API_KEY set!")
 
 # Session Settings
 SESSION_COOKIE_AGE = 600

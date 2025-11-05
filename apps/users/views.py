@@ -1,4 +1,3 @@
-import threading
 import logging
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
@@ -6,8 +5,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
-from django.conf import settings
 from django.template.loader import render_to_string
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -18,25 +15,24 @@ from django.contrib.auth.views import (
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.urls import reverse_lazy
 import re
-import logging
 
 from .models import User, Role
+from apps.shared.email_utils import send_sendgrid_email  # ADD THIS IMPORT
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
+
 # -----------------------------
-# Email Sending Functions (Threaded) - FIXED VERSION
+# Email Sending Functions - SENDGRID WEB API
 # -----------------------------
 def send_registration_email_async(email, first_name):
-    """Send registration email in background thread"""
+    """Send registration email using SendGrid Web API"""
     try:
         from django.core.mail import send_mail
         from django.conf import settings
 
         html_message = render_to_string('users/registration_notification.html', {'first_name': first_name})
-
-        # ULTIMATE ANTI-SPAM CONTENT
         plain_message = f"""Arcasys System - Registration Received
 
 Dear {first_name},
@@ -51,17 +47,20 @@ This is an automated message from the Arcasys System.
 
 Thank you."""
 
-        result = send_mail(
-            'Arcasys System - Registration Received',
-            plain_message,
-            'Arcasys System <arcasys.marketing.archive@gmail.com>',
-            [email],
-            html_message=html_message,
-            fail_silently=False
+        # Use SendGrid Web API
+        success = send_sendgrid_email(
+            to_email=email,
+            subject='Arcasys System - Registration Received',
+            plain_message=plain_message,
+            html_message=html_message
         )
 
-        logger.info(f"Registration email sent successfully to {email}")
-        return True
+        if success:
+            logger.info(f"Registration email sent successfully to {email}")
+        else:
+            logger.error(f"Registration email failed for {email}")
+
+        return success
 
     except Exception as email_error:
         logger.error(f"Registration email failed for {email}: {email_error}")
@@ -69,7 +68,7 @@ Thank you."""
 
 
 def send_password_reset_pending_email_async(user_email, user_name, registration_date):
-    """Send pending account password reset email in background thread"""
+    """Send pending account password reset email using SendGrid Web API"""
     try:
         html_message = render_to_string('users/pending_reset_email.html', {
             'user_name': user_name,
@@ -86,17 +85,25 @@ Note: Your account registration from {registration_date} is pending approval. Pa
 
 This is an automated message from the Arcasys System."""
 
-        send_mail(
-            'Arcasys System - Password Reset',
-            plain_message,
-            'Arcasys System <arcasys.marketing.archive@gmail.com>',
-            [user_email],
-            html_message=html_message,
-            fail_silently=False
+        # Use SendGrid Web API
+        success = send_sendgrid_email(
+            to_email=user_email,
+            subject='Arcasys System - Password Reset',
+            plain_message=plain_message,
+            html_message=html_message
         )
-        logger.info(f"Pending reset email sent successfully to {user_email}")
+
+        if success:
+            logger.info(f"Pending reset email sent successfully to {user_email}")
+        else:
+            logger.error(f"Pending reset email failed for {user_email}")
+
+        return success
+
     except Exception as email_error:
         logger.error(f"Pending reset email failed for {user_email}: {email_error}")
+        return False
+
 
 # -----------------------------
 # Email Validation Helper Function
@@ -252,7 +259,7 @@ def login_view(request):
 
 
 # -----------------------------
-# Register View - FIXED WITH THREADED EMAIL
+# Register View - FIXED WITH SENDGRID WEB API
 # -----------------------------
 def register_view(request):
     if request.user.is_authenticated:
@@ -383,15 +390,10 @@ def register_view(request):
                 isUserStaff=True
             )
 
-            # Send registration email in background thread
-            email_thread = threading.Thread(
-                target=send_registration_email_async,
-                args=(email, first_name)
-            )
-            email_thread.daemon = True
-            email_thread.start()
+            # Send registration email using SendGrid Web API (NO THREADING)
+            send_registration_email_async(email, first_name)
 
-            logger.info(f"User {first_name} {last_name} registered successfully - email queued in background")
+            logger.info(f"User {first_name} {last_name} registered successfully - email sent via SendGrid API")
 
             return render(request, "users/registration_success.html", {
                 'user_name': f"{first_name} {last_name}",
@@ -473,7 +475,7 @@ class CustomSetPasswordForm(SetPasswordForm):
 
 
 # -----------------------------
-# Password Reset Views - FIXED WITH THREADED EMAIL
+# Password Reset Views - FIXED WITH SENDGRID WEB API
 # -----------------------------
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
@@ -490,19 +492,14 @@ class CustomPasswordResetView(PasswordResetView):
             try:
                 pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
 
-                # Send pending account email in background thread
-                email_thread = threading.Thread(
-                    target=send_password_reset_pending_email_async,
-                    args=(
-                        pending_user.UserEmail,
-                        pending_user.UserFullName,
-                        pending_user.UserCreatedAt.strftime('%B %d, %Y')
-                    )
+                # Send pending account email using SendGrid Web API (NO THREADING)
+                send_password_reset_pending_email_async(
+                    pending_user.UserEmail,
+                    pending_user.UserFullName,
+                    pending_user.UserCreatedAt.strftime('%B %d, %Y')
                 )
-                email_thread.daemon = True
-                email_thread.start()
 
-                logger.info(f"Pending reset email queued for {pending_user.UserEmail}")
+                logger.info(f"Pending reset email sent via SendGrid API for {pending_user.UserEmail}")
 
                 return self.render_success_response()
 

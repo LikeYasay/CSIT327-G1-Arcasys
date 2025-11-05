@@ -125,22 +125,12 @@ LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'events:events'
 LOGOUT_REDIRECT_URL = 'marketing:landing'
 
-# SIMPLE EMAIL SETUP - SENDGRID API
+# EMAIL CONFIGURATION - SENDGRID WEB API (NO SMTP - RENDER BLOCKS SMTP)
 SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
+DEFAULT_FROM_EMAIL = 'arcasys.marketing.archive@gmail.com'
 
-if SENDGRID_API_KEY:
-    # USE SENDGRID API
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.sendgrid.net'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = 'apikey'
-    EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
-else:
-    # FALLBACK TO CONSOLE
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-DEFAULT_FROM_EMAIL = 'Arcasys System <arcasys.marketing.archive@gmail.com>'
+# Remove all SMTP settings - Render blocks SMTP ports
+# We use SendGrid Web API directly via custom email utility
 
 # SESSION
 SESSION_COOKIE_AGE = 600

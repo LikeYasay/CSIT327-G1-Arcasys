@@ -5,3 +5,4 @@ dj-database-url>=2.0.0
 python-dotenv>=1.0.0,<2.0.0
 whitenoise>=6.5.0,<7.0.0
 gunicorn>=21.2.0,<24.0.0
+sendgrid==6.9.7

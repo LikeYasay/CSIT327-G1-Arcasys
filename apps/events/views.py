@@ -1,13 +1,10 @@
 import datetime
 import logging
-import threading
 from django.db import OperationalError, ProgrammingError
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.core.mail import send_mail
-from django.conf import settings
 from django.template.loader import render_to_string
 from datetime import datetime
 from django.db import transaction
@@ -18,14 +15,15 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from apps.events.models import Event, EventDepartment, EventLink, EventTag, Department, Tag
 from .forms import AdminEditEventForm
+from apps.shared.email_utils import send_sendgrid_email  # ADD THIS IMPORT
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
 
-# Email sending functions (threaded)
+# Email sending functions - SENDGRID WEB API
 def send_approval_email_async(user_email, user_name, login_url):
-    """Send approval email in background thread"""
+    """Send approval email using SendGrid Web API"""
     try:
         html_message = render_to_string('events/account_approved.html', {
             'user_name': user_name,
@@ -44,20 +42,27 @@ Login: {login_url}
 
 This is an automated message from the Arcasys System."""
 
-        send_mail(
-            'Arcasys System - Account Approved',
-            plain_message,
-            'Arcasys System <arcasys.marketing.archive@gmail.com>',
-            [user_email],
-            html_message=html_message,
-            fail_silently=False
+        # Use SendGrid Web API
+        success = send_sendgrid_email(
+            to_email=user_email,
+            subject='Arcasys System - Account Approved',
+            plain_message=plain_message,
+            html_message=html_message
         )
-        logger.info(f"Approval email sent successfully to {user_email}")
+
+        if success:
+            logger.info(f"Approval email sent successfully to {user_email}")
+        else:
+            logger.error(f"Approval email failed for {user_email}")
+
+        return success
+
     except Exception as email_error:
         logger.error(f"Approval email failed for {user_email}: {str(email_error)}")
+        return False
 
 def send_rejection_email_async(user_email, user_name):
-    """Send rejection email in background thread"""
+    """Send rejection email using SendGrid Web API"""
     try:
         html_message = render_to_string('events/account_rejected.html', {
             'user_name': user_name,
@@ -73,17 +78,24 @@ Please contact the system administrator if you have questions.
 
 This is an automated message from the Arcasys System."""
 
-        send_mail(
-            'Arcasys System - Application Status',
-            plain_message,
-            'Arcasys System <arcasys.marketing.archive@gmail.com>',
-            [user_email],
-            html_message=html_message,
-            fail_silently=False
+        # Use SendGrid Web API
+        success = send_sendgrid_email(
+            to_email=user_email,
+            subject='Arcasys System - Application Status',
+            plain_message=plain_message,
+            html_message=html_message
         )
-        logger.info(f"Rejection email sent successfully to {user_email}")
+
+        if success:
+            logger.info(f"Rejection email sent successfully to {user_email}")
+        else:
+            logger.error(f"Rejection email failed for {user_email}")
+
+        return success
+
     except Exception as email_error:
         logger.error(f"Rejection email failed for {user_email}: {str(email_error)}")
+        return False
 
 # -----------------------------
 # Events View - FOR ALL USERS
@@ -450,7 +462,7 @@ def admin_approval_view(request):
 
 
 # -----------------------------
-# Approval/Reject Views - FIXED WITH THREADING
+# Approval/Reject Views - FIXED WITH SENDGRID WEB API
 # -----------------------------
 @login_required
 def approve_application(request, user_id):
@@ -467,18 +479,13 @@ def approve_application(request, user_id):
         user.UserApprovedAt = timezone.now()
         user.save()
 
-        # Start email in background thread
+        # Send approval email using SendGrid Web API (NO THREADING)
         login_url = request.build_absolute_uri("/users/login/")
-        email_thread = threading.Thread(
-            target=send_approval_email_async,
-            args=(user.UserEmail, user.UserFullName, login_url)
-        )
-        email_thread.daemon = True
-        email_thread.start()
+        send_approval_email_async(user.UserEmail, user.UserFullName, login_url)
 
         messages.success(request,
-                         f"Account for {user.UserFullName} approved successfully. Approval email has been queued.")
-        logger.info(f"User {user.UserFullName} approved successfully - email queued in background")
+                         f"Account for {user.UserFullName} approved successfully. Approval email has been sent.")
+        logger.info(f"User {user.UserFullName} approved successfully - email sent via SendGrid API")
 
     except User.DoesNotExist:
         messages.error(request, "User not found or already approved.")
@@ -500,19 +507,14 @@ def reject_application(request, user_id):
         user_name = user.UserFullName
         user_email = user.UserEmail
 
-        # Start email in background thread
-        email_thread = threading.Thread(
-            target=send_rejection_email_async,
-            args=(user_email, user_name)
-        )
-        email_thread.daemon = True
-        email_thread.start()
+        # Send rejection email using SendGrid Web API (NO THREADING)
+        send_rejection_email_async(user_email, user_name)
 
-        # Delete user after queuing email
+        # Delete user after sending email
         user.delete()
 
-        messages.success(request, f"Account for {user_name} rejected. Rejection email has been queued.")
-        logger.info(f"User {user_name} rejected successfully - email queued in background")
+        messages.success(request, f"Account for {user_name} rejected. Rejection email has been sent.")
+        logger.info(f"User {user_name} rejected successfully - email sent via SendGrid API")
 
     except User.DoesNotExist:
         messages.error(request, "User not found or already processed.")

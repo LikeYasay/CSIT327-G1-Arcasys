@@ -134,14 +134,13 @@ def is_valid_email(email):
 
 
 # -----------------------------
-# Login View
+# Login View - WITH AUTO LOGOUT FIX
 # -----------------------------
 def login_view(request):
+    # AUTO-LOGOUT FIX: Log out any currently logged-in user when accessing login page
     if request.user.is_authenticated:
-        if request.user.isUserAdmin or request.user.is_superuser:
-            return redirect("events:admin_approval")
-        else:
-            return redirect("events:events")
+        logout(request)
+        messages.info(request, "You have been logged out from your previous session.")
 
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
@@ -479,35 +478,90 @@ class CustomSetPasswordForm(SetPasswordForm):
 # -----------------------------
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
-    email_template_name = 'users/password_reset_email.html'
-    subject_template_name = 'users/password_reset_subject.txt'
     success_url = reverse_lazy('users:password_reset_done')
     form_class = CustomPasswordResetForm
 
     def form_valid(self, form):
         try:
             email = form.cleaned_data['email']
+            logger.info(f"Password reset requested for: {email}")
 
             # Check for pending accounts
             try:
                 pending_user = User.objects.get(UserEmail__iexact=email, isUserActive=False, isUserStaff=True)
-
-                # Send pending account email using SendGrid Web API (NO THREADING)
                 send_password_reset_pending_email_async(
                     pending_user.UserEmail,
                     pending_user.UserFullName,
                     pending_user.UserCreatedAt.strftime('%B %d, %Y')
                 )
-
-                logger.info(f"Pending reset email sent via SendGrid API for {pending_user.UserEmail}")
-
+                logger.info(f"Pending reset email sent for {email}")
                 return self.render_success_response()
-
             except User.DoesNotExist:
                 pass
 
-            # For active users - proceed with normal password reset (Django handles this)
-            return super().form_valid(form)
+            # Check for active users and use OUR email function
+            try:
+                user = User.objects.get(UserEmail__iexact=email, isUserActive=True, isUserStaff=True)
+
+                # Generate the token and UID like Django would
+                from django.contrib.auth.tokens import default_token_generator
+                from django.utils.encoding import force_bytes
+                from django.utils.http import urlsafe_base64_encode
+                from django.template.loader import render_to_string
+
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+                # Build the context for the email template
+                context = {
+                    'email': user.UserEmail,
+                    'domain': 'marketingarcasysdemo.onrender.com',
+                    'site_name': 'Marketing Archive',
+                    'uid': uid,
+                    'user': user,
+                    'token': token,
+                    'protocol': 'https',
+                }
+
+                # Render the email content
+                subject = "Password Reset Request - Marketing Archive"
+                html_message = render_to_string('users/password_reset_email.html', context)
+                plain_message = f"""Password Reset Request
+
+Hello,
+
+You're receiving this email because you requested a password reset for your Marketing Archive account.
+
+Please go to the following page to reset your password:
+https://marketingarcasysdemo.onrender.com/users/reset/{uid}/{token}/
+
+If you didn't request this, please ignore this email.
+
+This link will expire in 24 hours.
+
+Best regards,
+Marketing Archive Team"""
+
+                # Use your SendGrid function directly
+                email_sent = send_sendgrid_email(
+                    to_email=user.UserEmail,
+                    subject=subject,
+                    plain_message=plain_message,
+                    html_message=html_message
+                )
+
+                if email_sent:
+                    logger.info(f"Password reset email sent successfully to {user.UserEmail}")
+                    return self.render_success_response()
+                else:
+                    logger.error(f"Failed to send password reset email to {user.UserEmail}")
+                    messages.error(self.request, "Failed to send password reset email. Please try again.")
+                    return self.form_invalid(form)
+
+            except User.DoesNotExist:
+                # No user found - but show success for security
+                logger.warning(f"No user found for password reset: {email}")
+                return self.render_success_response()
 
         except Exception as e:
             logger.error(f"Password reset error: {e}")

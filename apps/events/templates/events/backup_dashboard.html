@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Backup Dashboard | Marketing Archive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/backup_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active">Status</button>
+    <button class="tab">System Logs</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:backup_history' %}'">Backup History</button>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-section">
+    <div class="summary-card">
+      <h2 class="count maroon">{{ total_backups }}</h2>
+      <p class="label">Total Backups</p>
+      <span>Recent backup jobs</span>
+    </div>
+    <div class="summary-card">
+      <h2 class="count green">{{ successful_backups }}</h2>
+      <p class="label">Successful</p>
+      <span>Last 24 hours</span>
+    </div>
+    <div class="summary-card">
+      <h2 class="count red">{{ failed_backups }}</h2>
+      <p class="label">Failed</p>
+      <span>Requires attention</span>
+    </div>
+  </div>
+
+  <!-- RECENT BACKUP JOBS -->
+  <section class="recent-jobs">
+    <div class="section-header">
+      <h3>Recent Backup Jobs</h3>
+      <button class="btn-yellow" onclick="runBackup()">Run New Backup</button>
+    </div>
+
+    {% if recent_jobs %}
+      <table class="job-table">
+        <thead>
+          <tr>
+            <th>Backup Name</th>
+            <th>Status</th>
+            <th>Last Run</th>
+            <th>Size</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in recent_jobs %}
+          <tr>
+            <td>{{ job.name }}</td>
+            <td>
+              {% if job.status == "completed" %}
+                <span class="badge green">Completed</span>
+              {% elif job.status == "failed" %}
+                <span class="badge red">Failed</span>
+              {% else %}
+                <span class="badge gray">{{ job.status }}</span>
+              {% endif %}
+            </td>
+            <td>{{ job.timestamp|date:"Y-m-d H:i:s" }}</td>
+            <td>{{ job.size|default:"N/A" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="view-all-container">
+        <a href="{% url 'events:backup_history' %}" class="view-all">View All</a>
+      </div>
+    {% else %}
+      <p>No recent backup jobs found.</p>
+    {% endif %}
+  </section>
+
+  <!-- ERRORS & ALERTS -->
+  <section class="alerts">
+    <div class="section-header">
+      <h3>Recent Errors & Alerts</h3>
+      <a href="#" class="view-all">View All</a>
+    </div>
+
+    {% if alerts %}
+      {% for alert in alerts %}
+      <div class="alert-card">
+        <div class="dot 
+          {% if alert.Level == 'Critical' %}maroon
+          {% elif alert.Level == 'Warning' %}yellow
+          {% elif alert.Level == 'Error' %}orange
+          {% else %}gray{% endif %}">
+        </div>
+        <div class="alert-info">
+          <h4>{{ alert.Level }}</h4>
+          <p class="time">{{ alert.CreatedAt|date:"Y-m-d H:i:s" }}</p>
+          <p>{{ alert.Message }}</p>
+          <small>Backup: {{ alert.RelatedBackup.BackupName|default:"N/A" }}</small>
+        </div>
+        <div class="alert-actions">
+          <a class="view">View</a>
+          <a class="resolve">Resolve</a>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p>No recent alerts found.</p>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+// CSRF helper
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function runBackup() {
+  if (!confirm("Run backup now?")) return;
+
+  fetch("/events/run-backup/", {
+    method: "POST",
+    headers: { "X-CSRFToken": getCookie("csrftoken") },
+  })
+  .then(response => response.json())
+  .then(data => alert(data.message))
+  .catch(err => alert("❌ Error running backup: " + err));
+}
+</script>
+{% endblock %}
+

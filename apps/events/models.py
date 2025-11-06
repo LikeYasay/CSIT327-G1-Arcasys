@@ -1,6 +1,8 @@
 import uuid
 from django.db import models
 from django.utils import timezone     
+from datetime import timedelta
+import calendar
 
 # ==============================
 # EVENT MODEL
@@ -177,3 +179,30 @@ class EventLink(models.Model):
 
     def __str__(self):
         return f"{self.EventLinkName} for Event {self.EventID}"
+    
+    
+# ==============================
+# BACKUP MODEL
+# ==============================
+class BackupHistory(models.Model):
+    BackupHistoryID = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        db_column='BackupHistoryID'
+    )
+    name = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=[
+        ('completed', 'Completed'),
+        ('failed', 'Failed')
+    ])
+    timestamp = models.DateTimeField(auto_now_add=True)
+    size = models.CharField(max_length=50, blank=True, null=True)
+    log_file = models.FileField(upload_to='logs/', blank=True, null=True)
+    backup_file = models.FileField(upload_to='backups/', blank=True, null=True)
+    
+    class Meta:
+        db_table = 'BackupHistory'
+
+    def __str__(self):
+        return f"{self.name} - {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"

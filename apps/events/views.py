@@ -1,5 +1,8 @@
 import datetime
 import logging
+import traceback
+import boto3
+import os
 from django.db import OperationalError, ProgrammingError
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -8,12 +11,14 @@ from django.utils import timezone
 from django.template.loader import render_to_string
 from datetime import datetime
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
-from apps.events.models import Event, EventDepartment, EventLink, EventTag, Department, Tag
+from apps.events.backup_script import backup_database
+from apps.events.models import BackupHistory, Event, EventDepartment, EventLink, EventTag, Department, Tag
+from project import settings
 from .forms import AdminEditEventForm
 from apps.shared.email_utils import send_sendgrid_email  # ADD THIS IMPORT
 
@@ -462,6 +467,96 @@ def admin_approval_view(request):
 
     return render(request, "events/admin_approval.html", {'applications': applications})
 
+def backup_history_view(request):
+    backups = BackupHistory.objects.all().order_by('-timestamp')
+
+    action = request.GET.get('action')
+    backup_id = request.GET.get('id')
+
+    if action and backup_id:
+        if action == "download":
+            return redirect('download_backup', id=backup_id)
+
+        elif action == "view-log":
+            backup = BackupHistory.objects.filter(BackupHistoryID=backup_id).first()
+            if backup and backup.log_file and os.path.exists(backup.log_file):
+                with open(backup.log_file, 'r') as f:
+                    return HttpResponse(
+                        f"<pre style='padding:1rem; background:#f4f4f4; border-radius:6px;'>{f.read()}</pre>"
+                    )
+            messages.error(request, "Log file not found.")
+            return redirect('backup_history')
+
+    if request.method == "POST" and "delete_id" in request.POST:
+        backup = BackupHistory.objects.filter(BackupHistoryID=request.POST["delete_id"]).first()
+        if backup:
+            backup.delete()
+            messages.success(request, "Backup deleted successfully.")
+        else:
+            messages.error(request, "Backup not found.")
+        return redirect('backup_history')
+
+    return render(request, 'events/backup_history.html', {"backups": backups})
+
+def backup_dashboard_view(request):
+    recent_jobs = BackupHistory.objects.order_by('-timestamp')[:3]
+    total_backups = BackupHistory.objects.count()
+    successful_backups = BackupHistory.objects.filter(
+        status='completed', 
+        timestamp__gte=timezone.now() - timezone.timedelta(days=1)
+    ).count()
+    failed_backups = BackupHistory.objects.filter(status='failed').count()
+
+    context = {
+        'recent_jobs': recent_jobs,
+        'total_backups': total_backups,
+        'successful_backups': successful_backups,
+        'failed_backups': failed_backups,
+        'alerts': []  # if you don’t yet have alert model
+    }
+    return render(request, 'events/backup_dashboard.html', context)
+
+# -----------------------------
+# Backup Actions
+# -----------------------------
+def run_backup(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+
+    try:
+        backup_database()
+        return JsonResponse({"status": "success", "message": "✅ Backup completed successfully!"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return JsonResponse({"status": "error", "message": str(e)})
+    
+
+def download_backup(request, id):
+    file_type = request.GET.get("file_type", "backup")  # default: backup
+    backup = get_object_or_404(BackupHistory, BackupHistoryID=id)
+
+    s3_key = getattr(backup, "backup_file" if file_type == "backup" else "log_file", None)
+    if not s3_key:
+        raise Http404(f"{file_type.capitalize()} file not available.")
+
+    s3_key = str(s3_key)  # ensure string
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_S3_REGION_NAME
+    )
+
+    presigned_url = s3_client.generate_presigned_url(
+        "get_object",
+        Params={
+            "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
+            "Key": s3_key
+        },
+        ExpiresIn=60
+    )
+
+    return HttpResponseRedirect(presigned_url)
 
 # -----------------------------
 # Approval/Reject Views - FIXED WITH SENDGRID WEB API

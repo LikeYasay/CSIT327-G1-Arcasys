@@ -185,11 +185,17 @@ footer {
 }
 
 /* --- ACTION LINKS --- */
-.actions a {
-  margin-right: 8px;
+.actions a,
+.actions button.delete {
+  margin-right: 10px;
   text-decoration: none;
   font-weight: 600;
   transition: 0.2s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
 }
 
 .actions .download {
@@ -255,4 +261,3 @@ footer {
 .tab:hover {
   text-decoration: none;
 }
-

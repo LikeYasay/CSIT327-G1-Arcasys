@@ -12,9 +12,9 @@
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab">Status</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:backup_dashboard' %}'">Status</button>
     <button class="tab">System Logs</button>
-    <button class="tab active">Backup History</button>
+    <button class="tab active" onclick="window.location.href='{% url 'events:backup_history' %}'">Backup History</button>
   </div>
 
   <!-- BACKUP HISTORY SECTION -->
@@ -49,71 +49,43 @@
             <th>Status</th>
             <th>Timestamp</th>
             <th>Size</th>
-            <th>Duration</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Database Backup</td>
-            <td><span class="status success">Completed</span></td>
-            <td>1/15/2025 2:30:00 PM</td>
-            <td>2.4 GB</td>
-            <td>5m 32s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
-          <tr>
-            <td>File System Backup</td>
-            <td><span class="status success">Completed</span></td>
-            <td>1/15/2025 12:00:00 PM</td>
-            <td>1.1 GB</td>
-            <td>3m 45s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Configuration Backup</td>
-            <td><span class="status failed">Failed</span></td>
-            <td>1/15/2025 1:45:00 PM</td>
-            <td>0 MB</td>
-            <td>0m 30s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Database Backup</td>
-            <td><span class="status success">Completed</span></td>
-            <td>1/14/2025 2:30:00 PM</td>
-            <td>2.3 GB</td>
-            <td>5m 15s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
-          <tr>
-            <td>File System Backup</td>
-            <td><span class="status success">Completed</span></td>
-            <td>1/14/2025 12:00:00 PM</td>
-            <td>1.0 GB</td>
-            <td>3m 20s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
+          {% if backups %}
+            {% for backup in backups %}
+              <tr>
+                <td>{{ backup.name }}</td>
+                <td>
+                  {% if backup.status == "completed" %}
+                    <span class="status success">Completed</span>
+                  {% else %}
+                    <span class="status failed">Failed</span>
+                  {% endif %}
+                </td>
+                <td>{{ backup.timestamp|date:"M d, Y h:i A" }}</td>
+                <td>{{ backup.size }}</td>
+                <td class="actions">
+                  {% if backup.backup_file %}
+                    <a href="{% url 'events:download_backup' backup.BackupHistoryID %}?file_type=backup" class="download">Download</a>
+                  {% endif %}
+                  {% if backup.log_file %}
+                    <a href="{% url 'events:download_backup' backup.BackupHistoryID %}?file_type=log" class="view">View Log</a>
+                  {% endif %}
+                  <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="delete_id" value="{{ backup.BackupHistoryID }}">
+                    <button type="submit" class="delete" onclick="return confirm('Delete this backup?')">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" style="text-align:center;">No backups found.</td>
+            </tr>
+          {% endif %}
         </tbody>
       </table>
     </div>

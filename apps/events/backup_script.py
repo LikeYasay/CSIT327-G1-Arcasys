@@ -66,11 +66,11 @@ def backup_database():
         if result.returncode != 0:
             log_line(log_output, f"Backup failed:\n{result.stderr}", level="ERROR")
             BackupHistory.objects.create(
-                name=backup_name,
-                status="failed",
-                size="0 MB",
-                backup_file=None,
-                log_file=None
+                BackupName=backup_name,
+                BackupStatus="failed",
+                BackupSize="0 MB",
+                BackupFile=None,
+                BackupLogFile=None
             )
             return
 
@@ -80,7 +80,7 @@ def backup_database():
         log_line(log_output, "Uploading backup file to cloud...")
         backup_s3_key = upload_backup_to_cloud(str(backup_path), log_output, folder="backups")
 
-        # Step 3: Save log locally (all log lines including backup upload)
+        # Step 3: Save log locally
         with open(log_path, "w") as f:
             f.write(log_output.getvalue())
 
@@ -90,11 +90,11 @@ def backup_database():
         # Step 5: Record backup in database
         status = "completed" if backup_s3_key and log_s3_key else "failed"
         BackupHistory.objects.create(
-            name=backup_name,
-            status=status,
-            size=f"{os.path.getsize(backup_path) / (1024*1024):.2f} MB",
-            backup_file=backup_s3_key,
-            log_file=log_s3_key
+            BackupName=backup_name,
+            BackupStatus=status,
+            BackupSize=f"{os.path.getsize(backup_path) / (1024*1024):.2f} MB",
+            BackupFile=backup_s3_key,
+            BackupLogFile=log_s3_key
         )
 
         log_line(log_output, "Backup record saved in the database.")
@@ -102,26 +102,25 @@ def backup_database():
     except Exception as e:
         log_line(log_output, f"An error occurred during backup: {str(e)}", level="ERROR")
         BackupHistory.objects.create(
-            name=backup_name,
-            status="failed",
-            size="0 MB",
-            backup_file=None,
-            log_file=None
+            BackupName=backup_name,
+            BackupStatus="failed",
+            BackupSize="0 MB",
+            BackupFile=None,
+            BackupLogFile=None
         )
 
     finally:
-        # Step 6: Cleanup local temporary files
+        # Step 6: Cleanup temporary files
         if backup_path.exists():
             backup_path.unlink()
         if log_path.exists():
             log_path.unlink()
 
-        # Step 7: Final log to console
+        # Step 7: Final log output
         print(log_output.getvalue())
 
 
 if __name__ == "__main__":
     backup_database()
-
 
 

@@ -13,6 +13,8 @@ urlpatterns = [
     path('admin-approval/reject/<uuid:user_id>/', views.reject_application, name='reject_application'),
     path('backup-history/', views.backup_history_view, name='backup_history'),
     path("backup-dashboard/", views.backup_dashboard_view, name="backup_dashboard"),
+    path('restore/', views.restore_operations_view, name='restore_operations'),
     path("run-backup/", views.run_backup, name="run_backup"),
     path("download-backup/<uuid:id>/", views.download_backup, name="download_backup"),
+    path('view-log/<uuid:backup_id>/', views.view_log, name='view_log'),
 ]

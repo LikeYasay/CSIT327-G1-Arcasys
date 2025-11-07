@@ -12,9 +12,9 @@
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab active">Status</button>
-    <button class="tab">System Logs</button>
-    <button class="tab" onclick="window.location.href='{% url 'events:backup_history' %}'">Backup History</button>
+    <button class="tab active" onclick="window.location.href='{% url 'events:backup_dashboard' %}'">Status</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:backup_history' %}'">History</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:restore_operations' %}'">Restore</button>
   </div>
 
   <!-- SUMMARY CARDS -->
@@ -56,18 +56,18 @@
         <tbody>
           {% for job in recent_jobs %}
           <tr>
-            <td>{{ job.name }}</td>
+            <td>{{ job.BackupName }}</td>
             <td>
-              {% if job.status == "completed" %}
+              {% if job.BackupStatus == "completed" %}
                 <span class="badge green">Completed</span>
-              {% elif job.status == "failed" %}
+              {% elif job.BackupStatus == "failed" %}
                 <span class="badge red">Failed</span>
               {% else %}
-                <span class="badge gray">{{ job.status }}</span>
+                <span class="badge gray">{{ job.BackupStatus }}</span>
               {% endif %}
             </td>
-            <td>{{ job.timestamp|date:"Y-m-d H:i:s" }}</td>
-            <td>{{ job.size|default:"N/A" }}</td>
+            <td>{{ job.BackupTimestamp|date:"Y-m-d H:i:s" }}</td>
+            <td>{{ job.BackupSize|default:"N/A" }}</td>
           </tr>
           {% endfor %}
         </tbody>

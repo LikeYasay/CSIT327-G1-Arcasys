@@ -12,9 +12,10 @@
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab">Status</button>
-    <button class="tab active">System Logs</button>
-    <button class="tab">Backup History</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:backup_dashboard' %}'">Status</button>
+    <button class="tab active" onclick="window.location.href='{% url 'events:system_log' %}'">System Logs</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:backup_history' %}'">History</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:restore_operations' %}'">Restore</button>
   </div>
 
   <!-- SYSTEM LOGS SECTION -->

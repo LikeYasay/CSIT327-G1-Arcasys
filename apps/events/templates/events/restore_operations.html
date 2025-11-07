@@ -8,88 +8,88 @@
 {% endblock %}
 
 {% block content %}
-<div class="backup-page">
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <ul class="sidebar-menu">
-        <li>Backup Schedules</li>
-        <li>Storage Settings</li>
-        <li class="active">Restore Operations</li>
-    </ul>
+<meta name="csrf-token" content="{{ csrf_token }}">
 
-    <div class="system-status">
-      <h3>System Status</h3>
-      <p><strong>Last Backup:</strong> <span class="status success">Success</span></p>
-      <p><strong>Storage Used:</strong> 1.6 TB / 3.5 TB</p>
-      <p><strong>Active Jobs:</strong> 3</p>
-    </div>
-  </aside>
+<div class="dashboard-container">
+  <div class="tabs">
+    <button class="tab" onclick="window.location.href='{% url 'events:backup_dashboard' %}'">Status</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:backup_history' %}'">History</button>
+    <button class="tab active" onclick="window.location.href='{% url 'events:restore_operations' %}'">Restore</button>
+  </div>
 
-  <!-- MAIN CONTENT -->
   <section class="backup-content">
     <div class="backup-header">
       <div>
-        <h1>Restore Operations</h1>
+        <h3>Restore Operations</h3>
         <p>Monitor and manage data restoration processes</p>
       </div>
-      <button class="start-btn">Start Restore</button>
     </div>
 
-    <!-- Database Restore -->
-    <div class="restore-card">
+    <!-- Active Restore Card -->
+    <div id="restoreCard" class="restore-card hidden">
       <div class="restore-header">
-        <h2>Database Restore – Jan 14</h2>
+        <h2 id="restoreTitle">Database Restoration</h2>
         <a href="#" class="details-link">View Details</a>
       </div>
-      <div class="status-badge yellow">In Progress</div>
-      <p class="progress-label">Progress: 65%</p>
-      <div class="progress-bar">
-        <div class="progress-fill yellow" style="width: 65%;"></div>
-      </div>
-      <div class="restore-info">
-        <p><strong>Start Time:</strong> 2025-01-15 14:30</p>
-        <p><strong>Estimated Completion:</strong> 2025-01-15 15:45</p>
-      </div>
-    </div>
-
-    <!-- File System Restore -->
-    <div class="restore-card">
-      <div class="restore-header">
-        <h2>File System Restore</h2>
-        <a href="#" class="details-link">View Details</a>
-      </div>
-      <div class="status-badge green">Completed</div>
-      <p class="progress-label">Progress: 100%</p>
-      <div class="progress-bar">
-        <div class="progress-fill green" style="width: 100%;"></div>
-      </div>
-      <div class="restore-info">
-        <p><strong>Start Time:</strong> 2025-01-15 10:00</p>
-        <p><strong>Estimated Completion:</strong> 2025-01-15 11:30</p>
+      
+      <div class="restore-content">
+        <div class="status-section">
+          <div class="status-header">
+            <div id="statusBadge" class="status-badge yellow">In Progress</div>
+            <p id="progressLabel" class="progress-label">Progress: 0%</p>
+          </div>
+          <div class="progress-bar">
+            <div id="progressFill" class="progress-fill yellow" style="width: 0%;"></div>
+          </div>
+          <p id="restoreMessage" class="restore-message">Starting restoration...</p>
+        </div>
+        
+        <div class="time-info">
+          <div class="time-item">
+            <span class="time-label">Start Time:</span>
+            <span id="startTime" class="time-value">{{ current_time|date:"Y-m-d H:i" }}</span>
+          </div>
+          <div class="time-item">
+            <span class="time-label">Completion Time:</span>
+            <span id="estimatedCompletion" class="time-value">--:--</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Available Backups -->
     <div class="available-section">
-      <h2>Available Backups for Restore</h2>
+      <h2>Available Backups for Restoration</h2>
       <div class="available-grid">
+        {% for backup in page_obj %}
         <div class="available-card">
           <div>
-            <h3>Database Backup</h3>
-            <p>2025-01-15 02:00 – 2.4 GB</p>
+            <h3>{{ backup.BackupName }}</h3>
+            <p>{{ backup.BackupTimestamp|date:"Y-m-d H:i" }} — {{ backup.BackupSize }}</p>
           </div>
-          <a href="#" class="restore-link">Restore</a>
+          <button class="restore-link" onclick="startRestore('{{ backup.BackupHistoryID }}')">Restore</button>
         </div>
-
-        <div class="available-card">
-          <div>
-            <h3>Full System Backup</h3>
-            <p>2025-01-14 01:00 – 15.2 GB</p>
-          </div>
-          <a href="#" class="restore-link">Restore</a>
-        </div>
+        {% empty %}
+        <p>No backups available for restoration.</p>
+        {% endfor %}
       </div>
     </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a class="page-btn prev" href="?page={{ page_obj.previous_page_number }}">← Previous</a>
+      {% else %}
+        <span class="page-btn prev disabled">← Previous</span>
+      {% endif %}
+
+      {% if page_obj.has_next %}
+        <a class="page-btn next" href="?page={{ page_obj.next_page_number }}">Next →</a>
+      {% else %}
+        <span class="page-btn next disabled">Next →</span>
+      {% endif %}
+    </div>
+
   </section>
 </div>
 {% endblock %}

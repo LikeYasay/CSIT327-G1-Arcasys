@@ -114,8 +114,22 @@
   </section>
 </div>
 
+<!-- Backup Progress Modal -->
+<div id="backupModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeBackupModal()" style="display:none;">&times;</span>
+    <div id="modalIcon" class="modal-icon loading">
+      <div class="spinner"></div>
+    </div>
+    <h2 id="modalTitle" class="modal-title">Running Backup</h2>
+    <p id="modalMessage" class="modal-message">Please wait while the backup is in progress...</p>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+</div>
+
 <script>
-// CSRF helper
 function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== "") {
@@ -131,17 +145,97 @@ function getCookie(name) {
   return cookieValue;
 }
 
+function showBackupModal() {
+  const modal = document.getElementById("backupModal");
+  modal.classList.add("show");
+  document.body.style.overflow = "hidden";
+  
+  // Reset to loading state
+  document.getElementById("modalIcon").className = "modal-icon loading";
+  document.getElementById("modalIcon").innerHTML = '<div class="spinner"></div>';
+  document.getElementById("modalTitle").textContent = "Running Backup";
+  document.getElementById("modalMessage").textContent = "Please wait while the backup is in progress...";
+  document.querySelector(".progress-bar").style.display = "block";
+  document.querySelector(".modal-close").style.display = "none";
+}
+
+function showBackupResult(success, data) {
+  const modalIcon = document.getElementById("modalIcon");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalMessage = document.getElementById("modalMessage");
+  const progressBar = document.querySelector(".progress-bar");
+  const closeBtn = document.querySelector(".modal-close");
+  
+  // Hide progress bar
+  progressBar.style.display = "none";
+  closeBtn.style.display = "flex";
+  
+  if (success) {
+    // Success state
+    modalIcon.className = "modal-icon success";
+    modalIcon.innerHTML = "✓";
+    modalTitle.textContent = "Backup Completed";
+    modalMessage.textContent = data.message || "Your backup has been created successfully.";
+  } else {
+    // Error state
+    modalIcon.className = "modal-icon error";
+    modalIcon.innerHTML = "✕";
+    modalTitle.textContent = "Backup Failed";
+    modalMessage.textContent = data.message || "An error occurred while creating the backup.";
+  }
+}
+
+function closeBackupModal() {
+  const modal = document.getElementById("backupModal");
+  modal.classList.remove("show");
+  document.body.style.overflow = "auto";
+  location.reload();
+}
+
 function runBackup() {
-  if (!confirm("Run backup now?")) return;
+  showBackupModal();
 
   fetch("/events/run-backup/", {
     method: "POST",
     headers: { "X-CSRFToken": getCookie("csrftoken") },
   })
-  .then(response => response.json())
-  .then(data => alert(data.message))
-  .catch(err => alert("❌ Error running backup: " + err));
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.status === "success") {
+      showBackupResult(true, data);
+    } else {
+      showBackupResult(false, data);
+    }
+  })
+  .catch(err => {
+    console.error("Error:", err);
+    showBackupResult(false, { message: err.message });
+  });
 }
+
+// Close modal when clicking outside (only if backup is complete and will refresh)
+window.onclick = function(event) {
+  const modal = document.getElementById("backupModal");
+  if (event.target == modal) {
+    // Only allow closing if backup is complete (close button is visible)
+    if (document.querySelector(".modal-close").style.display === "flex") {
+      closeBackupModal();
+    }
+  }
+};
+
+// Close modal with Escape key (only if backup is complete and will refresh)
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    if (document.querySelector(".modal-close").style.display === "flex") {
+      closeBackupModal();
+    }
+  }
+});
 </script>
 {% endblock %}
-

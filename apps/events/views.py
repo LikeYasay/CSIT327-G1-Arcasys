@@ -475,6 +475,12 @@ def admin_approval_view(request):
 def backup_history_view(request):
     backups = BackupHistory.objects.all().order_by('-BackupTimestamp')
 
+    # Pagination -----
+    paginator = Paginator(backups, 10)  # Show 10 backups per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Actions -----
     action = request.GET.get('action')
     backup_id = request.GET.get('id')
 
@@ -492,10 +498,10 @@ def backup_history_view(request):
             messages.error(request, "Log file not found.")
             return redirect('backup_history')
 
+    # Delete Backup -----
     if request.method == "POST" and "delete_id" in request.POST:
         backup = BackupHistory.objects.filter(BackupHistoryID=request.POST["delete_id"]).first()
         if backup:
-            # Delete associated files
             if backup.BackupFile:
                 backup.BackupFile.delete()
             if backup.BackupLogFile:
@@ -506,8 +512,11 @@ def backup_history_view(request):
             messages.error(request, "Backup not found.")
         return redirect('events:backup_history')
 
-    return render(request, 'events/backup_history.html', {"backups": backups})
+    return render(request, 'events/backup_history.html', {
+        "backups": page_obj
+    })
 
+@login_required
 def backup_dashboard_view(request):
     recent_jobs = BackupHistory.objects.order_by('-BackupTimestamp')[:3]
     total_backups = BackupHistory.objects.count()
@@ -526,6 +535,7 @@ def backup_dashboard_view(request):
     }
     return render(request, 'events/backup_dashboard.html', context)
 
+@login_required
 def restore_operations_view(request):
     """Display restore operations page"""
     backups = BackupHistory.objects.filter(BackupStatus='completed').order_by('-BackupTimestamp')
@@ -535,7 +545,7 @@ def restore_operations_view(request):
     page_obj = paginator.get_page(page_number)
 
     context = {
-        'page_obj': page_obj,
+        'backups': page_obj,  
     }
     
     return render(request, 'events/restore_operations.html', context)
@@ -549,7 +559,7 @@ def run_backup(request):
 
     try:
         backup_database()
-        return JsonResponse({"status": "success", "message": "✅ Backup completed successfully!"})
+        return JsonResponse({"status": "success", "message": "Backup completed successfully!"})
     except Exception as e:
         print(traceback.format_exc())
         return JsonResponse({"status": "error", "message": str(e)})

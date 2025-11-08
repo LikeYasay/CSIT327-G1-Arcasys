@@ -90,10 +90,23 @@
       </table>
     </div>
 
-    <!-- PAGINATION -->
+    <!-- Pagination -->
     <div class="pagination">
-      <button class="btn-gray">← Previous</button>
-      <button class="btn-maroon">Next →</button>
+      {% if backups.has_previous %}
+        <div class="page-btn prev">
+          <a href="?page={{ backups.previous_page_number }}">← Previous</a>
+        </div>
+      {% endif %}
+
+      <span class="current-page">
+        Page {{ backups.number }} of {{ backups.paginator.num_pages }}
+      </span>
+
+      {% if backups.has_next %}
+        <div class="page-btn next">
+          <a href="?page={{ backups.next_page_number }}">Next →</a>
+        </div>
+      {% endif %}
     </div>
   </section>
 </div>

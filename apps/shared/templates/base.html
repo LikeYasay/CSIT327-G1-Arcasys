@@ -39,7 +39,12 @@
                 {% if user.isUserAdmin or user.is_superuser %}
                   <!-- ADMIN NAVBAR -->
                   <li><a href="{% url 'events:admin_approval' %}">Approve Accounts</a></li>
-                  <li><a href="{% url 'events:backup_dashboard' %}">Backup Management</a></li>
+                  <li>
+                    <a href="{% url 'events:backup_dashboard' %}" class="{% if nav_active == 'backup_management' %}active{% endif %}">
+                      Backup Management
+                    </a>
+                  </li>
+                  </li>
                   <li><a href="{% url 'events:events' %}">Events</a></li> <!-- FIXED -->
                 {% elif user.isUserStaff %}
                   <!-- STAFF NAVBAR -->

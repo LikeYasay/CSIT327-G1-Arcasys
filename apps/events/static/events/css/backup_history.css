@@ -90,7 +90,9 @@ footer {
   border-radius: 8px;
   padding: 10px 22px;
   font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
+  text-decoration: none;
   transition: all 0.3s ease;
 }
 
@@ -100,14 +102,14 @@ footer {
 }
 
 /* --- FILTERS --- */
-.filters {
+.filters form {
   display: flex;
   gap: 10px;
   margin-bottom: 25px;
 }
 
-.filters input,
-.filters select {
+.filters input {
+  flex: 1; 
   border: none;
   background: #f4f4f4;
   padding: 10px 15px;
@@ -117,24 +119,31 @@ footer {
   transition: background-color 0.3s ease;
 }
 
+.filters select,
+.filters button:not(.btn-green) {
+  flex: 0 0 auto; 
+  border: none;
+  background: #f4f4f4;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
 .filters select {
   appearance: none;
-  background-color: #f4f4f4;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 3l3 4 3-4' stroke='black' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 10px;
   padding-right: 32px;
-  cursor: pointer;
 }
 
 .filters input:hover,
-.filters select:hover {
+.filters select:hover,
+.filters button:not(.btn-green):hover {
   background-color: #e9e9e9;
-}
-
-.filters input {
-  flex: 1;
 }
 
 /* --- TABLE --- */

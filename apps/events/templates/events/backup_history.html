@@ -21,23 +21,25 @@
   <section class="backup-history">
     <div class="section-header">
       <h3>Backup History</h3>
-      <button class="btn-green">Export to CSV</button>
+      <a href="?{{ request.GET.urlencode }}{% if request.GET.urlencode %}&{% endif %}export=1" class="btn-green">
+        Export to CSV
+      </a>
     </div>
 
     <!-- FILTER BAR -->
     <div class="filters">
-      <input type="text" placeholder="Search backups...">
-      <select>
-        <option>All Status</option>
-        <option>Completed</option>
-        <option>Failed</option>
-      </select>
-      <select>
-        <option>All Types</option>
-        <option>Database</option>
-        <option>File System</option>
-        <option>Configuration</option>
-      </select>
+      <form method="get" id="filterForm">
+        <input type="text" name="q" placeholder="Search backups..." value="{{ search_query }}">
+        
+        <select name="status">
+          <option value="">All Status</option>
+          <option value="completed" {% if status_filter == "completed" %}selected{% endif %}>Completed</option>
+          <option value="failed" {% if status_filter == "failed" %}selected{% endif %}>Failed</option>
+        </select>
+
+        <!-- Optional: keep a visible submit button -->
+        <button type="submit" class="btn-green">Filter</button>
+      </form>
     </div>
 
     <!-- BACKUP TABLE -->
@@ -92,17 +94,19 @@
 
     <!-- Pagination -->
     <div class="pagination">
-      {% if backups.has_previous %}
-        <a class="page-btn prev" href="?page={{ backups.previous_page_number }}">← Previous</a>
-      {% endif %}
+      {% with request.GET.urlencode as query_params %}
+        {% if backups.has_previous %}
+          <a class="page-btn prev" href="?page={{ backups.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">← Previous</a>
+        {% endif %}
 
-      <span class="current-page">
-        Page {{ backups.number }} of {{ backups.paginator.num_pages }}
-      </span>
+        <span class="current-page">
+          Page {{ backups.number }} of {{ backups.paginator.num_pages }}
+        </span>
 
-      {% if backups.has_next %}
-        <a class="page-btn next" href="?page={{ backups.next_page_number }}">Next →</a>
-      {% endif %}
+        {% if backups.has_next %}
+          <a class="page-btn next" href="?page={{ backups.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">Next →</a>
+        {% endif %}
+      {% endwith %}
     </div>
   </section>
 </div>

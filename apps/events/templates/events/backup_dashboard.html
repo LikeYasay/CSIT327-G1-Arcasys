@@ -102,10 +102,10 @@
           <p>{{ alert.Message }}</p>
           <small>Backup: {{ alert.RelatedBackup.BackupName|default:"N/A" }}</small>
         </div>
-        <div class="alert-actions">
+        <!-- <div class="alert-actions">
           <a class="view">View</a>
           <a class="resolve">Resolve</a>
-        </div>
+        </div> -->
       </div>
       {% endfor %}
     {% else %}

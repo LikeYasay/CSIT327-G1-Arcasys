@@ -518,7 +518,7 @@ def backup_history_view(request):
 
 @login_required
 def backup_dashboard_view(request):
-    recent_jobs = BackupHistory.objects.order_by('-BackupTimestamp')[:3]
+    recent_jobs = BackupHistory.objects.order_by('-BackupTimestamp')[:5]
     total_backups = BackupHistory.objects.count()
     successful_backups = BackupHistory.objects.filter(
         BackupStatus='completed', 
@@ -526,12 +526,24 @@ def backup_dashboard_view(request):
     ).count()
     failed_backups = BackupHistory.objects.filter(BackupStatus='failed').count()
 
+    # Generate alerts based on failed or recent backups
+    alerts = []
+    failed_jobs = BackupHistory.objects.filter(BackupStatus='failed').order_by('-BackupTimestamp')[:5]
+
+    for job in failed_jobs:
+        alerts.append({
+            'Level': 'Critical',  # you can customize based on logic
+            'Message': f"Backup '{job.BackupName}' failed.",
+            'CreatedAt': job.BackupTimestamp,
+            'RelatedBackup': job
+        })
+
     context = {
         'recent_jobs': recent_jobs,
         'total_backups': total_backups,
         'successful_backups': successful_backups,
         'failed_backups': failed_backups,
-        'alerts': []  # if you don't yet have alert model
+        'alerts': alerts
     }
     return render(request, 'events/backup_dashboard.html', context)
 

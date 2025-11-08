@@ -216,39 +216,43 @@ footer {
 
 /* --- PAGINATION --- */
 .pagination {
+  margin-top: 30px;
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
-  gap: 10px;
+  align-items: center;
+  gap: 15px;
 }
 
-.btn-gray {
-  background: #f4f4f4;
-  border: none;
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 14px;
   border-radius: 8px;
   padding: 8px 16px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-decoration: none; 
 }
 
-.btn-gray:hover {
-  background: #e0e0e0;
+.page-btn.prev {
+  background: #F3F3F3;
+  color: #111; 
 }
 
-.btn-maroon {
+.page-btn.next {
   background: #8A252C;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  color: #fff; 
 }
 
-.btn-maroon:hover {
-  background: #6e1e23;
+.page-btn:hover {
+  opacity: 0.85;
+}
+
+.current-page {
+  color: #444;
+  font-weight: 500;
+  font-size: 12px;
 }
 
 .tab {

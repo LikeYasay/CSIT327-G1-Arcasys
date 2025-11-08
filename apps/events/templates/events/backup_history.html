@@ -93,9 +93,7 @@
     <!-- Pagination -->
     <div class="pagination">
       {% if backups.has_previous %}
-        <div class="page-btn prev">
-          <a href="?page={{ backups.previous_page_number }}">← Previous</a>
-        </div>
+        <a class="page-btn prev" href="?page={{ backups.previous_page_number }}">← Previous</a>
       {% endif %}
 
       <span class="current-page">
@@ -103,9 +101,7 @@
       </span>
 
       {% if backups.has_next %}
-        <div class="page-btn next">
-          <a href="?page={{ backups.next_page_number }}">Next →</a>
-        </div>
+        <a class="page-btn next" href="?page={{ backups.next_page_number }}">Next →</a>
       {% endif %}
     </div>
   </section>

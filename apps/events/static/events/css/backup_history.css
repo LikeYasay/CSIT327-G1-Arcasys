@@ -216,15 +216,19 @@ footer {
 
 /* --- PAGINATION --- */
 .pagination {
+  margin-top: 30px;
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
-  gap: 10px;
+  align-items: center;
+  gap: 15px;
 }
 
-.btn-gray {
-  background: #f4f4f4;
-  border: none;
+.page-btn a {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
   border-radius: 8px;
   padding: 8px 16px;
   font-weight: 600;
@@ -232,34 +236,25 @@ footer {
   transition: all 0.3s ease;
 }
 
-.btn-gray:hover {
-  background: #e0e0e0;
+.page-btn.prev a {
+  background: #ddd;
+  color: #333;
 }
 
-.btn-maroon {
+.page-btn.next a {
   background: #8A252C;
   color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-.btn-maroon:hover {
-  background: #6e1e23;
-}
-
-.tab {
+.pagination a:hover {
   text-decoration: none;
-  color: inherit;
-  display: inline-block;
-  text-align: center;
+  opacity: 0.9;
 }
 
-.tab:hover {
-  text-decoration: none;
+.current-page {
+  color: #444;
+  font-weight: 500;
+  font-size: 12px;
 }
 
 /* Log Modal Styles */

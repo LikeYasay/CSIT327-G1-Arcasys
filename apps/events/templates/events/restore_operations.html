@@ -61,7 +61,7 @@
     <div class="available-section">
       <h2>Available Backups for Restoration</h2>
       <div class="available-grid">
-        {% for backup in page_obj %}
+        {% for backup in backups %}
         <div class="available-card">
           <div>
             <h3>{{ backup.BackupName }}</h3>
@@ -77,19 +77,22 @@
 
     <!-- Pagination -->
     <div class="pagination">
-      {% if page_obj.has_previous %}
-        <a class="page-btn prev" href="?page={{ page_obj.previous_page_number }}">← Previous</a>
-      {% else %}
-        <span class="page-btn prev disabled">← Previous</span>
+      {% if backups.has_previous %}
+        <div class="page-btn prev">
+          <a href="?page={{ backups.previous_page_number }}">← Previous</a>
+        </div>
       {% endif %}
 
-      {% if page_obj.has_next %}
-        <a class="page-btn next" href="?page={{ page_obj.next_page_number }}">Next →</a>
-      {% else %}
-        <span class="page-btn next disabled">Next →</span>
+      <span class="current-page">
+        Page {{ backups.number }} of {{ backups.paginator.num_pages }}
+      </span>
+
+      {% if backups.has_next %}
+        <div class="page-btn next">
+          <a href="?page={{ backups.next_page_number }}">Next →</a>
+        </div>
       {% endif %}
     </div>
-
   </section>
 </div>
 {% endblock %}

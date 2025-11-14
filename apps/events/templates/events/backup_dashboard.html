@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Backup Dashboard | Marketing Archive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/backup_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="window.location.href='{% url 'events:backup_dashboard' %}'">Status</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:backup_history' %}'">History</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:restore_operations' %}'">Restore</button>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-section">
+    <div class="summary-card">
+      <h2 class="count maroon">{{ total_backups }}</h2>
+      <p class="label">Total Backups</p>
+      <span>Recent backup jobs</span>
+    </div>
+    <div class="summary-card">
+      <h2 class="count green">{{ successful_backups }}</h2>
+      <p class="label">Successful</p>
+      <span>Last 24 hours</span>
+    </div>
+    <div class="summary-card">
+      <h2 class="count red">{{ failed_backups }}</h2>
+      <p class="label">Failed</p>
+      <span>Requires attention</span>
+    </div>
+  </div>
+
+  <!-- RECENT BACKUP JOBS -->
+  <section class="recent-jobs">
+    <div class="section-header">
+      <h3>Recent Backup Jobs</h3>
+      <button class="btn-yellow" onclick="runBackup()">Run New Backup</button>
+    </div>
+
+    {% if recent_jobs %}
+      <table class="job-table">
+        <thead>
+          <tr>
+            <th>Backup Name</th>
+            <th>Status</th>
+            <th>Last Run</th>
+            <th>Size</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in recent_jobs %}
+          <tr>
+            <td>{{ job.BackupName }}</td>
+            <td>
+              {% if job.BackupStatus == "completed" %}
+                <span class="badge green">Completed</span>
+              {% elif job.BackupStatus == "failed" %}
+                <span class="badge red">Failed</span>
+              {% else %}
+                <span class="badge gray">{{ job.BackupStatus }}</span>
+              {% endif %}
+            </td>
+            <td>{{ job.BackupTimestamp|date:"Y-m-d H:i:s" }}</td>
+            <td>{{ job.BackupSize|default:"N/A" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="view-all-container">
+        <a href="{% url 'events:backup_history' %}" class="view-all">View All</a>
+      </div>
+    {% else %}
+      <p>No recent backup jobs found.</p>
+    {% endif %}
+  </section>
+
+  <!-- ERRORS & ALERTS -->
+  <section class="alerts">
+    <div class="section-header">
+      <h3>Recent Errors & Alerts</h3>
+      <a href="#" class="view-all">View All</a>
+    </div>
+
+    {% if alerts %}
+      {% for alert in alerts %}
+      <div class="alert-card">
+        <div class="dot 
+          {% if alert.Level == 'Critical' %}maroon
+          {% elif alert.Level == 'Warning' %}yellow
+          {% elif alert.Level == 'Error' %}orange
+          {% else %}gray{% endif %}">
+        </div>
+        <div class="alert-info">
+          <h4>{{ alert.Level }}</h4>
+          <p class="time">{{ alert.CreatedAt|date:"Y-m-d H:i:s" }}</p>
+          <p>{{ alert.Message }}</p>
+          <small>Backup: {{ alert.RelatedBackup.BackupName|default:"N/A" }}</small>
+        </div>
+        <!-- <div class="alert-actions">
+          <a class="view">View</a>
+          <a class="resolve">Resolve</a>
+        </div> -->
+      </div>
+      {% endfor %}
+    {% else %}
+      <p>No recent alerts found.</p>
+    {% endif %}
+  </section>
+</div>
+
+<!-- Backup Progress Modal -->
+<div id="backupModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeBackupModal()" style="display:none;">&times;</span>
+    <div id="modalIcon" class="modal-icon loading">
+      <div class="spinner"></div>
+    </div>
+    <h2 id="modalTitle" class="modal-title">Running Backup</h2>
+    <p id="modalMessage" class="modal-message">Please wait while the backup is in progress...</p>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function showBackupModal() {
+  const modal = document.getElementById("backupModal");
+  modal.classList.add("show");
+  document.body.style.overflow = "hidden";
+  
+  // Reset to loading state
+  document.getElementById("modalIcon").className = "modal-icon loading";
+  document.getElementById("modalIcon").innerHTML = '<div class="spinner"></div>';
+  document.getElementById("modalTitle").textContent = "Running Backup";
+  document.getElementById("modalMessage").textContent = "Please wait while the backup is in progress...";
+  document.querySelector(".progress-bar").style.display = "block";
+  document.querySelector(".modal-close").style.display = "none";
+}
+
+function showBackupResult(success, data) {
+  const modalIcon = document.getElementById("modalIcon");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalMessage = document.getElementById("modalMessage");
+  const progressBar = document.querySelector(".progress-bar");
+  const closeBtn = document.querySelector(".modal-close");
+  
+  // Hide progress bar
+  progressBar.style.display = "none";
+  closeBtn.style.display = "flex";
+  
+  if (success) {
+    // Success state
+    modalIcon.className = "modal-icon success";
+    modalIcon.innerHTML = "✓";
+    modalTitle.textContent = "Backup Completed";
+    modalMessage.textContent = data.message || "Your backup has been created successfully.";
+  } else {
+    // Error state
+    modalIcon.className = "modal-icon error";
+    modalIcon.innerHTML = "✕";
+    modalTitle.textContent = "Backup Failed";
+    modalMessage.textContent = data.message || "An error occurred while creating the backup.";
+  }
+}
+
+function closeBackupModal() {
+  const modal = document.getElementById("backupModal");
+  modal.classList.remove("show");
+  document.body.style.overflow = "auto";
+  location.reload();
+}
+
+function runBackup() {
+  showBackupModal();
+
+  fetch("/events/run-backup/", {
+    method: "POST",
+    headers: { "X-CSRFToken": getCookie("csrftoken") },
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.status === "success") {
+      showBackupResult(true, data);
+    } else {
+      showBackupResult(false, data);
+    }
+  })
+  .catch(err => {
+    console.error("Error:", err);
+    showBackupResult(false, { message: err.message });
+  });
+}
+
+// Close modal when clicking outside (only if backup is complete and will refresh)
+window.onclick = function(event) {
+  const modal = document.getElementById("backupModal");
+  if (event.target == modal) {
+    // Only allow closing if backup is complete (close button is visible)
+    if (document.querySelector(".modal-close").style.display === "flex") {
+      closeBackupModal();
+    }
+  }
+};
+
+// Close modal with Escape key (only if backup is complete and will refresh)
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    if (document.querySelector(".modal-close").style.display === "flex") {
+      closeBackupModal();
+    }
+  }
+});
+</script>
+{% endblock %}

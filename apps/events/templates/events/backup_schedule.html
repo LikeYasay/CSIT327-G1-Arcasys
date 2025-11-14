@@ -13,6 +13,7 @@
   <aside class="sidebar">
     <ul class="sidebar-menu">
       <li class="active">Backup Schedules</li>
+      <li onclick="window.location.href='{% url 'events:backup_history' %}'">Backup History</li>
       <li>Storage Settings</li>
       <li>Restore Operations</li>
     </ul>
@@ -20,7 +21,6 @@
     <div class="system-status">
       <h3>System Status</h3>
       <p><strong>Last Backup:</strong> <span class="status success">Success</span></p>
-      <p><strong>Storage Used:</strong> 1.6 TB / 3.5 TB</p>
       <p><strong>Active Jobs:</strong> 3</p>
     </div>
   </aside>
@@ -32,72 +32,203 @@
         <h1>Backup Schedules</h1>
         <p>Manage automated backup schedules and configurations</p>
       </div>
-      <button class="add-btn">Add Schedule</button>
+      <div class="backup-actions">
+        <button class="run-btn" onclick="runBackup()">Run Backup Now</button>
+        <button class="add-btn">Add Schedule</button>
+      </div>
     </div>
 
     <!-- Schedule Cards -->
-    <div class="schedule-card">
-      <div class="schedule-card-header">
-        <h2 class="schedule-title">
-          Daily Database Backup
-          <span class="status-badge active">Active</span>
-        </h2>
-        <div class="actions">
-          <a href="#" class="disable">Disable</a>
-          <a href="#" class="edit">Edit</a>
-          <a href="#" class="delete">Delete</a>
+    {% if schedules %}
+      {% for schedule in schedules %}
+        <div class="schedule-card">
+          <div class="schedule-card-header">
+            <h2 class="schedule-title">
+              {{ schedule.name }}
+              {% if schedule.active %}
+                <span class="status-badge active">Active</span>
+              {% else %}
+                <span class="status-badge inactive">Inactive</span>
+              {% endif %}
+            </h2>
+            <div class="actions">
+              {% if schedule.active %}
+                <a href="{% url 'events:disable_schedule' schedule.BackupScheduleID %}" class="disable">Disable</a>
+              {% else %}
+                <a href="{% url 'events:enable_schedule' schedule.BackupScheduleID %}" class="enable">Enable</a>
+              {% endif %}
+              <a href="{% url 'events:edit_schedule' schedule.BackupScheduleID %}" class="edit">Edit</a>
+              <a href="{% url 'events:delete_schedule' schedule.BackupScheduleID %}" class="delete">Delete</a>
+            </div>
+          </div>
+
+          <p class="schedule-time">{{ schedule.frequency }} at {{ schedule.time }}</p>
+          <div class="schedule-info"> 
+            <p><strong>Last Run:</strong> 
+              {% if history.schedule.BackupScheduleID %}
+                {{ history.schedule.BackupScheduleID.timestamp|date:"Y-m-d H:i" }}
+              {% else %}
+                N/A
+              {% endif %}
+            </p>
+            <p><strong>Next Run:</strong> 
+              {% if schedule.get_next_run %}
+                {{ schedule.get_next_run|date:"Y-m-d H:i" }}
+              {% else %}
+                N/A
+              {% endif %}
+            </p>
+            <p><strong>Backup Size:</strong> 
+              {% if history.schedule.BackupScheduleID %}
+                {{ history.schedule.BackupScheduleID.backup_size }}
+              {% else %}
+                N/A
+              {% endif %}
+            </p>
+          </div>
         </div>
-      </div>
-
-      <p class="schedule-time">Daily at 02:00 AM</p>
-      <div class="schedule-info">
-        <p><strong>Last Run:</strong> 2025-01-15 02:00</p>
-        <p><strong>Next Run:</strong> 2025-01-16 02:00</p>
-        <p><strong>Backup Size:</strong> 2.4 GB</p>
-      </div>
-    </div>
-
-    <div class="schedule-card">
-      <div class="schedule-card-header">
-        <h2 class="schedule-title">
-          Weekly Full System Backup
-          <span class="status-badge active">Active</span>
-        </h2>
-        <div class="actions">
-          <a href="#" class="disable">Disable</a>
-          <a href="#" class="edit">Edit</a>
-          <a href="#" class="delete">Delete</a>
-        </div>
-      </div>
-
-      <p class="schedule-time">Weekly at Sunday 01:00 AM</p>
-      <div class="schedule-info">
-        <p><strong>Last Run:</strong> 2025-01-14 01:00</p>
-        <p><strong>Next Run:</strong> 2025-01-21 01:00</p>
-        <p><strong>Backup Size:</strong> 15.2 GB</p>
-      </div>
-    </div>
-
-    <div class="schedule-card">
-      <div class="schedule-card-header">
-        <h2 class="schedule-title">
-          Monthly Archive Backup
-          <span class="status-badge inactive">Inactive</span>
-        </h2>
-        <div class="actions">
-          <a href="#" class="enable">Enable</a>
-          <a href="#" class="edit">Edit</a>
-          <a href="#" class="delete">Delete</a>
-        </div>
-      </div>
-
-      <p class="schedule-time">Monthly at 1st 03:00 AM</p>
-      <div class="schedule-info">
-        <p><strong>Last Run:</strong> 2024-12-01 03:00</p>
-        <p><strong>Next Run:</strong> 2025-02-01 03:00</p>
-        <p><strong>Backup Size:</strong> 45.8 GB</p>
-      </div>
-    </div>
+      {% endfor %}
+    {% else %}
+      <p style="text-align:center;">
+        No backup schedules found.
+      </p>
+    {% endif %}
   </section>
+
+  <!-- Add Schedule Modal -->
+  <div id="addScheduleModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New Backup Schedule</h2>
+      <form id="addScheduleForm">
+        {% csrf_token %}
+        <label for="name">Schedule Name</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="frequency">Frequency</label>
+        <select id="frequency" name="frequency" required>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+
+        <label for="time">Time</label>
+        <input type="time" id="time" name="time" required>
+
+        <div id="dayOfWeekContainer" style="display:none;">
+          <label for="day_of_week">Day of Week (for Weekly)</label>
+          <select id="day_of_week" name="day_of_week">
+            <option value="">--Select Day--</option>
+            <option value="monday">Monday</option>
+            <option value="tuesday">Tuesday</option>
+            <option value="wednesday">Wednesday</option>
+            <option value="thursday">Thursday</option>
+            <option value="friday">Friday</option>
+            <option value="saturday">Saturday</option>
+            <option value="sunday">Sunday</option>
+          </select>
+        </div>
+
+        <div id="dayOfMonthContainer" style="display:none;">
+          <label for="day_of_month">Day of Month (for Monthly)</label>
+          <select id="day_of_month" name="day_of_month">
+            <option value="">--Select Day--</option>
+            {% for day in "123456789012345678901234567890" %}
+              <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+            {% endfor %}
+            <option value="31">31</option>
+          </select>
+        </div>
+
+        <div class="checkbox-container">
+          <input type="checkbox" id="active" name="active" checked>
+          <label for="active">Activate Schedule</label>
+        </div>
+
+        <button type="submit" class="save-btn">Save Schedule</button>
+      </form>
+    </div>
+  </div>
 </div>
+
+<script>
+// CSRF helper
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function runBackup() {
+  if (!confirm("Run manual backup now?")) return;
+
+  fetch("/events/run-backup/", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+  })
+  .then(response => response.json())
+  .then(data => alert(data.message))
+  .catch(err => alert("❌ Error running backup: " + err));
+}
+
+// Modal open/close
+const modal = document.getElementById("addScheduleModal");
+const addBtn = document.querySelector(".add-btn");
+const closeBtn = document.querySelector(".close");
+
+addBtn.onclick = () => modal.style.display = "block";
+closeBtn.onclick = () => modal.style.display = "none";
+window.onclick = (e) => { if (e.target == modal) modal.style.display = "none"; };
+
+// Show day-of-week if "weekly" selected
+document.getElementById("frequency").addEventListener("change", function() {
+  const container = document.getElementById("dayOfWeekContainer");
+  container.style.display = (this.value === "weekly") ? "block" : "none";
+});
+
+// Submit form
+document.querySelector("#addScheduleForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const data = {
+    name: document.querySelector("#name").value,
+    frequency: document.querySelector("#frequency").value,
+    time: document.querySelector("#time").value,
+    day_of_week: document.querySelector("#day_of_week").value,
+    active: document.querySelector("#active").checked,
+  };
+
+  try {
+    const response = await fetch("/events/add-schedule/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"), 
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+    alert(result.message);
+    if (result.success) {
+      modal.style.display = "none";
+      window.location.reload();
+    }
+  } catch (error) {
+    console.error("❌ Error adding schedule:", error);
+    alert("Failed to add schedule.");
+  }
+});
+</script>
 {% endblock %}

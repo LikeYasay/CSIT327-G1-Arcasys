@@ -12,32 +12,34 @@
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab">Status</button>
-    <button class="tab">System Logs</button>
-    <button class="tab active">Backup History</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:backup_dashboard' %}'">Status</button>
+    <button class="tab active" onclick="window.location.href='{% url 'events:backup_history' %}'">History</button>
+    <button class="tab" onclick="window.location.href='{% url 'events:restore_operations' %}'">Restore</button>
   </div>
 
   <!-- BACKUP HISTORY SECTION -->
   <section class="backup-history">
     <div class="section-header">
       <h3>Backup History</h3>
-      <button class="btn-green">Export to CSV</button>
+      <a href="?{{ request.GET.urlencode }}{% if request.GET.urlencode %}&{% endif %}export=1" class="btn-green">
+        Export to CSV
+      </a>
     </div>
 
     <!-- FILTER BAR -->
     <div class="filters">
-      <input type="text" placeholder="Search backups...">
-      <select>
-        <option>All Status</option>
-        <option>Completed</option>
-        <option>Failed</option>
-      </select>
-      <select>
-        <option>All Types</option>
-        <option>Database</option>
-        <option>File System</option>
-        <option>Configuration</option>
-      </select>
+      <form method="get" id="filterForm">
+        <input type="text" name="q" placeholder="Search backups..." value="{{ search_query }}">
+        
+        <select name="status">
+          <option value="">All Status</option>
+          <option value="completed" {% if status_filter == "completed" %}selected{% endif %}>Completed</option>
+          <option value="failed" {% if status_filter == "failed" %}selected{% endif %}>Failed</option>
+        </select>
+
+        <!-- Optional: keep a visible submit button -->
+        <button type="submit" class="btn-green">Filter</button>
+      </form>
     </div>
 
     <!-- BACKUP TABLE -->
@@ -49,80 +51,207 @@
             <th>Status</th>
             <th>Timestamp</th>
             <th>Size</th>
-            <th>Duration</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Database Backup</td>
-            <td><span class="status success">Completed</span></td>
-            <td>1/15/2025 2:30:00 PM</td>
-            <td>2.4 GB</td>
-            <td>5m 32s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
-          <tr>
-            <td>File System Backup</td>
-            <td><span class="status success">Completed</span></td>
-            <td>1/15/2025 12:00:00 PM</td>
-            <td>1.1 GB</td>
-            <td>3m 45s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Configuration Backup</td>
-            <td><span class="status failed">Failed</span></td>
-            <td>1/15/2025 1:45:00 PM</td>
-            <td>0 MB</td>
-            <td>0m 30s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Database Backup</td>
-            <td><span class="status success">Completed</span></td>
-            <td>1/14/2025 2:30:00 PM</td>
-            <td>2.3 GB</td>
-            <td>5m 15s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
-          <tr>
-            <td>File System Backup</td>
-            <td><span class="status success">Completed</span></td>
-            <td>1/14/2025 12:00:00 PM</td>
-            <td>1.0 GB</td>
-            <td>3m 20s</td>
-            <td class="actions">
-              <a href="#" class="download">Download</a>
-              <a href="#" class="view">View Log</a>
-              <a href="#" class="delete">Delete</a>
-            </td>
-          </tr>
+          {% if backups %}
+            {% for backup in backups %}
+              <tr>
+                <td>{{ backup.BackupName }}</td>
+                <td>
+                  {% if backup.BackupStatus == "completed" %}
+                    <span class="status success">Completed</span>
+                  {% else %}
+                    <span class="status failed">Failed</span>
+                  {% endif %}
+                </td>
+                <td>{{ backup.BackupTimestamp|date:"M d, Y h:i A" }}</td>
+                <td>{{ backup.BackupSize }}</td>
+                <td class="actions">
+                  {% if backup.BackupFile %}
+                    <a href="{% url 'events:download_backup' backup.BackupHistoryID %}?file_type=backup" class="download">Download</a>
+                  {% endif %}
+                  {% if backup.BackupLogFile %}
+                    <a href="#" class="view" onclick="viewLog('{{ backup.BackupHistoryID }}', '{{ backup.BackupName }}'); return false;">View Log</a>
+                  {% endif %}
+                  <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="delete_id" value="{{ backup.BackupHistoryID }}">
+                    <button type="button" class="delete" onclick="openDeleteModal(this.form)">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" style="text-align:center;">No backups found.</td>
+            </tr>
+          {% endif %}
         </tbody>
       </table>
     </div>
 
-    <!-- PAGINATION -->
+    <!-- Pagination -->
     <div class="pagination">
-      <button class="btn-gray">Previous</button>
-      <button class="btn-maroon">Next</button>
+      {% with request.GET.urlencode as query_params %}
+        {% if backups.has_previous %}
+          <a class="page-btn prev" href="?page={{ backups.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">← Previous</a>
+        {% endif %}
+
+        <span class="current-page">
+          Page {{ backups.number }} of {{ backups.paginator.num_pages }}
+        </span>
+
+        {% if backups.has_next %}
+          <a class="page-btn next" href="?page={{ backups.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">Next →</a>
+        {% endif %}
+      {% endwith %}
     </div>
   </section>
 </div>
+
+<!-- LOG VIEW MODAL -->
+<div id="logModal" class="log-modal">
+  <div class="log-modal-content">
+    <div class="log-modal-header">
+      <h3 id="logModalTitle">Log</h3>
+      <span class="log-modal-close" onclick="closeLogModal()">&times;</span>
+    </div>
+    <div id="logContentArea" class="log-content">
+      <div class="log-loading">Loading log file...</div>
+    </div>
+    <div class="log-actions">
+      <button class="btn-download" onclick="downloadCurrentLog()">Download Log</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div id="deleteModal" class="log-modal">
+  <div class="log-modal-content" style="max-width: 450px;">
+    <div class="log-modal-header">
+      <h3>Delete Backup</h3>
+      <span class="log-modal-close" onclick="closeDeleteModal()">&times;</span>
+    </div>
+
+    <p style="font-size: 15px; margin-bottom: 25px;">
+      Are you sure you want to delete this backup? This action cannot be undone.
+    </p>
+
+    <div class="log-actions">
+      <button class="btn-download" onclick="submitDeleteForm()">Yes, Delete</button>
+      <button class="btn-download" style="background:#ccc;" onclick="closeDeleteModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+let currentBackupId = null;
+
+function viewLog(backupId, backupName) {
+  currentBackupId = backupId;
+  const modal = document.getElementById("logModal");
+  const logContentArea = document.getElementById("logContentArea");
+  const modalTitle = document.getElementById("logModalTitle");
+  
+  modalTitle.textContent = `Log: ${backupName}`;
+  modal.style.display = "block";
+
+  document.body.style.overflow = "hidden";
+  
+  // Show loading state
+  logContentArea.innerHTML = '<div class="log-loading">Loading log file...</div>';
+  
+  // Fetch log content
+  fetch(`/events/view-log/${backupId}/`, {
+    method: "GET",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      logContentArea.innerHTML = `<pre>${data.content}</pre>`;
+    } else {
+      logContentArea.innerHTML = `<div class="log-error">${data.message}</div>`;
+    }
+  })
+  .catch(err => {
+    console.error("Error:", err);
+    logContentArea.innerHTML = `<div class="log-error">Error loading log file: ${err.message}</div>`;
+  });
+}
+
+function closeLogModal() {
+  const modal = document.getElementById("logModal");
+  modal.style.display = "none";
+  document.body.style.overflow = "";
+  currentBackupId = null;
+}
+
+function downloadCurrentLog() {
+  if (currentBackupId) {
+    window.location.href = `/events/download-backup/${currentBackupId}/?file_type=log`;
+  }
+}
+
+// Close view log modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById("logModal");
+  if (event.target == modal) {
+    closeLogModal();
+  }
+};
+
+// Close view log modal with Escape key
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeLogModal();
+  }
+});
+
+let deleteForm = null;
+
+function openDeleteModal(form) {
+  deleteForm = form;
+  const modal = document.getElementById("deleteModal");
+  modal.style.display = "block";
+  document.body.style.overflow = "hidden"; // Disable page scroll
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById("deleteModal");
+  modal.style.display = "none";
+  document.body.style.overflow = ""; // Enable scroll again
+  deleteForm = null;
+}
+
+function submitDeleteForm() {
+  if (deleteForm) {
+    deleteForm.submit();
+  }
+}
+</script>
 {% endblock %}

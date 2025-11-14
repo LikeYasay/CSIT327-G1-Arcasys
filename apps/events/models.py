@@ -1,6 +1,8 @@
 import uuid
 from django.db import models
 from django.utils import timezone     
+from datetime import timedelta
+import calendar
 
 # ==============================
 # EVENT MODEL
@@ -177,3 +179,53 @@ class EventLink(models.Model):
 
     def __str__(self):
         return f"{self.EventLinkName} for Event {self.EventID}"
+    
+    
+# ==============================
+# BACKUP MODEL
+# ==============================
+class BackupHistory(models.Model):
+    BackupHistoryID = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        db_column='BackupHistoryID'
+    )
+    BackupName = models.CharField(max_length=100)
+    BackupStatus = models.CharField(max_length=20, choices=[
+        ('completed', 'Completed'),
+        ('failed', 'Failed')
+    ])
+    BackupTimestamp = models.DateTimeField(auto_now_add=True)
+    BackupSize = models.CharField(max_length=50, blank=True, null=True)
+    BackupLogFile = models.FileField(upload_to='logs/', blank=True, null=True)
+    BackupFile = models.FileField(upload_to='backups/', blank=True, null=True)
+
+    class Meta:
+        db_table = 'BackupHistory'
+
+    def __str__(self):
+        return f"{self.BackupName} - {self.BackupTimestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+
+class RestoreOperation(models.Model):
+    RestoreID = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    BackupHistoryID = models.ForeignKey(
+        BackupHistory,
+        on_delete=models.CASCADE,
+        db_column='BackupHistoryID'
+    )
+    RestoreStatus = models.CharField(max_length=20, choices=[
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ], default='in_progress')
+    RestoreProgress = models.IntegerField(default=0)
+    RestoreMessage = models.TextField(blank=True, null=True)
+    RestoreStartedAt = models.DateTimeField(auto_now_add=True)
+    RestoreCompletedAt = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'RestoreOperation'
+
+    def __str__(self):
+        return f"Restore {self.BackupHistoryID.BackupName} ({self.RestoreStatus})"

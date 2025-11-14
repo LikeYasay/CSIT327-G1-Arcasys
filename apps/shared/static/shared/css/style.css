@@ -82,6 +82,15 @@ main {
     text-decoration: underline;
 }
 
+.nav-links a.active {
+  background-color: #8A252C !important;
+  color: #fff !important;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: bold;
+  text-decoration: none;
+}
+
 .nav-right {
   display: flex;
   align-items: center;
@@ -468,3 +477,5 @@ main {
   margin: 0;
   text-align: center;
 }
+
+

@@ -90,7 +90,7 @@
     {% if alerts %}
       {% for alert in alerts %}
       <div class="alert-card">
-        <div class="dot 
+        <div class="dot
           {% if alert.Level == 'Critical' %}maroon
           {% elif alert.Level == 'Warning' %}yellow
           {% elif alert.Level == 'Error' %}orange
@@ -102,10 +102,6 @@
           <p>{{ alert.Message }}</p>
           <small>Backup: {{ alert.RelatedBackup.BackupName|default:"N/A" }}</small>
         </div>
-        <!-- <div class="alert-actions">
-          <a class="view">View</a>
-          <a class="resolve">Resolve</a>
-        </div> -->
       </div>
       {% endfor %}
     {% else %}
@@ -123,8 +119,8 @@
     </div>
     <h2 id="modalTitle" class="modal-title">Running Backup</h2>
     <p id="modalMessage" class="modal-message">Please wait while the backup is in progress...</p>
-    <div class="progress-bar">
-      <div class="progress-fill"></div>
+    <div class="progress-bar" id="progressBarContainer">
+      <div class="progress-fill" id="progressFill"></div>
     </div>
   </div>
 </div>
@@ -145,31 +141,80 @@ function getCookie(name) {
   return cookieValue;
 }
 
+let progressInterval = null;
+
 function showBackupModal() {
   const modal = document.getElementById("backupModal");
   modal.classList.add("show");
   document.body.style.overflow = "hidden";
-  
+
   // Reset to loading state
   document.getElementById("modalIcon").className = "modal-icon loading";
   document.getElementById("modalIcon").innerHTML = '<div class="spinner"></div>';
   document.getElementById("modalTitle").textContent = "Running Backup";
   document.getElementById("modalMessage").textContent = "Please wait while the backup is in progress...";
-  document.querySelector(".progress-bar").style.display = "block";
+
+  // Show progress bar
+  const progressBarContainer = document.getElementById("progressBarContainer");
+  progressBarContainer.style.display = "block";
+
   document.querySelector(".modal-close").style.display = "none";
+
+  // Reset progress bar to 0%
+  const progressFill = document.getElementById("progressFill");
+  progressFill.style.width = "0%";
+  progressFill.classList.add('active');
+}
+
+function updateProgressBar(percentage) {
+  const progressFill = document.getElementById("progressFill");
+  progressFill.style.width = percentage + "%";
+}
+
+function simulateProgress() {
+  let progress = 0;
+  const steps = [10, 25, 40, 60, 75, 90, 95]; // Stop at 95%
+  let currentStep = 0;
+
+  progressInterval = setInterval(() => {
+    if (currentStep < steps.length) {
+      progress = steps[currentStep];
+      updateProgressBar(progress);
+      currentStep++;
+    } else {
+      clearInterval(progressInterval);
+    }
+  }, 3000); // Update every 3 seconds
 }
 
 function showBackupResult(success, data) {
   const modalIcon = document.getElementById("modalIcon");
   const modalTitle = document.getElementById("modalTitle");
   const modalMessage = document.getElementById("modalMessage");
-  const progressBar = document.querySelector(".progress-bar");
+  const progressBarContainer = document.getElementById("progressBarContainer");
   const closeBtn = document.querySelector(".modal-close");
-  
-  // Hide progress bar
-  progressBar.style.display = "none";
+  const progressFill = document.getElementById("progressFill");
+
+  // Stop progress simulation
+  if (progressInterval) {
+    clearInterval(progressInterval);
+    progressInterval = null;
+  }
+
+  if (success) {
+    // Show 100% for 0.5 seconds then hide progress bar
+    updateProgressBar(100);
+    setTimeout(() => {
+      progressBarContainer.style.display = "none";
+    }, 500);
+  } else {
+    // Hide progress bar immediately on failure
+    progressBarContainer.style.display = "none";
+  }
+
+  // Show close button
   closeBtn.style.display = "flex";
-  
+
   if (success) {
     // Success state
     modalIcon.className = "modal-icon success";
@@ -189,12 +234,26 @@ function closeBackupModal() {
   const modal = document.getElementById("backupModal");
   modal.classList.remove("show");
   document.body.style.overflow = "auto";
-  location.reload();
+
+  // Clear any running intervals
+  if (progressInterval) {
+    clearInterval(progressInterval);
+    progressInterval = null;
+  }
+
+  // Reload the page to show updated backup list
+  setTimeout(() => {
+    location.reload();
+  }, 500);
 }
 
 function runBackup() {
   showBackupModal();
 
+  // Start progress simulation
+  simulateProgress();
+
+  // Make the actual backup request
   fetch("/events/run-backup/", {
     method: "POST",
     headers: { "X-CSRFToken": getCookie("csrftoken") },

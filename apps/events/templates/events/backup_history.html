@@ -30,7 +30,7 @@
     <div class="filters">
       <form method="get" id="filterForm">
         <input type="text" name="q" placeholder="Search backups..." value="{{ search_query }}">
-        
+
         <select name="status">
           <option value="">All Status</option>
           <option value="completed" {% if status_filter == "completed" %}selected{% endif %}>Completed</option>
@@ -72,9 +72,12 @@
                   {% if backup.BackupFile %}
                     <a href="{% url 'events:download_backup' backup.BackupHistoryID %}?file_type=backup" class="download">Download</a>
                   {% endif %}
+
+                  <!-- SIMPLE FIX: Show View Log for ALL backups that have log files -->
                   {% if backup.BackupLogFile %}
                     <a href="#" class="view" onclick="viewLog('{{ backup.BackupHistoryID }}', '{{ backup.BackupName }}'); return false;">View Log</a>
                   {% endif %}
+
                   <form method="post" style="display:inline;">
                     {% csrf_token %}
                     <input type="hidden" name="delete_id" value="{{ backup.BackupHistoryID }}">
@@ -169,15 +172,15 @@ function viewLog(backupId, backupName) {
   const modal = document.getElementById("logModal");
   const logContentArea = document.getElementById("logContentArea");
   const modalTitle = document.getElementById("logModalTitle");
-  
+
   modalTitle.textContent = `Log: ${backupName}`;
   modal.style.display = "block";
 
   document.body.style.overflow = "hidden";
-  
+
   // Show loading state
   logContentArea.innerHTML = '<div class="log-loading">Loading log file...</div>';
-  
+
   // Fetch log content
   fetch(`/events/view-log/${backupId}/`, {
     method: "GET",

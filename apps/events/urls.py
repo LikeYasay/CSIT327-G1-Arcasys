@@ -17,4 +17,6 @@ urlpatterns = [
     path("run-backup/", views.run_backup, name="run_backup"),
     path("download-backup/<uuid:id>/", views.download_backup, name="download_backup"),
     path('view-log/<uuid:backup_id>/', views.view_log, name='view_log'),
+    path('restore-full/', views.restore_full_database, name='restore_full'),
+    path('check-restore-status/<uuid:restore_op_id>/', views.check_restore_status, name='check_restore_status'),
 ]

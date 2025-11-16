@@ -25,13 +25,12 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME")
 PG_DUMP_PATH = os.getenv("PG_DUMP_PATH", "pg_dump")
 
-# Local folders for temporary backups and logs
+# Local folders
 BASE_DIR = Path(__file__).resolve().parent
 BACKUP_DIR = BASE_DIR / "temp_files"
 LOG_DIR = BASE_DIR / "temp_logs"
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 LOG_DIR.mkdir(parents=True, exist_ok=True)
-
 
 def backup_database():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -43,84 +42,115 @@ def backup_database():
     log_path = LOG_DIR / log_filename
 
     log_output = StringIO()
-    log_line(log_output, "Starting database backup...")
+    log_line(log_output, "Starting DATA-ONLY database backup...")
+
+    backup_s3_key = None
+    log_s3_key = None
 
     try:
-        # Step 1: Run database backup
-        log_line(log_output, "Creating backup file...")
+        # Build correct PG URL (NO PASSWORD HERE)
+        db_url = f"postgresql://{DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
+
+        log_line(log_output, "Creating Supabase-safe DATA-ONLY backup file...")
+
+        # DATA ONLY + exclude Supabase system tables
         result = subprocess.run(
             [
                 PG_DUMP_PATH,
-                "-h", DB_HOST,
-                "-p", DB_PORT,
-                "-U", DB_USER,
-                "-d", DB_NAME,
+                db_url,
+                "--data-only",
+                "--inserts",
+                "--exclude-table=schema_migrations",
+                "--exclude-table=django_migrations",
+                "--exclude-table=django_session",
+                "--exclude-table=pg_*",
+                "--exclude-table=information_schema.*",
+                "--exclude-table=auth.*",
+                "--exclude-table=storage.*",
+                "--exclude-table=realtime.*",
                 "-f", str(backup_path),
-                "--no-password"
+                "--verbose"
             ],
-            env={"PGPASSWORD": DB_PASSWORD},
             capture_output=True,
-            text=True
+            text=True,
+            timeout=60,
+            env={**os.environ, "PGPASSWORD": DB_PASSWORD}  # FIX: this is the correct way
         )
 
         if result.returncode != 0:
             log_line(log_output, f"Backup failed:\n{result.stderr}", level="ERROR")
+            log_line(log_output, f"Command stdout:\n{result.stdout}")
+
+            with open(log_path, "w") as f:
+                f.write(log_output.getvalue())
+            log_s3_key = upload_backup_to_cloud(str(log_path), log_output, folder="logs")
+
             BackupHistory.objects.create(
                 BackupName=backup_name,
                 BackupStatus="failed",
                 BackupSize="0 MB",
                 BackupFile=None,
-                BackupLogFile=None
+                BackupLogFile=log_s3_key
             )
             return
 
-        log_line(log_output, f"Database backup completed successfully! Saved as {backup_filename}")
+        log_line(log_output, f"Backup created successfully: {backup_filename}")
 
-        # Step 2: Upload backup file to S3
-        log_line(log_output, "Uploading backup file to cloud...")
+        # Upload backup file
+        log_line(log_output, "Uploading backup file to cloud…")
         backup_s3_key = upload_backup_to_cloud(str(backup_path), log_output, folder="backups")
 
-        # Step 3: Save log locally
+        # Save log locally then upload
         with open(log_path, "w") as f:
             f.write(log_output.getvalue())
-
-        # Step 4: Upload log file to S3
         log_s3_key = upload_backup_to_cloud(str(log_path), log_output, folder="logs")
 
-        # Step 5: Record backup in database
         status = "completed" if backup_s3_key and log_s3_key else "failed"
+
         BackupHistory.objects.create(
             BackupName=backup_name,
             BackupStatus=status,
-            BackupSize=f"{os.path.getsize(backup_path) / (1024*1024):.2f} MB",
+            BackupSize=f"{os.path.getsize(backup_path) / (1024 * 1024):.2f} MB",
             BackupFile=backup_s3_key,
             BackupLogFile=log_s3_key
         )
 
-        log_line(log_output, "Backup record saved in the database.")
+        log_line(log_output, "Backup record saved.")
 
-    except Exception as e:
-        log_line(log_output, f"An error occurred during backup: {str(e)}", level="ERROR")
+    except subprocess.TimeoutExpired:
+        log_line(log_output, "Backup timed out after 60 seconds", level="ERROR")
+
+        with open(log_path, "w") as f:
+            f.write(log_output.getvalue())
+        log_s3_key = upload_backup_to_cloud(str(log_path), log_output, folder="logs")
+
         BackupHistory.objects.create(
             BackupName=backup_name,
             BackupStatus="failed",
             BackupSize="0 MB",
             BackupFile=None,
-            BackupLogFile=None
+            BackupLogFile=log_s3_key
+        )
+
+    except Exception as e:
+        log_line(log_output, f"Backup error: {str(e)}", level="ERROR")
+
+        with open(log_path, "w") as f:
+            f.write(log_output.getvalue())
+        log_s3_key = upload_backup_to_cloud(str(log_path), log_output, folder="logs")
+
+        BackupHistory.objects.create(
+            BackupName=backup_name,
+            BackupStatus="failed",
+            BackupSize="0 MB",
+            BackupFile=None,
+            BackupLogFile=log_s3_key
         )
 
     finally:
-        # Step 6: Cleanup temporary files
         if backup_path.exists():
             backup_path.unlink()
         if log_path.exists():
             log_path.unlink()
 
-        # Step 7: Final log output
         print(log_output.getvalue())
-
-
-if __name__ == "__main__":
-    backup_database()
-
-

@@ -4,6 +4,11 @@ import traceback
 import boto3
 import os
 import csv
+import json  # ADD THIS
+import tempfile  # ADD THIS
+import subprocess  # ADD THIS
+import re  # ADD THIS
+import uuid
 from django.urls import reverse
 from django.db import OperationalError, ProgrammingError
 from django.shortcuts import get_object_or_404, render, redirect
@@ -19,14 +24,15 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from apps.events.backup_script import backup_database
-from apps.events.models import BackupHistory, Event, EventDepartment, EventLink, EventTag, Department, RestoreOperation, Tag, BackupHistory
+from apps.events.models import BackupHistory, Event, EventDepartment, EventLink, EventTag, Department, RestoreOperation, \
+    Tag, BackupHistory
 from project import settings
 from .forms import AdminEditEventForm
-from apps.shared.email_utils import send_sendgrid_email  # ADD THIS IMPORT
+from apps.shared.email_utils import send_sendgrid_email
 from django.http import JsonResponse
 from django.conf import settings
 from django.db import transaction
-
+from django.views.decorators.http import require_POST, require_GET  # ADD THIS LINE
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -473,10 +479,11 @@ def admin_approval_view(request):
 
     return render(request, "events/admin_approval.html", {'applications': applications})
 
+
 @login_required
 def backup_history_view(request):
     backups = BackupHistory.objects.all().order_by('-BackupTimestamp')
-    
+
     #  Filters -----
     search_query = request.GET.get('q', '').strip()
     status_filter = request.GET.get('status', '').lower()
@@ -526,7 +533,7 @@ def backup_history_view(request):
         else:
             messages.error(request, "Backup not found.")
         return redirect('events:backup_history')
-    
+
     # Export CSV -----
     if request.GET.get('export') == '1':
         response = HttpResponse(content_type='text/csv')
@@ -566,12 +573,13 @@ def backup_history_view(request):
         "nav_active": 'backup_management',
     })
 
+
 @login_required
 def backup_dashboard_view(request):
     recent_jobs = BackupHistory.objects.order_by('-BackupTimestamp')[:5]
     total_backups = BackupHistory.objects.count()
     successful_backups = BackupHistory.objects.filter(
-        BackupStatus='completed', 
+        BackupStatus='completed',
         BackupTimestamp__gte=timezone.now() - timezone.timedelta(days=1)
     ).count()
     failed_backups = BackupHistory.objects.filter(BackupStatus='failed').count()
@@ -597,25 +605,26 @@ def backup_dashboard_view(request):
     }
     return render(request, 'events/backup_dashboard.html', context)
 
+
 @login_required
 def restore_operations_view(request):
     """Display restore operations page"""
     backups = BackupHistory.objects.filter(BackupStatus='completed').order_by('-BackupTimestamp')
-    
-    paginator = Paginator(backups, 9)  
+
+    paginator = Paginator(backups, 9)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     context = {
-        'backups': page_obj,  
+        'backups': page_obj,
         "nav_active": 'backup_management',
     }
-    
+
     return render(request, 'events/restore_operations.html', context)
 
 # -----------------------------
 # Backup Actions
-# -----------------------------        
+# -----------------------------
 def run_backup(request):
     if request.method != "POST":
         return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
@@ -627,15 +636,16 @@ def run_backup(request):
         print(traceback.format_exc())
         return JsonResponse({"status": "error", "message": str(e)})
 
+
 def download_backup(request, id):
-    file_type = request.GET.get("file_type", "backup")  
+    file_type = request.GET.get("file_type", "backup")
     backup = get_object_or_404(BackupHistory, BackupHistoryID=id)
 
     s3_key = getattr(backup, "BackupFile" if file_type == "backup" else "BackupLogFile", None)
     if not s3_key:
         raise Http404(f"{file_type.capitalize()} file not available.")
 
-    s3_key = str(s3_key) 
+    s3_key = str(s3_key)
     s3_client = boto3.client(
         "s3",
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -654,19 +664,20 @@ def download_backup(request, id):
 
     return HttpResponseRedirect(presigned_url)
 
+
 def view_log(request, backup_id):
     try:
         backup = BackupHistory.objects.get(BackupHistoryID=backup_id)
-        
+
         if not backup.BackupLogFile:
             return JsonResponse({
                 'success': False,
                 'message': 'No log file associated with this backup'
             })
-        
+
         # Get the S3 file key (path in S3)
         file_key = backup.BackupLogFile.name
-        
+
         # Read directly from S3 using boto3
         try:
             s3_client = boto3.client(
@@ -675,26 +686,26 @@ def view_log(request, backup_id):
                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
                 region_name=settings.AWS_S3_REGION_NAME
             )
-            
+
             response = s3_client.get_object(
                 Bucket=settings.AWS_STORAGE_BUCKET_NAME,
                 Key=file_key
             )
-            
+
             # Read and decode the content
             log_content = response['Body'].read().decode('utf-8', errors='ignore')
-            
+
         except Exception as e:
             return JsonResponse({
                 'success': False,
                 'message': f'Error reading file from S3: {str(e)}'
             })
-        
+
         return JsonResponse({
             'success': True,
             'content': log_content
         })
-        
+
     except BackupHistory.DoesNotExist:
         return JsonResponse({
             'success': False,
@@ -705,6 +716,7 @@ def view_log(request, backup_id):
             'success': False,
             'message': f'Error: {str(e)}'
         }, status=500)
+
 
 # -----------------------------
 # Approval/Reject Views - FIXED WITH SENDGRID WEB API
@@ -766,3 +778,259 @@ def reject_application(request, user_id):
         logger.warning(f"User rejection failed: User {user_id} not found or already processed")
 
     return redirect('events:admin_approval')
+
+
+@login_required
+@require_POST
+def restore_full_database(request):
+    """
+    Initiates full database restoration, including User and Role tables.
+    Sessions and system tables are preserved.
+    """
+    try:
+        data = json.loads(request.body)
+        backup_id = data.get('backup_id')
+
+        if not backup_id:
+            return JsonResponse({'status': 'error', 'message': 'Backup ID is required'})
+
+        # Get backup record
+        backup = BackupHistory.objects.get(
+            BackupHistoryID=backup_id,
+            BackupStatus='completed'
+        )
+
+        # Create restore operation record
+        restore_op, _ = RestoreOperation.objects.get_or_create(
+            RestoreID=str(uuid.uuid4()),  # Ensure unique
+            defaults={
+                'RestoreStatus': 'in_progress',
+                'RestoreProgress': 0,
+                'RestoreMessage': 'Starting full restoration process...',
+                'RestoreStartedAt': timezone.now(),
+                'BackupHistoryID': backup
+            }
+        )
+
+        # Execute restoration in background thread
+        import threading
+        thread = threading.Thread(
+            target=execute_full_restoration_async,
+            args=(str(backup.BackupFile), str(restore_op.RestoreID))
+        )
+        thread.daemon = True
+        thread.start()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Full restoration process started',
+            'restore_op_id': str(restore_op.RestoreID)
+        })
+
+    except BackupHistory.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Backup not found'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Failed to start restoration: {str(e)}'})
+
+
+def execute_full_restoration_async(backup_s3_key, restore_op_id):
+    """
+    Background restoration process.
+    """
+    from django.db import connection
+    connection.close()
+
+    try:
+        restore_op = RestoreOperation.objects.get(RestoreID=restore_op_id)
+
+        restore_op.RestoreProgress = 10
+        restore_op.RestoreMessage = 'Downloading backup file...'
+        restore_op.save()
+
+        # Download and restore
+        success = restore_full_database_from_s3(backup_s3_key, restore_op)
+
+        # Update status
+        restore_op = RestoreOperation.objects.get(RestoreID=restore_op_id)
+        restore_op.RestoreStatus = 'completed' if success else 'failed'
+        restore_op.RestoreProgress = 100
+        restore_op.RestoreMessage = 'FULL DATA RESTORATION COMPLETED' if success else 'RESTORATION FAILED'
+        restore_op.RestoreCompletedAt = timezone.now()
+        restore_op.save()
+
+    except Exception as e:
+        try:
+            restore_op = RestoreOperation.objects.get(RestoreID=restore_op_id)
+            restore_op.RestoreStatus = 'failed'
+            restore_op.RestoreMessage = f'Restoration failed: {str(e)}'
+            restore_op.RestoreCompletedAt = timezone.now()
+            restore_op.save()
+        except RestoreOperation.DoesNotExist:
+            print(f"RestoreOperation {restore_op_id} not found during error handling")
+
+
+def restore_full_database_from_s3(backup_s3_key, restore_op=None):
+    """
+    Downloads the backup from S3 and executes full restoration.
+    """
+    try:
+        if restore_op:
+            restore_op.RestoreProgress = 20
+            restore_op.RestoreMessage = 'Processing backup file...'
+            restore_op.save()
+
+        # Download backup from S3
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_S3_REGION_NAME
+        )
+
+        with tempfile.NamedTemporaryFile(suffix='.sql', delete=False) as temp_file:
+            s3_client.download_fileobj(
+                settings.AWS_STORAGE_BUCKET_NAME,
+                backup_s3_key,
+                temp_file
+            )
+            temp_file_path = temp_file.name
+
+        # Execute restoration
+        success = execute_full_restoration(temp_file_path, restore_op)
+
+        if os.path.exists(temp_file_path):
+            os.unlink(temp_file_path)
+
+        return success
+
+    except Exception as e:
+        if restore_op:
+            restore_op.RestoreStatus = 'failed'
+            restore_op.RestoreMessage = f'Download failed: {str(e)}'
+            restore_op.RestoreCompletedAt = timezone.now()
+            restore_op.save()
+        return False
+
+def execute_full_restoration(sql_file_path, restore_op=None):
+    """
+    Actual restoration using psql.
+    Preserves django_session and avoids duplicate PK errors.
+    Makes inserts for BackupHistory and RestoreOperation idempotent.
+    """
+    try:
+        db_host = os.getenv('DB_HOST')
+        db_port = os.getenv('DB_PORT', '5432')
+        db_name = os.getenv('DB_NAME')
+        db_user = os.getenv('DB_USER')
+        db_password = os.getenv('DB_PASSWORD')
+
+        env = os.environ.copy()
+        env['PGPASSWORD'] = db_password
+        psql_path = r"C:\Program Files\PostgreSQL\18\bin\psql.exe"
+
+        # Disable constraints
+        subprocess.run([
+            psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
+            '-c', "SET session_replication_role = 'replica';",
+            '--quiet'
+        ], env=env, check=True)
+
+        # Delete application tables but preserve django_session
+        delete_script = """
+        DELETE FROM public."EventTag";
+        DELETE FROM public."EventDepartment";
+        DELETE FROM public."EventLink";
+        DELETE FROM public."Event";
+        DELETE FROM public."Tag";
+        DELETE FROM public."Department";
+        DELETE FROM public."Role";
+        DELETE FROM public."User";
+        -- KEEP django_session
+        """
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False) as tmp_del:
+            tmp_del.write(delete_script)
+            tmp_del_path = tmp_del.name
+
+        subprocess.run([
+            psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
+            '-f', tmp_del_path, '--quiet'
+        ], env=env, check=True)
+        os.unlink(tmp_del_path)
+
+        # Read the backup SQL
+        with open(sql_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            sql_content = f.read()
+
+        # Make inserts for BackupHistory idempotent
+        sql_content = re.sub(
+            r'INSERT INTO public\."BackupHistory"\s*\((.*?)\)\s*VALUES\s*\((.*?)\);',
+            r'INSERT INTO public."BackupHistory" (\1) VALUES (\2) '
+            r'ON CONFLICT ("BackupHistoryID") DO UPDATE SET '
+            r'BackupStatus = EXCLUDED.BackupStatus, '
+            r'BackupSize = EXCLUDED.BackupSize, '
+            r'BackupLogFile = EXCLUDED.BackupLogFile, '
+            r'BackupFile = EXCLUDED.BackupFile;',
+            sql_content,
+            flags=re.DOTALL
+        )
+
+        # Make inserts for RestoreOperation idempotent
+        sql_content = re.sub(
+            r'INSERT INTO public\."RestoreOperation"\s*\((.*?)\)\s*VALUES\s*\((.*?)\);',
+            r'INSERT INTO public."RestoreOperation" (\1) VALUES (\2) '
+            r'ON CONFLICT ("RestoreID") DO UPDATE SET '
+            r'RestoreStatus = EXCLUDED.RestoreStatus, '
+            r'RestoreProgress = EXCLUDED.RestoreProgress, '
+            r'RestoreMessage = EXCLUDED.RestoreMessage, '
+            r'RestoreStartedAt = EXCLUDED.RestoreStartedAt, '
+            r'RestoreCompletedAt = EXCLUDED.RestoreCompletedAt, '
+            r'BackupHistoryID = EXCLUDED.BackupHistoryID;',
+            sql_content,
+            flags=re.DOTALL
+        )
+
+        # Write modified SQL to temp file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False) as tmp_sql:
+            tmp_sql.write(sql_content)
+            tmp_sql_path = tmp_sql.name
+
+        # Run the restored SQL
+        subprocess.run([
+            psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
+            '-f', tmp_sql_path, '--quiet'
+        ], env=env, check=True)
+        os.unlink(tmp_sql_path)
+
+        # Re-enable constraints
+        subprocess.run([
+            psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
+            '-c', "SET session_replication_role = 'origin';",
+            '--quiet'
+        ], env=env, check=True)
+
+        return True
+
+    except Exception as e:
+        if restore_op:
+            restore_op.RestoreMessage = f'Full restoration error: {str(e)}'
+            restore_op.save()
+        return False
+
+@login_required
+@require_GET
+def check_restore_status(request, restore_op_id):
+    """Polling endpoint to check restoration status"""
+    try:
+        restore_op = RestoreOperation.objects.get(RestoreID=restore_op_id)
+
+        return JsonResponse({
+            'status': restore_op.RestoreStatus,
+            'message': restore_op.RestoreMessage,
+            'progress': restore_op.RestoreProgress
+        })
+    except RestoreOperation.DoesNotExist:
+        return JsonResponse({
+            'status': 'failed',
+            'message': 'Restore operation not found'
+        })

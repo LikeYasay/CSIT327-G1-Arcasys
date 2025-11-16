@@ -494,6 +494,11 @@ def backup_history_view(request):
     paginator = Paginator(backups, 10)  # Show 10 backups per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+    query_string = query_params.urlencode()
 
     # Actions -----
     action = request.GET.get('action')
@@ -564,6 +569,7 @@ def backup_history_view(request):
         "search_query": search_query,
         "status_filter": status_filter,
         "nav_active": 'backup_management',
+        "query_string": query_string,
     })
 
 @login_required

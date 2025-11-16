@@ -94,19 +94,17 @@
 
     <!-- Pagination -->
     <div class="pagination">
-      {% with request.GET.urlencode as query_params %}
-        {% if backups.has_previous %}
-          <a class="page-btn prev" href="?page={{ backups.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">← Previous</a>
-        {% endif %}
+      {% if backups.has_previous %}
+        <a class="page-btn prev" href="?page={{ backups.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">← Previous</a>
+      {% endif %}
 
-        <span class="current-page">
-          Page {{ backups.number }} of {{ backups.paginator.num_pages }}
-        </span>
+      <span class="current-page">
+        Page {{ backups.number }} of {{ backups.paginator.num_pages }}
+      </span>
 
-        {% if backups.has_next %}
-          <a class="page-btn next" href="?page={{ backups.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">Next →</a>
-        {% endif %}
-      {% endwith %}
+      {% if backups.has_next %}
+        <a class="page-btn next" href="?page={{ backups.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">Next →</a>
+      {% endif %}
     </div>
   </section>
 </div>

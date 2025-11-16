@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="dashboard-container">
 
   <!-- TABS -->
@@ -18,6 +19,13 @@
   </div>
 
   <!-- BACKUP HISTORY SECTION -->
+  <div class="flash-area">
+    {% for message in messages %}
+      <div class="alert {{ message.tags }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
   <section class="backup-history">
     <div class="section-header">
       <h3>Backup History</h3>

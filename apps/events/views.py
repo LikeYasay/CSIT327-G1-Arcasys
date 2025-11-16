@@ -567,6 +567,7 @@ def backup_history_view(request):
                 backup.BackupLogFile.delete()
             backup.delete()
             messages.success(request, "Backup deleted successfully.")
+            return redirect('backup_history')
         else:
             messages.error(request, "Backup not found.")
         return redirect('events:backup_history')

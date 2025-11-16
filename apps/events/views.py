@@ -3,8 +3,6 @@ import logging
 import traceback
 import boto3
 import os
-import csv
-from django.urls import reverse
 from django.db import OperationalError, ProgrammingError
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -477,19 +475,6 @@ def admin_approval_view(request):
 def backup_history_view(request):
     backups = BackupHistory.objects.all().order_by('-BackupTimestamp')
     
-    #  Filters -----
-    search_query = request.GET.get('q', '').strip()
-    status_filter = request.GET.get('status', '').lower()
-
-    if search_query:
-        backups = backups.filter(Q(BackupName__icontains=search_query))
-
-    if status_filter:
-        if status_filter == "completed":
-            backups = backups.filter(BackupStatus='completed')
-        elif status_filter == "failed":
-            backups = backups.filter(BackupStatus='failed')
-
     # Pagination -----
     paginator = Paginator(backups, 10)  # Show 10 backups per page
     page_number = request.GET.get('page')
@@ -526,44 +511,8 @@ def backup_history_view(request):
         else:
             messages.error(request, "Backup not found.")
         return redirect('events:backup_history')
-    
-    # Export CSV -----
-    if request.GET.get('export') == '1':
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="Arcasys_Backups.csv"'
-
-        writer = csv.writer(response)
-        writer.writerow(['Backup Name', 'Status', 'Timestamp', 'Size', 'Backup File', 'Log File'])
-
-        for backup in backups:
-            backup_file_url = ""
-            log_file_url = ""
-
-            if backup.BackupFile:
-                backup_file_url = request.build_absolute_uri(
-                    reverse("events:download_backup", args=[backup.BackupHistoryID]) + "?file_type=backup"
-                )
-            if backup.BackupLogFile:
-                log_file_url = request.build_absolute_uri(
-                    reverse("events:download_backup", args=[backup.BackupHistoryID]) + "?file_type=log"
-                )
-
-            writer.writerow([
-                backup.BackupName,
-                backup.BackupStatus.capitalize(),
-                backup.BackupTimestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                backup.BackupSize,
-                backup_file_url,
-                log_file_url,
-            ])
-
-        return response
-
     return render(request, 'events/backup_history.html', {
-        "backups": page_obj,
-        "search_query": search_query,
-        "status_filter": status_filter,
-        "nav_active": 'backup_management',
+        "backups": page_obj
     })
 
 @login_required
@@ -608,7 +557,6 @@ def restore_operations_view(request):
 
     context = {
         'backups': page_obj,  
-        "nav_active": 'backup_management',
     }
     
     return render(request, 'events/restore_operations.html', context)

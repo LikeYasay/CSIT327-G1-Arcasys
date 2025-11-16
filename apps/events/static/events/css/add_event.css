@@ -138,13 +138,7 @@ select:focus {
     margin-bottom: 10px;
 }
 
-.tags-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 15px;
-}
-
+/* Base style for tags (kept from original) */
 .tag {
   background-color: #e5e7eb;   
   color: #333333;
@@ -157,18 +151,26 @@ select:focus {
   transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
 
-.tag.active {
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.tag.green {
   background-color: #34A853;   
   border: 1px solid #46BE66;
   color: #ffffff;
+  cursor: default; 
 }
 
-.custom-tag-input {
+.tag-input-row {
     display: flex;
     gap: 10px;
 }
 
-.custom-tag-input input {
+.tag-input-row input {
     flex-grow: 1;
     width: auto;
 }

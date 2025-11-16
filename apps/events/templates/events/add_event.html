@@ -152,55 +152,47 @@ document.addEventListener('DOMContentLoaded', function () {
     window.location.href = "{% url 'events:events' %}";
   });
 
-  // --- MODIFIED JAVASCRIPT SECTION ---
-  // --- Tag handling (copied from Edit Event) ---
-  const tagsInput = document.getElementById('id_tags_input'); // The visible text input
-  const chipsWrap = document.querySelector('.event-tags-section .tags'); // The div for chips
+  const tagsInput = document.getElementById('id_tags_input'); 
+  const chipsWrap = document.querySelector('.event-tags-section .tags'); 
 
-  // Function to refresh chips from the text input
   function refreshChipsFromTags() {
     if (!tagsInput || !chipsWrap) return;
     
-    // Get tags, split by comma, trim, and remove empty ones
     const parts = (tagsInput.value || '')
       .split(',')
       .map(t => t.trim())
       .filter(Boolean);
     
-    chipsWrap.innerHTML = ''; // Clear existing chips
+    chipsWrap.innerHTML = ''; 
     
-    // Re-create all chips
+
     parts.forEach(t => {
       const span = document.createElement('span');
-      span.className = 'tag green'; // Style from screenshot
+      span.className = 'tag green'; 
       span.textContent = t;
       chipsWrap.appendChild(span);
     });
   }
 
-  // Add listener to refresh chips whenever the user types
   if (tagsInput) {
     tagsInput.addEventListener('input', refreshChipsFromTags);
-    refreshChipsFromTags(); // Run once on page load
+    refreshChipsFromTags(); 
   }
 
-  // Handle the "Add Tag" button click
-  const addTagBtn = document.getElementById('btn-add-tag'); // The new button ID
+  const addTagBtn = document.getElementById('btn-add-tag'); 
   if (addTagBtn && tagsInput) {
     addTagBtn.addEventListener('click', (e) => {
       e.preventDefault();
       
-      // This logic (from edit_event.html) just adds a comma
-      // to help the user separate tags.
+      // Help separate tags
       let v = tagsInput.value.trim();
-      if (!v) return; // Do nothing if empty
+      if (!v) return; 
       
       if (!v.endsWith(',')) {
         tagsInput.value = v + ', ';
       }
       
-      tagsInput.focus(); // Put cursor back in the input
-      // Trigger the input event to refresh the chips
+      tagsInput.focus(); 
       tagsInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
   }

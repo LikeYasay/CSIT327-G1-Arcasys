@@ -231,14 +231,22 @@ Events | Marketing Archive
       }
     });
 
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('q') && urlParams.get('q').trim() === '') {
+      urlParams.delete('q');
+      const newQuery = urlParams.toString();
+      const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+
     // MAM-40 Instant search results
     const searchInput = document.querySelector('#search-input');
     const resultsBox = document.querySelector('.typeahead-list');
+    const searchForm = searchInput.closest('form');
     let timer = null;
 
     searchInput.addEventListener('input', function () {
       const query = searchInput.value.trim();
-
       clearTimeout(timer);
 
       if (!query) {
@@ -248,24 +256,28 @@ Events | Marketing Archive
       }
 
       timer = setTimeout(() => {
-        fetch(`/events/search/?q=${encodeURIComponent(query)}`)
+        const params = new URLSearchParams({
+          q: query,
+          limit: 5,
+          department: document.getElementById('department').value,
+          platform: document.getElementById('platform').value,
+          fromDate: document.getElementById('fromDate').value,
+          toDate: document.getElementById('toDate').value
+        });
+
+        fetch(`/events/search/?${params.toString()}`)
           .then(res => res.json())
           .then(data => {
             const results = data.results || [];
-
             if (results.length > 0) {
-              resultsBox.innerHTML = results
-                .map(
-                  (r) => `
-                  <li class="search-result-item">
-                    <div class="search-result">
-                      <strong>${r.title}</strong><br>
-                      <small>${r.date} — ${r.location}</small>
-                    </div>
-                  </li>
-                `
-                )
-                .join('');
+              resultsBox.innerHTML = results.map(r => `
+                <li class="search-result-item">
+                  <div class="search-result">
+                    <strong>${r.title}</strong><br>
+                    <small>${r.date} — ${r.location}</small>
+                  </div>
+                </li>
+              `).join('');
               resultsBox.classList.add('has-results');
             } else {
               resultsBox.innerHTML = '<li class="search-result-item">No events found</li>';
@@ -276,7 +288,7 @@ Events | Marketing Archive
             resultsBox.innerHTML = '<li class="search-result-item">Error fetching results</li>';
             resultsBox.classList.add('has-results');
           });
-      }, 200); // Debounce delay
+      }, 200);
     });
 
     document.addEventListener('click', (e) => {

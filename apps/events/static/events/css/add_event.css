@@ -138,7 +138,7 @@ select:focus {
     margin-bottom: 10px;
 }
 
-/* Base style for tags (kept from original) */
+/* Base style for tags */
 .tag {
   background-color: #e5e7eb;   
   color: #333333;

@@ -13,7 +13,7 @@ from apps.events.utils.log_line import log_line
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 django.setup()
 
-# Load .env for local dev (Render uses env vars in dashboard)
+# Load .env for local dev
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -23,9 +23,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME")
-PG_DUMP_PATH = os.getenv("PG_DUMP_PATH", "pg_dump")  # Should exist in Render container
+PG_DUMP_PATH = os.getenv("PG_DUMP_PATH", "pg_dump")  # Make sure pg_dump exists in Render container
 
-# Use Render-friendly temporary folders
 BACKUP_DIR = Path("/tmp/backups")
 LOG_DIR = Path("/tmp/logs")
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -42,13 +41,12 @@ def backup_database():
     log_path = LOG_DIR / log_filename
 
     log_output = StringIO()
-    log_line(log_output, "Starting database backup...")
+    log_line(log_output, "Starting backup...")
 
     try:
-        # Step 1: Run database backup
-        log_line(log_output, "Creating backup file...")
+        #  Run data-only backup
+        log_line(log_output, f"Creating backup file: {backup_filename}")
 
-        # Copy current env and add password
         env = os.environ.copy()
         env["PGPASSWORD"] = DB_PASSWORD
 
@@ -59,6 +57,8 @@ def backup_database():
                 "-p", DB_PORT,
                 "-U", DB_USER,
                 "-d", DB_NAME,
+                "--data-only",            # Only dump data
+                "--column-inserts",       # Optional: safer INSERT statements
                 "-f", str(backup_path),
                 "--no-password"
             ],
@@ -78,20 +78,20 @@ def backup_database():
             )
             return {"status": "error", "message": result.stderr}
 
-        log_line(log_output, f"Database backup completed successfully! Saved as {backup_filename}")
+        log_line(log_output, f"Data backup completed successfully: {backup_filename}")
 
-        # Step 2: Upload backup file to S3
+        # Upload backup file to cloud
         log_line(log_output, "Uploading backup file to cloud...")
         backup_s3_key = upload_backup_to_cloud(str(backup_path), log_output, folder="backups")
 
-        # Step 3: Save log locally
+        # Save log locally
         with open(log_path, "w") as f:
             f.write(log_output.getvalue())
 
-        # Step 4: Upload log file to S3
+        # Upload log file to cloud
         log_s3_key = upload_backup_to_cloud(str(log_path), log_output, folder="logs")
 
-        # Step 5: Record backup in database
+        # Record backup in database
         status = "completed" if backup_s3_key and log_s3_key else "failed"
         BackupHistory.objects.create(
             BackupName=backup_name,
@@ -102,8 +102,7 @@ def backup_database():
         )
 
         log_line(log_output, "Backup record saved in the database.")
-
-        return {"status": "success", "message": f"Backup {backup_name} completed!"}
+        return {"status": "success", "message": f"{backup_name} completed!"}
 
     except Exception as e:
         log_line(log_output, f"An error occurred during backup: {str(e)}", level="ERROR")
@@ -117,12 +116,9 @@ def backup_database():
         return {"status": "error", "message": str(e)}
 
     finally:
-        # Step 6: Cleanup temporary files
         if backup_path.exists():
             backup_path.unlink()
         if log_path.exists():
             log_path.unlink()
 
-        # Step 7: Final log output
         print(log_output.getvalue())
-

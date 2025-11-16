@@ -183,29 +183,68 @@ def events_view(request):
     }
     return render(request, "events/events.html", context)
 
+def _event_to_dict(e):
+    """Serialize an Event model instance to a dict for the UI."""
+    return {
+        "id": str(e.EventID),
+        "title": e.EventTitle,
+        "department": e.eventdepartment_set.first().DepartmentID.DepartmentName
+                      if e.eventdepartment_set.exists() else "",
+        "date": e.EventDate.strftime("%Y-%m-%d") if e.EventDate else None,
+        "description": e.EventDescription,
+        "tags": [t.TagID.TagName for t in e.eventtag_set.all()],
+        "platforms": [l.EventLinkName for l in e.eventlink_set.all()],
+        "location": e.EventLocation,
+    }
 
-def events_search_ajax(request):
-    query = request.GET.get('q', '').strip()
-    results = []
+def search_events_api(request):
+    """
+    GET /events/search/?q=...&department=...&platform=...&fromDate=yyyy-mm-dd&toDate=yyyy-mm-dd&limit=8
+    Returns JSON: { results: [...], count: N }
+    """
 
-    if query:
-        events = Event.objects.filter(
-            Q(EventTitle__icontains=query) |
-            Q(EventLocation__icontains=query)
-        ).order_by('-EventDate')[:5]
+    q = request.GET.get("q", "").strip()
+    department = request.GET.get("department", "").strip()
+    platform = request.GET.get("platform", "").strip()
+    from_date = request.GET.get("fromDate", "").strip()
+    to_date = request.GET.get("toDate", "").strip()
+    try:
+        limit = int(request.GET.get("limit", 8))
+    except ValueError:
+        limit = 8
 
-        results = [
-            {
-                'id': str(e.EventID),
-                'title': e.EventTitle,
-                'date': e.EventDate.strftime('%b %d, %Y'),
-                'location': e.EventLocation,
-            }
-            for e in events
-        ]
+    qs = Event.objects.all()
 
-    return JsonResponse({'results': results})
+    # Text search across title and location
+    if q:
+        qs = qs.filter(
+            Q(EventTitle__icontains=q) |
+            Q(EventLocation__icontains=q)
+        )
 
+    # Department filter
+    if department:
+        qs = qs.filter(eventdepartment__DepartmentID=department)
+
+    # Platform filter
+    if platform and platform.lower() != "all platforms":
+        qs = qs.filter(eventlink__EventLinkName__iexact=platform)
+
+    # Date range filter
+    if from_date:
+        qs = qs.filter(EventDate__gte=from_date)
+    if to_date:
+        qs = qs.filter(EventDate__lte=to_date)
+
+    # Remove duplicates (joins can create duplicates)
+    qs = qs.distinct().order_by("-EventDate")[:limit]
+
+    data = [_event_to_dict(e) for e in qs]
+
+    return JsonResponse({
+        "results": data,
+        "count": len(data),
+    })
 
 # -----------------------------
 # Add Event View - FOR STAFF & ADMIN
@@ -494,6 +533,11 @@ def backup_history_view(request):
     paginator = Paginator(backups, 10)  # Show 10 backups per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+    query_string = query_params.urlencode()
 
     # Actions -----
     action = request.GET.get('action')
@@ -564,6 +608,7 @@ def backup_history_view(request):
         "search_query": search_query,
         "status_filter": status_filter,
         "nav_active": 'backup_management',
+        "query_string": query_string,
     })
 
 @login_required
@@ -582,8 +627,8 @@ def backup_dashboard_view(request):
 
     for job in failed_jobs:
         alerts.append({
-            'Level': 'Critical',  # you can customize based on logic
-            'Message': f"Backup '{job.BackupName}' failed.",
+            'Level': 'Critical',  
+            'Message': f"{job.BackupName} failed.",
             'CreatedAt': job.BackupTimestamp,
             'RelatedBackup': job
         })

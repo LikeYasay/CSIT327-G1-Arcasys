@@ -1,10 +1,10 @@
 import os
 import subprocess
 from datetime import datetime
-import django
-from dotenv import load_dotenv
 from pathlib import Path
 from io import StringIO
+import django
+from dotenv import load_dotenv
 from apps.events.models import BackupHistory
 from apps.events.upload_to_cloud import upload_backup_to_cloud
 from apps.events.utils.log_line import log_line
@@ -13,7 +13,7 @@ from apps.events.utils.log_line import log_line
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 django.setup()
 
-# Load .env
+# Load .env for local dev (Render uses env vars in dashboard)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -23,12 +23,11 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME")
-PG_DUMP_PATH = os.getenv("PG_DUMP_PATH", "pg_dump")
+PG_DUMP_PATH = os.getenv("PG_DUMP_PATH", "pg_dump")  # Should exist in Render container
 
-# Local folders for temporary backups and logs
-BASE_DIR = Path(__file__).resolve().parent
-BACKUP_DIR = BASE_DIR / "temp_files"
-LOG_DIR = BASE_DIR / "temp_logs"
+# Use Render-friendly temporary folders
+BACKUP_DIR = Path("/tmp/backups")
+LOG_DIR = Path("/tmp/logs")
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -48,6 +47,11 @@ def backup_database():
     try:
         # Step 1: Run database backup
         log_line(log_output, "Creating backup file...")
+
+        # Copy current env and add password
+        env = os.environ.copy()
+        env["PGPASSWORD"] = DB_PASSWORD
+
         result = subprocess.run(
             [
                 PG_DUMP_PATH,
@@ -58,7 +62,7 @@ def backup_database():
                 "-f", str(backup_path),
                 "--no-password"
             ],
-            env={"PGPASSWORD": DB_PASSWORD},
+            env=env,
             capture_output=True,
             text=True
         )
@@ -72,7 +76,7 @@ def backup_database():
                 BackupFile=None,
                 BackupLogFile=None
             )
-            return
+            return {"status": "error", "message": result.stderr}
 
         log_line(log_output, f"Database backup completed successfully! Saved as {backup_filename}")
 
@@ -99,6 +103,8 @@ def backup_database():
 
         log_line(log_output, "Backup record saved in the database.")
 
+        return {"status": "success", "message": f"Backup {backup_name} completed!"}
+
     except Exception as e:
         log_line(log_output, f"An error occurred during backup: {str(e)}", level="ERROR")
         BackupHistory.objects.create(
@@ -108,6 +114,7 @@ def backup_database():
             BackupFile=None,
             BackupLogFile=None
         )
+        return {"status": "error", "message": str(e)}
 
     finally:
         # Step 6: Cleanup temporary files
@@ -118,9 +125,4 @@ def backup_database():
 
         # Step 7: Final log output
         print(log_output.getvalue())
-
-
-if __name__ == "__main__":
-    backup_database()
-
 

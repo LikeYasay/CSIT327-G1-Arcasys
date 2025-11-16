@@ -424,6 +424,51 @@ footer {
   transform: translateY(-2px);
 }
 
+/* Flash messages */
+.flash-area {
+  margin: 0 0 16px 0;
+}
+
+.alert {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  margin-bottom: 10px;
+}
+
+/* success (green), error (red), info (blue), warning (amber) */
+.alert.success, .alert.message-success {
+  background: #ecfdf5;
+  border-color: #34d399;
+  color: #065f46;
+}
+
+.alert.error, .alert.message-error {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.alert.info, .alert.message-info {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e3a8a;
+}
+
+.alert.warning, .alert.message-warning {
+  background: #fffbeb;
+  border-color: #facc15;
+  color: #92400e;
+}
+
+/* optional fade-out */
+.alert.fade-out {
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

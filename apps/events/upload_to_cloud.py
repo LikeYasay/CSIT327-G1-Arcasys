@@ -1,4 +1,3 @@
-# apps/events/upload_to_cloud.py
 import os
 import boto3
 from datetime import datetime
@@ -13,7 +12,7 @@ def upload_backup_to_cloud(file_path, log=None, folder="backups"):
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
     S3_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-    S3_REGION = os.getenv("AWS_S3_REGION", "ap-southeast-1")
+    S3_REGION = os.getenv("AWS_S3_REGION_NAME", "ap-southeast-1")  # FIXED: Use AWS_S3_REGION_NAME
 
     if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY or not S3_BUCKET_NAME:
         log_line(log, "Missing AWS credentials or bucket name.", level="ERROR")

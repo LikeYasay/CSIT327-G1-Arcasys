@@ -957,6 +957,7 @@ def restore_full_database_from_s3(backup_s3_key, restore_op=None):
             restore_op.save()
         return False
 
+
 def execute_full_restoration(sql_file_path, restore_op=None):
     """
     Actual restoration using psql.
@@ -974,12 +975,29 @@ def execute_full_restoration(sql_file_path, restore_op=None):
         env['PGPASSWORD'] = db_password
         psql_path = r"C:\Program Files\PostgreSQL\18\bin\psql.exe"
 
-        # Disable constraints
-        subprocess.run([
+        if restore_op:
+            restore_op.RestoreProgress = 30
+            restore_op.RestoreMessage = 'Preparing database for restoration...'
+            restore_op.save()
+
+        # Disable constraints to avoid foreign key issues during restoration
+        disable_result = subprocess.run([
             psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
             '-c', "SET session_replication_role = 'replica';",
             '--quiet'
-        ], env=env, check=True)
+        ], env=env, capture_output=True, text=True)
+
+        if disable_result.returncode != 0:
+            logger.error(f"Failed to disable constraints: {disable_result.stderr}")
+            if restore_op:
+                restore_op.RestoreMessage = f'Failed to prepare database: {disable_result.stderr[:200]}'
+                restore_op.save()
+            return False
+
+        if restore_op:
+            restore_op.RestoreProgress = 40
+            restore_op.RestoreMessage = 'Cleaning existing data...'
+            restore_op.save()
 
         # Delete application tables but preserve django_session
         delete_script = """
@@ -989,77 +1007,104 @@ def execute_full_restoration(sql_file_path, restore_op=None):
         DELETE FROM public."Event";
         DELETE FROM public."Tag";
         DELETE FROM public."Department";
-        DELETE FROM public."Role";
         DELETE FROM public."User";
-        -- KEEP django_session
+        DELETE FROM public."Role";
+        -- KEEP django_session table untouched
         """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False) as tmp_del:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False, encoding='utf-8') as tmp_del:
             tmp_del.write(delete_script)
             tmp_del_path = tmp_del.name
 
-        subprocess.run([
+        delete_result = subprocess.run([
             psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
             '-f', tmp_del_path, '--quiet'
-        ], env=env, check=True)
+        ], env=env, capture_output=True, text=True)
+
         os.unlink(tmp_del_path)
+
+        if delete_result.returncode != 0:
+            logger.error(f"Failed to clean tables: {delete_result.stderr}")
+            if restore_op:
+                restore_op.RestoreMessage = f'Failed to clean existing data: {delete_result.stderr[:200]}'
+                restore_op.save()
+            return False
+
+        if restore_op:
+            restore_op.RestoreProgress = 60
+            restore_op.RestoreMessage = 'Processing backup data...'
+            restore_op.save()
 
         # Read the backup SQL
         with open(sql_file_path, 'r', encoding='utf-8', errors='ignore') as f:
             sql_content = f.read()
 
-        # Make inserts for BackupHistory idempotent
+        # Make inserts for BackupHistory idempotent - FIXED with proper conflict target
         sql_content = re.sub(
             r'INSERT INTO public\."BackupHistory"\s*\((.*?)\)\s*VALUES\s*\((.*?)\);',
             r'INSERT INTO public."BackupHistory" (\1) VALUES (\2) '
-            r'ON CONFLICT ("BackupHistoryID") DO UPDATE SET '
-            r'BackupStatus = EXCLUDED.BackupStatus, '
-            r'BackupSize = EXCLUDED.BackupSize, '
-            r'BackupLogFile = EXCLUDED.BackupLogFile, '
-            r'BackupFile = EXCLUDED.BackupFile;',
+            r'ON CONFLICT ("BackupHistoryID") DO NOTHING;',
             sql_content,
-            flags=re.DOTALL
+            flags=re.DOTALL | re.IGNORECASE
         )
 
-        # Make inserts for RestoreOperation idempotent
+        # Make inserts for RestoreOperation idempotent - FIXED with proper conflict target
         sql_content = re.sub(
             r'INSERT INTO public\."RestoreOperation"\s*\((.*?)\)\s*VALUES\s*\((.*?)\);',
             r'INSERT INTO public."RestoreOperation" (\1) VALUES (\2) '
-            r'ON CONFLICT ("RestoreID") DO UPDATE SET '
-            r'RestoreStatus = EXCLUDED.RestoreStatus, '
-            r'RestoreProgress = EXCLUDED.RestoreProgress, '
-            r'RestoreMessage = EXCLUDED.RestoreMessage, '
-            r'RestoreStartedAt = EXCLUDED.RestoreStartedAt, '
-            r'RestoreCompletedAt = EXCLUDED.RestoreCompletedAt, '
-            r'BackupHistoryID = EXCLUDED.BackupHistoryID;',
+            r'ON CONFLICT ("RestoreID") DO NOTHING;',
             sql_content,
-            flags=re.DOTALL
+            flags=re.DOTALL | re.IGNORECASE
         )
 
         # Write modified SQL to temp file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False) as tmp_sql:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False, encoding='utf-8') as tmp_sql:
             tmp_sql.write(sql_content)
             tmp_sql_path = tmp_sql.name
 
+        if restore_op:
+            restore_op.RestoreProgress = 80
+            restore_op.RestoreMessage = 'Restoring data from backup...'
+            restore_op.save()
+
         # Run the restored SQL
-        subprocess.run([
+        restore_result = subprocess.run([
             psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
             '-f', tmp_sql_path, '--quiet'
-        ], env=env, check=True)
+        ], env=env, capture_output=True, text=True)
+
         os.unlink(tmp_sql_path)
 
+        if restore_result.returncode != 0:
+            logger.error(f"Restoration failed: {restore_result.stderr}")
+            if restore_op:
+                restore_op.RestoreMessage = f'Data restoration failed: {restore_result.stderr[:200]}'
+                restore_op.save()
+            return False
+
+        if restore_op:
+            restore_op.RestoreProgress = 90
+            restore_op.RestoreMessage = 'Finalizing restoration...'
+            restore_op.save()
+
         # Re-enable constraints
-        subprocess.run([
+        enable_result = subprocess.run([
             psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
             '-c', "SET session_replication_role = 'origin';",
             '--quiet'
-        ], env=env, check=True)
+        ], env=env, capture_output=True, text=True)
 
+        if enable_result.returncode != 0:
+            logger.warning(f"Failed to re-enable constraints: {enable_result.stderr}")
+            # Don't fail the whole restoration for this, but log it
+
+        logger.info("Database restoration completed successfully")
         return True
 
     except Exception as e:
+        logger.error(f"Restoration error: {str(e)}")
         if restore_op:
-            restore_op.RestoreMessage = f'Full restoration error: {str(e)}'
+            restore_op.RestoreMessage = f'Restoration error: {str(e)}'
             restore_op.save()
         return False
 

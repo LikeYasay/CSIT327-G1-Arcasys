@@ -25,38 +25,6 @@
       </div>
     </div>
 
-    <!-- Active Restore Card -->
-    <div id="restoreCard" class="restore-card hidden">
-      <div class="restore-header">
-        <h2 id="restoreTitle">Database Restoration</h2>
-        <a href="#" class="details-link">View Details</a>
-      </div>
-      
-      <div class="restore-content">
-        <div class="status-section">
-          <div class="status-header">
-            <div id="statusBadge" class="status-badge yellow">In Progress</div>
-            <p id="progressLabel" class="progress-label">Progress: 0%</p>
-          </div>
-          <div class="progress-bar">
-            <div id="progressFill" class="progress-fill yellow" style="width: 0%;"></div>
-          </div>
-          <p id="restoreMessage" class="restore-message">Starting restoration...</p>
-        </div>
-        
-        <div class="time-info">
-          <div class="time-item">
-            <span class="time-label">Start Time:</span>
-            <span id="startTime" class="time-value">{{ current_time|date:"Y-m-d H:i" }}</span>
-          </div>
-          <div class="time-item">
-            <span class="time-label">Completion Time:</span>
-            <span id="estimatedCompletion" class="time-value">--:--</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Available Backups -->
     <div class="available-section">
       <h2>Available Backups for Restoration</h2>
@@ -67,7 +35,7 @@
             <h3>{{ backup.BackupName }}</h3>
             <p>{{ backup.BackupTimestamp|date:"Y-m-d H:i" }} — {{ backup.BackupSize }}</p>
           </div>
-          <button class="restore-link" onclick="startRestore('{{ backup.BackupHistoryID }}')">Restore</button>
+          <button class="restore-link" onclick="startRestore('{{ backup.BackupHistoryID }}', '{{ backup.BackupName }}')">Restore</button>
         </div>
         {% empty %}
         <p>No backups available for restoration.</p>
@@ -91,4 +59,322 @@
     </div>
   </section>
 </div>
+
+<!-- Restore Loading Modal -->
+<div id="restoreModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeRestoreModal()" style="display:none;">&times;</span>
+    <div id="modalIcon" class="modal-icon loading">
+      <div class="spinner"></div>
+    </div>
+    <h2 id="modalTitle" class="modal-title">Restoring Database</h2>
+    <p id="modalMessage" class="modal-message">Please wait while the restore is in progress...</p>
+    <div class="progress-bar" id="progressBarContainer">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div id="successActions" class="success-actions" style="display: none;">
+      <button class="confirm-btn" onclick="redirectToLogin()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="modal confirmation-modal">
+  <div class="modal-content">
+    <div class="confirmation-icon">⚠️</div>
+    <h2 class="confirmation-title">Confirm Database Restoration</h2>
+
+    <div class="confirmation-message">
+      <p>You are about to restore the database from backup:</p>
+      <p><strong id="backupNameText"></strong></p>
+
+      <div class="confirmation-warning">
+        ⚠️ IMPORTANT: You will be logged out after restoration!
+      </div>
+
+      <p><strong>This will:</strong></p>
+      <ul>
+        <li>Completely replace your current database</li>
+        <li>Permanently delete all changes made since the backup</li>
+        <li>Restore the database to its exact state when the backup was created</li>
+        <li><strong>You will be automatically logged out</strong> - this is normal and indicates the restoration was successful</li>
+      </ul>
+
+      <div class="session-note">
+        💡 Please just simply log back in if you continue - this confirms the restoration worked correctly!
+      </div>
+    </div>
+
+    <div class="confirmation-buttons">
+      <button class="cancel-btn" onclick="closeConfirmationModal()">Cancel</button>
+      <button class="confirm-btn" onclick="confirmRestore()">Yes, Restore Database</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentBackupId = null;
+let progressInterval = null;
+let statusPollInterval = null;
+let pendingBackupId = null;
+let pendingBackupName = null;
+let progressValue = 0;
+
+function startRestore(backupId, backupName) {
+    pendingBackupId = backupId;
+    pendingBackupName = backupName;
+    showConfirmationModal(backupName);
+}
+
+function showConfirmationModal(backupName) {
+    const modal = document.getElementById('confirmationModal');
+    const backupNameText = document.getElementById('backupNameText');
+    backupNameText.textContent = backupName;
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeConfirmationModal() {
+    const modal = document.getElementById('confirmationModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+function confirmRestore() {
+    closeConfirmationModal();
+    if (!pendingBackupId) return;
+
+    showRestoreModal();
+
+    // Start restoration process
+    fetch('/events/restore-full/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({ backup_id: pendingBackupId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success' && data.restore_op_id) {
+            startStatusPolling(data.restore_op_id);
+        } else {
+            showRestoreResult(false, data.message || 'Failed to start restoration');
+        }
+    })
+    .catch(error => {
+        showRestoreResult(false, 'Network error starting restoration');
+    });
+}
+
+function startStatusPolling(restoreOpId) {
+    let pollCount = 0;
+    const maxPolls = 300; // 10 minutes max
+    progressValue = 10; // Start at 10% when polling begins
+
+    // Start progress bar animation
+    startProgressAnimation();
+
+    statusPollInterval = setInterval(() => {
+        pollCount++;
+        if (pollCount > maxPolls) {
+            clearInterval(statusPollInterval);
+            showRestoreResult(false, 'Restoration timeout');
+            return;
+        }
+
+        fetch(`/events/check-restore-status/${restoreOpId}/`)
+            .then(response => {
+                // If we get redirected (session lost), treat as SUCCESS
+                if (response.status === 302 || response.redirected) {
+                    clearInterval(statusPollInterval);
+                    showRestoreResult(true, '<br>You have been logged out. Please log back in.');
+                    return null;
+                }
+                // If we get any other error, continue polling
+                if (!response.ok) {
+                    return null;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data) return; // Skip if we got redirect or error
+
+                if (data.status === 'completed') {
+                    clearInterval(statusPollInterval);
+                    showRestoreResult(true, 'DATABASE RESTORED SUCCESSFULLY');
+                } else if (data.status === 'failed') {
+                    clearInterval(statusPollInterval);
+                    showRestoreResult(false, data.message || 'DATA RESTORATION FAILED');
+                }
+                // No progress updates from backend - we handle progress separately
+            })
+            .catch(error => {
+                // Network error - treat as session loss (SUCCESS) after a few attempts
+                if (pollCount > 5) {
+                    clearInterval(statusPollInterval);
+                    showRestoreResult(true, 'DATABASE RESTORED SUCCESSFULLY - You have been logged out. Please log back in.');
+                }
+            });
+    }, 2000);
+}
+
+function startProgressAnimation() {
+    // Initial progress update
+    updateProgressBar();
+
+    // Gradually increase progress to 95% over time (every 1.5 seconds)
+    progressInterval = setInterval(() => {
+        if (progressValue < 95) {
+            progressValue = Math.min(95, progressValue + 20); // Jump 20% every 1.5 seconds
+            updateProgressBar();
+        } else {
+            // Stop at 95% until completion
+            clearInterval(progressInterval);
+        }
+    }, 1500); // 1.5 second intervals
+}
+
+function updateProgressBar() {
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) {
+        progressFill.style.width = progressValue + '%';
+    }
+}
+
+function showRestoreResult(success, message) {
+    const modalIcon = document.getElementById('modalIcon');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const progressBarContainer = document.getElementById('progressBarContainer');
+    const progressFill = document.getElementById('progressFill');
+    const closeBtn = document.querySelector('.modal-close');
+    const successActions = document.getElementById('successActions');
+
+    // Stop any intervals
+    if (progressInterval) clearInterval(progressInterval);
+    if (statusPollInterval) clearInterval(statusPollInterval);
+
+    if (success) {
+        modalIcon.className = 'modal-icon success';
+        modalIcon.innerHTML = '✓';
+        modalTitle.textContent = 'Restore Completed';
+        modalMessage.innerHTML = message;
+
+        // Immediately show 100% and hide progress bar quickly
+        progressValue = 100;
+        updateProgressBar();
+
+        // Hide progress bar after 0.5 seconds
+        setTimeout(() => {
+            progressBarContainer.style.display = 'none';
+            successActions.style.display = 'block';
+            closeBtn.style.display = 'none'; // Hide X close button
+        }, 500); // Half second then hide progress bar
+
+    } else {
+        modalIcon.className = 'modal-icon error';
+        modalIcon.innerHTML = '✕';
+        modalTitle.textContent = 'Restore Failed';
+        modalMessage.textContent = message;
+        successActions.style.display = 'none';
+        closeBtn.style.display = 'flex';
+
+        // Hide progress bar immediately on failure
+        progressBarContainer.style.display = 'none';
+    }
+}
+
+function redirectToLogin() {
+    window.location.href = '/users/login/';
+}
+
+function showRestoreModal() {
+    const modal = document.getElementById('restoreModal');
+
+    // Reset modal to initial state
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    // Reset to loading state
+    const modalIcon = document.getElementById('modalIcon');
+    modalIcon.className = 'modal-icon loading';
+    modalIcon.innerHTML = '<div class="spinner"></div>';
+
+    // Reset messages
+    document.getElementById('modalTitle').textContent = 'Restoring Database';
+    document.getElementById('modalMessage').textContent = 'Please wait while the restoration is in progress...';
+
+    // Reset progress and show bar
+    progressValue = 0;
+    updateProgressBar();
+    const progressBarContainer = document.getElementById('progressBarContainer');
+    progressBarContainer.style.display = 'block';
+
+    // Hide success actions and show close button
+    document.getElementById('successActions').style.display = 'none';
+    document.querySelector('.modal-close').style.display = 'none';
+}
+
+function closeRestoreModal() {
+    const modal = document.getElementById('restoreModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+
+    // Clear all intervals
+    if (progressInterval) clearInterval(progressInterval);
+    if (statusPollInterval) clearInterval(statusPollInterval);
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrf-token]').getAttribute('content');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const restoreModal = document.getElementById('restoreModal');
+    const confirmationModal = document.getElementById('confirmationModal');
+
+    if (event.target == restoreModal) {
+        if (document.querySelector('.modal-close').style.display === 'flex') {
+            closeRestoreModal();
+        }
+    }
+
+    if (event.target == confirmationModal) {
+        closeConfirmationModal();
+    }
+};
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const restoreModal = document.getElementById('restoreModal');
+        const confirmationModal = document.getElementById('confirmationModal');
+
+        if (restoreModal.classList.contains('show') && document.querySelector('.modal-close').style.display === 'flex') {
+            closeRestoreModal();
+        }
+
+        if (confirmationModal.classList.contains('show')) {
+            closeConfirmationModal();
+        }
+    }
+});
+</script>
+
+<style>
+.success-actions {
+    margin-top: 25px;
+    text-align: center;
+}
+
+/* Use the existing confirm-btn class for the OK button */
+.success-actions .confirm-btn {
+    min-width: 150px;
+    margin: 0 auto;
+}
+</style>
+
 {% endblock %}

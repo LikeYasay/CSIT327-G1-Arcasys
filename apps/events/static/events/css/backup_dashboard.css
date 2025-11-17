@@ -404,12 +404,6 @@ body { background: #f8f8f8; color: #333; }
   height: 100%;
   background: #FFCF01;
   width: 0%;
-  transition: width 0.3s ease;
-  animation: progress 2s ease-in-out infinite;
-}
-
-@keyframes progress {
-  0% { width: 0%; }
-  50% { width: 70%; }
-  100% { width: 100%; }
+  transition: width 0.5s ease;
+  /* NO ANIMATION - we control width via JavaScript */
 }

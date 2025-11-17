@@ -118,24 +118,30 @@ input[type="time"]::-webkit-inner-spin-button {
 input:focus,
 textarea:focus,
 select:focus {
-    border-color: #000;
-    outline: none;
-    box-shadow: 0 0 0 1px #000;
+  border: 1px solid #000;
+  outline: none;
+  box-shadow: none;
 }
-
-
 
 .dropdown-container,
 .input-with-icon {
-    position: relative;
+  position: relative;
 }
 
 .description-group {
-    margin-bottom: 25px;
+  margin-bottom: 25px;
+}
+
+.description-group textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 100%;
+  resize: vertical;
+  box-sizing: border-box;
 }
 
 .event-tags-section {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 /* Base style for tags */

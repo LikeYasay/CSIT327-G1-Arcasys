@@ -562,7 +562,7 @@ def backup_history_view(request):
                         f"<pre style='padding:1rem; background:#f4f4f4; border-radius:6px;'>{f.read()}</pre>"
                     )
             messages.error(request, "Log file not found.")
-            return redirect('backup_history')
+            return redirect('events:backup_history')
 
     # Delete Backup -----
     if request.method == "POST" and "delete_id" in request.POST:
@@ -574,6 +574,7 @@ def backup_history_view(request):
                 backup.BackupLogFile.delete()
             backup.delete()
             messages.success(request, "Backup deleted successfully.")
+            return redirect('events:backup_history')
         else:
             messages.error(request, "Backup not found.")
         return redirect('events:backup_history')

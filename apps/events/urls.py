@@ -5,7 +5,7 @@ app_name = 'events'
 
 urlpatterns = [
     path('', views.events_view, name='events'),
-    path('search/', views.search_events_api, name='events_search_api'),
+    path('search/', views.events_search_ajax, name='events_search_api'),
     path('add/', views.add_event_view, name='add_event'),
     path('edit/<uuid:EventID>/', views.edit_event_view, name='edit_event'),
     path('admin-approval/', views.admin_approval_view, name='admin_approval'),

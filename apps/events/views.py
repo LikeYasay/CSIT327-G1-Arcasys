@@ -4,11 +4,12 @@ import traceback
 import boto3
 import os
 import csv
-import json  # ADD THIS
-import tempfile  # ADD THIS
-import subprocess  # ADD THIS
-import re  # ADD THIS
+import json
+import tempfile
+import subprocess
+import re
 import uuid
+import platform
 from django.urls import reverse
 from django.db import OperationalError, ProgrammingError
 from django.shortcuts import get_object_or_404, render, redirect
@@ -29,13 +30,36 @@ from apps.events.models import BackupHistory, Event, EventDepartment, EventLink,
 from project import settings
 from .forms import AdminEditEventForm
 from apps.shared.email_utils import send_sendgrid_email
-from django.http import JsonResponse
 from django.conf import settings
-from django.db import transaction
-from django.views.decorators.http import require_POST, require_GET  # ADD THIS LINE
+from django.views.decorators.http import require_POST, require_GET
 
 # Set up logger
 logger = logging.getLogger(__name__)
+
+
+def get_platform_config():
+    """Get platform-specific configuration"""
+    IS_RENDER = os.environ.get('RENDER', 'false').lower() == 'true'
+    IS_WINDOWS = platform.system().lower() == 'windows'
+
+    if IS_RENDER:
+        return {
+            'psql_path': 'psql',
+            'pg_dump_path': 'pg_dump',
+            'platform': 'render'
+        }
+    elif IS_WINDOWS:
+        return {
+            'psql_path': r"C:\Program Files\PostgreSQL\18\bin\psql.exe",
+            'pg_dump_path': r"C:\Program Files\PostgreSQL\18\bin\pg_dump.exe",
+            'platform': 'windows'
+        }
+    else:
+        return {
+            'psql_path': 'psql',
+            'pg_dump_path': 'pg_dump',
+            'platform': 'linux'
+        }
 
 
 # Email sending functions - SENDGRID WEB API
@@ -189,68 +213,29 @@ def events_view(request):
     }
     return render(request, "events/events.html", context)
 
-def _event_to_dict(e):
-    """Serialize an Event model instance to a dict for the UI."""
-    return {
-        "id": str(e.EventID),
-        "title": e.EventTitle,
-        "department": e.eventdepartment_set.first().DepartmentID.DepartmentName
-                      if e.eventdepartment_set.exists() else "",
-        "date": e.EventDate.strftime("%Y-%m-%d") if e.EventDate else None,
-        "description": e.EventDescription,
-        "tags": [t.TagID.TagName for t in e.eventtag_set.all()],
-        "platforms": [l.EventLinkName for l in e.eventlink_set.all()],
-        "location": e.EventLocation,
-    }
 
-def search_events_api(request):
-    """
-    GET /events/search/?q=...&department=...&platform=...&fromDate=yyyy-mm-dd&toDate=yyyy-mm-dd&limit=8
-    Returns JSON: { results: [...], count: N }
-    """
+def events_search_ajax(request):
+    query = request.GET.get('q', '').strip()
+    results = []
 
-    q = request.GET.get("q", "").strip()
-    department = request.GET.get("department", "").strip()
-    platform = request.GET.get("platform", "").strip()
-    from_date = request.GET.get("fromDate", "").strip()
-    to_date = request.GET.get("toDate", "").strip()
-    try:
-        limit = int(request.GET.get("limit", 8))
-    except ValueError:
-        limit = 8
+    if query:
+        events = Event.objects.filter(
+            Q(EventTitle__icontains=query) |
+            Q(EventLocation__icontains=query)
+        ).order_by('-EventDate')[:5]
 
-    qs = Event.objects.all()
+        results = [
+            {
+                'id': str(e.EventID),
+                'title': e.EventTitle,
+                'date': e.EventDate.strftime('%b %d, %Y'),
+                'location': e.EventLocation,
+            }
+            for e in events
+        ]
 
-    # Text search across title and location
-    if q:
-        qs = qs.filter(
-            Q(EventTitle__icontains=q) |
-            Q(EventLocation__icontains=q)
-        )
+    return JsonResponse({'results': results})
 
-    # Department filter
-    if department:
-        qs = qs.filter(eventdepartment__DepartmentID=department)
-
-    # Platform filter
-    if platform and platform.lower() != "all platforms":
-        qs = qs.filter(eventlink__EventLinkName__iexact=platform)
-
-    # Date range filter
-    if from_date:
-        qs = qs.filter(EventDate__gte=from_date)
-    if to_date:
-        qs = qs.filter(EventDate__lte=to_date)
-
-    # Remove duplicates (joins can create duplicates)
-    qs = qs.distinct().order_by("-EventDate")[:limit]
-
-    data = [_event_to_dict(e) for e in qs]
-
-    return JsonResponse({
-        "results": data,
-        "count": len(data),
-    })
 
 # -----------------------------
 # Add Event View - FOR STAFF & ADMIN
@@ -540,11 +525,6 @@ def backup_history_view(request):
     paginator = Paginator(backups, 10)  # Show 10 backups per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
-    query_params = request.GET.copy()
-    if 'page' in query_params:
-        query_params.pop('page')
-    query_string = query_params.urlencode()
 
     # Actions -----
     action = request.GET.get('action')
@@ -562,7 +542,7 @@ def backup_history_view(request):
                         f"<pre style='padding:1rem; background:#f4f4f4; border-radius:6px;'>{f.read()}</pre>"
                     )
             messages.error(request, "Log file not found.")
-            return redirect('events:backup_history')
+            return redirect('backup_history')
 
     # Delete Backup -----
     if request.method == "POST" and "delete_id" in request.POST:
@@ -574,7 +554,6 @@ def backup_history_view(request):
                 backup.BackupLogFile.delete()
             backup.delete()
             messages.success(request, "Backup deleted successfully.")
-            return redirect('events:backup_history')
         else:
             messages.error(request, "Backup not found.")
         return redirect('events:backup_history')
@@ -616,7 +595,6 @@ def backup_history_view(request):
         "search_query": search_query,
         "status_filter": status_filter,
         "nav_active": 'backup_management',
-        "query_string": query_string,
     })
 
 
@@ -636,8 +614,8 @@ def backup_dashboard_view(request):
 
     for job in failed_jobs:
         alerts.append({
-            'Level': 'Critical',  
-            'Message': f"{job.BackupName} failed.",
+            'Level': 'Critical',  # you can customize based on logic
+            'Message': f"Backup '{job.BackupName}' failed.",
             'CreatedAt': job.BackupTimestamp,
             'RelatedBackup': job
         })
@@ -668,6 +646,7 @@ def restore_operations_view(request):
 
     return render(request, 'events/restore_operations.html', context)
 
+
 # -----------------------------
 # Backup Actions
 # -----------------------------
@@ -679,8 +658,8 @@ def run_backup(request):
         backup_database()
         return JsonResponse({"status": "success", "message": "Backup completed successfully!"})
     except Exception as e:
-        print(traceback.format_exc())
-        return JsonResponse({"status": "error", "message": str(e)})
+        logger.error(f"Backup failed: {str(e)}")
+        return JsonResponse({"status": "error", "message": f"Backup failed: {str(e)}"})
 
 
 def download_backup(request, id):
@@ -912,7 +891,7 @@ def execute_full_restoration_async(backup_s3_key, restore_op_id):
             restore_op.RestoreCompletedAt = timezone.now()
             restore_op.save()
         except RestoreOperation.DoesNotExist:
-            print(f"RestoreOperation {restore_op_id} not found during error handling")
+            logger.error(f"RestoreOperation {restore_op_id} not found during error handling")
 
 
 def restore_full_database_from_s3(backup_s3_key, restore_op=None):
@@ -960,9 +939,7 @@ def restore_full_database_from_s3(backup_s3_key, restore_op=None):
 
 def execute_full_restoration(sql_file_path, restore_op=None):
     """
-    Actual restoration using psql.
-    Preserves django_session and avoids duplicate PK errors.
-    Makes inserts for BackupHistory and RestoreOperation idempotent.
+    Actual restoration using psql - platform aware
     """
     try:
         db_host = os.getenv('DB_HOST')
@@ -971,21 +948,40 @@ def execute_full_restoration(sql_file_path, restore_op=None):
         db_user = os.getenv('DB_USER')
         db_password = os.getenv('DB_PASSWORD')
 
+        # Get platform config
+        config = get_platform_config()
+        psql_path = config['psql_path']
+
         env = os.environ.copy()
-        env['PGPASSWORD'] = db_password
-        psql_path = r"C:\Program Files\PostgreSQL\18\bin\psql.exe"
+
+        # Handle password based on platform
+        IS_RENDER = os.environ.get('RENDER', 'false').lower() == 'true'
+        if not IS_RENDER:
+            env['PGPASSWORD'] = db_password
 
         if restore_op:
             restore_op.RestoreProgress = 30
-            restore_op.RestoreMessage = 'Preparing database for restoration...'
+            restore_op.RestoreMessage = f'Preparing database for restoration on {config["platform"]}...'
             restore_op.save()
 
-        # Disable constraints to avoid foreign key issues during restoration
-        disable_result = subprocess.run([
-            psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
-            '-c', "SET session_replication_role = 'replica';",
-            '--quiet'
-        ], env=env, capture_output=True, text=True)
+        # Build connection command based on platform
+        if IS_RENDER:
+            # Render connection string includes password
+            base_cmd = [
+                psql_path,
+                f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
+            ]
+        else:
+            # Local connection uses separate parameters
+            base_cmd = [
+                psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name
+            ]
+
+        # Disable constraints
+        disable_result = subprocess.run(
+            base_cmd + ['-c', "SET session_replication_role = 'replica';", '--quiet'],
+            env=env, capture_output=True, text=True
+        )
 
         if disable_result.returncode != 0:
             logger.error(f"Failed to disable constraints: {disable_result.stderr}")
@@ -1016,10 +1012,10 @@ def execute_full_restoration(sql_file_path, restore_op=None):
             tmp_del.write(delete_script)
             tmp_del_path = tmp_del.name
 
-        delete_result = subprocess.run([
-            psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
-            '-f', tmp_del_path, '--quiet'
-        ], env=env, capture_output=True, text=True)
+        delete_result = subprocess.run(
+            base_cmd + ['-f', tmp_del_path, '--quiet'],
+            env=env, capture_output=True, text=True
+        )
 
         os.unlink(tmp_del_path)
 
@@ -1039,7 +1035,7 @@ def execute_full_restoration(sql_file_path, restore_op=None):
         with open(sql_file_path, 'r', encoding='utf-8', errors='ignore') as f:
             sql_content = f.read()
 
-        # Make inserts for BackupHistory idempotent - FIXED with proper conflict target
+        # Make inserts for BackupHistory idempotent
         sql_content = re.sub(
             r'INSERT INTO public\."BackupHistory"\s*\((.*?)\)\s*VALUES\s*\((.*?)\);',
             r'INSERT INTO public."BackupHistory" (\1) VALUES (\2) '
@@ -1048,7 +1044,7 @@ def execute_full_restoration(sql_file_path, restore_op=None):
             flags=re.DOTALL | re.IGNORECASE
         )
 
-        # Make inserts for RestoreOperation idempotent - FIXED with proper conflict target
+        # Make inserts for RestoreOperation idempotent
         sql_content = re.sub(
             r'INSERT INTO public\."RestoreOperation"\s*\((.*?)\)\s*VALUES\s*\((.*?)\);',
             r'INSERT INTO public."RestoreOperation" (\1) VALUES (\2) '
@@ -1068,10 +1064,10 @@ def execute_full_restoration(sql_file_path, restore_op=None):
             restore_op.save()
 
         # Run the restored SQL
-        restore_result = subprocess.run([
-            psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
-            '-f', tmp_sql_path, '--quiet'
-        ], env=env, capture_output=True, text=True)
+        restore_result = subprocess.run(
+            base_cmd + ['-f', tmp_sql_path, '--quiet'],
+            env=env, capture_output=True, text=True
+        )
 
         os.unlink(tmp_sql_path)
 
@@ -1088,15 +1084,13 @@ def execute_full_restoration(sql_file_path, restore_op=None):
             restore_op.save()
 
         # Re-enable constraints
-        enable_result = subprocess.run([
-            psql_path, '-h', db_host, '-p', db_port, '-U', db_user, '-d', db_name,
-            '-c', "SET session_replication_role = 'origin';",
-            '--quiet'
-        ], env=env, capture_output=True, text=True)
+        enable_result = subprocess.run(
+            base_cmd + ['-c', "SET session_replication_role = 'origin';", '--quiet'],
+            env=env, capture_output=True, text=True
+        )
 
         if enable_result.returncode != 0:
             logger.warning(f"Failed to re-enable constraints: {enable_result.stderr}")
-            # Don't fail the whole restoration for this, but log it
 
         logger.info("Database restoration completed successfully")
         return True
@@ -1107,6 +1101,7 @@ def execute_full_restoration(sql_file_path, restore_op=None):
             restore_op.RestoreMessage = f'Restoration error: {str(e)}'
             restore_op.save()
         return False
+
 
 @login_required
 @require_GET

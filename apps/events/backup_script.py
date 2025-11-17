@@ -23,12 +23,23 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME")
-PG_DUMP_PATH = os.getenv("PG_DUMP_PATH", "pg_dump")
 
-# Local folders
-BASE_DIR = Path(__file__).resolve().parent
-BACKUP_DIR = BASE_DIR / "temp_files"
-LOG_DIR = BASE_DIR / "temp_logs"
+# Platform detection
+IS_RENDER = os.environ.get('RENDER', False)  # Render sets RENDER=true
+IS_WINDOWS = os.name == 'nt'
+
+# Determine pg_dump path based on platform
+if IS_RENDER:
+    PG_DUMP_PATH = "pg_dump"  # Render has PostgreSQL client in PATH
+elif IS_WINDOWS:
+    PG_DUMP_PATH = r"C:\Program Files\PostgreSQL\18\bin\pg_dump.exe"
+else:
+    PG_DUMP_PATH = "pg_dump"  # Linux/Mac
+
+# Local folders - use temp directory that works on both platforms
+import tempfile
+BACKUP_DIR = Path(tempfile.gettempdir()) / "arcasys_backups"
+LOG_DIR = Path(tempfile.gettempdir()) / "arcasys_logs"
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -42,44 +53,59 @@ def backup_database():
     log_path = LOG_DIR / log_filename
 
     log_output = StringIO()
-    log_line(log_output, "Starting DATA-ONLY database backup...")
+    log_line(log_output, f"Starting DATA-ONLY database backup on {'Render' if IS_RENDER else 'Local'}...")
+    log_line(log_output, f"Using pg_dump at: {PG_DUMP_PATH}")
 
     backup_s3_key = None
     log_s3_key = None
 
     try:
-        # Build correct PG URL (NO PASSWORD HERE)
-        db_url = f"postgresql://{DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
+        # Build database URL - different format for Render vs Local
+        if IS_RENDER:
+            # Use connection string format for Render
+            db_url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
+        else:
+            # Use local format
+            db_url = f"postgresql://{DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
 
         log_line(log_output, "Creating Supabase-safe DATA-ONLY backup file...")
 
-        # DATA ONLY + exclude Supabase system tables
+        # Build command arguments
+        cmd_args = [
+            PG_DUMP_PATH,
+            db_url,
+            "--data-only",
+            "--inserts",
+            "--exclude-table=schema_migrations",
+            "--exclude-table=django_migrations",
+            "--exclude-table=django_session",
+            "--exclude-table=pg_*",
+            "--exclude-table=information_schema.*",
+            "--exclude-table=auth.*",
+            "--exclude-table=storage.*",
+            "--exclude-table=realtime.*",
+            "-f", str(backup_path),
+            "--verbose"
+        ]
+
+        # Set environment - different approach for Render vs Local
+        env = os.environ.copy()
+        if not IS_RENDER:
+            # Only set PGPASSWORD for local (password is in connection string for Render)
+            env['PGPASSWORD'] = DB_PASSWORD
+
         result = subprocess.run(
-            [
-                PG_DUMP_PATH,
-                db_url,
-                "--data-only",
-                "--inserts",
-                "--exclude-table=schema_migrations",
-                "--exclude-table=django_migrations",
-                "--exclude-table=django_session",
-                "--exclude-table=pg_*",
-                "--exclude-table=information_schema.*",
-                "--exclude-table=auth.*",
-                "--exclude-table=storage.*",
-                "--exclude-table=realtime.*",
-                "-f", str(backup_path),
-                "--verbose"
-            ],
+            cmd_args,
             capture_output=True,
             text=True,
-            timeout=60,
-            env={**os.environ, "PGPASSWORD": DB_PASSWORD}  # FIX: this is the correct way
+            timeout=120,  # Increased timeout for Render
+            env=env
         )
 
         if result.returncode != 0:
-            log_line(log_output, f"Backup failed:\n{result.stderr}", level="ERROR")
-            log_line(log_output, f"Command stdout:\n{result.stdout}")
+            log_line(log_output, f"Backup failed with return code {result.returncode}", level="ERROR")
+            log_line(log_output, f"STDERR: {result.stderr}", level="ERROR")
+            log_line(log_output, f"STDOUT: {result.stdout}")
 
             with open(log_path, "w") as f:
                 f.write(log_output.getvalue())
@@ -118,7 +144,7 @@ def backup_database():
         log_line(log_output, "Backup record saved.")
 
     except subprocess.TimeoutExpired:
-        log_line(log_output, "Backup timed out after 60 seconds", level="ERROR")
+        log_line(log_output, "Backup timed out after 120 seconds", level="ERROR")
 
         with open(log_path, "w") as f:
             f.write(log_output.getvalue())
@@ -148,9 +174,13 @@ def backup_database():
         )
 
     finally:
-        if backup_path.exists():
-            backup_path.unlink()
-        if log_path.exists():
-            log_path.unlink()
+        # Cleanup temp files
+        try:
+            if backup_path.exists():
+                backup_path.unlink()
+            if log_path.exists():
+                log_path.unlink()
+        except Exception as e:
+            log_line(log_output, f"Cleanup warning: {str(e)}")
 
         print(log_output.getvalue())

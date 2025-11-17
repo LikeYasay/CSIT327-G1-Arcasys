@@ -118,33 +118,33 @@ input[type="time"]::-webkit-inner-spin-button {
 input:focus,
 textarea:focus,
 select:focus {
-    border-color: #000;
-    outline: none;
-    box-shadow: 0 0 0 1px #000;
+  border: 1px solid #000;
+  outline: none;
+  box-shadow: none;
 }
-
-
 
 .dropdown-container,
 .input-with-icon {
-    position: relative;
+  position: relative;
 }
 
 .description-group {
-    margin-bottom: 25px;
+  margin-bottom: 25px;
+}
+
+.description-group textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 100%;
+  resize: vertical;
+  box-sizing: border-box;
 }
 
 .event-tags-section {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
-.tags-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 15px;
-}
-
+/* Base style for tags */
 .tag {
   background-color: #e5e7eb;   
   color: #333333;
@@ -157,18 +157,26 @@ select:focus {
   transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
 
-.tag.active {
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.tag.green {
   background-color: #34A853;   
   border: 1px solid #46BE66;
   color: #ffffff;
+  cursor: default; 
 }
 
-.custom-tag-input {
+.tag-input-row {
     display: flex;
     gap: 10px;
 }
 
-.custom-tag-input input {
+.tag-input-row input {
     flex-grow: 1;
     width: auto;
 }

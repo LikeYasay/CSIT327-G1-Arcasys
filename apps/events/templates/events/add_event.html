@@ -71,23 +71,14 @@
     <div class="event-tags-section">
         <label>Event Tags</label>
 
-        <div class="tags-list" id="preset-tags">
-            <span class="tag selectable">SDG</span>
-            <span class="tag selectable">Forum</span>
-            <span class="tag selectable">LeadTheFuture</span>
-            <span class="tag selectable">Academic</span>
-            <span class="tag selectable">Workshop</span>
-            <span class="tag selectable">Conference</span>
-            <span class="tag selectable">Seminar</span>
-        </div>
+        <div class="tags"></div>
 
-        <div class="custom-tag-input">
-            <input type="text" id="custom-tag-text" placeholder="Add custom tag">
-            <button type="button" class="add-tag-btn" id="btn-add-custom-tag">Add Tag</button>
+        <div class="tag-input-row">
+          <input type="text" id="id_tags_input" name="tags_input" 
+                 placeholder="Add tags (comma-separated)" value="" />
+          <button type="button" class="add-tag-btn" id="btn-add-tag">Add Tag</button>
         </div>
-
-        <input type="hidden" id="id_tags_input" name="tags_input" />
-    </div>
+        </div>
 
     <br>
     <div class="form-group-social-links">
@@ -145,80 +136,67 @@
 
 {% block extra_js %}
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const form = document.querySelector('form');
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('form');
 
-    form.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter' && event.target.tagName.toLowerCase() !== 'textarea') {
-        event.preventDefault();
-      }
-    });
-
-    document.getElementById('create-event-btn').addEventListener('click', () => document.querySelector('form').submit())
-    document.getElementById('cancel-btn').addEventListener('click', () => {
-      window.location.href = "{% url 'events:events' %}";
-    });
-
-    // Tags handling (gray by default, turn green when active) 
-    const preset = document.getElementById('preset-tags');
-    const hiddenTagsInput = document.getElementById('id_tags_input');
-    const customText = document.getElementById('custom-tag-text');
-    const addBtn = document.getElementById('btn-add-custom-tag');
-    let selected = new Set();
-
-    const normalize = s => s.trim().replace(/^#/, '');
-    const keyOf = s => normalize(s).toLowerCase();
-
-    function refreshHidden() {
-      hiddenTagsInput.value = Array.from(selected).join(', ');
+  // --- Prevent Enter from submitting (except textarea) ---
+  form.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && event.target.tagName.toLowerCase() !== 'textarea') {
+      event.preventDefault();
     }
-
-    // Toggle pre-set tags
-    preset.addEventListener('click', (e) => {
-      if (!e.target.classList.contains('selectable')) return;
-      const raw = normalize(e.target.textContent);
-      const key = keyOf(raw);
-
-      if (e.target.classList.contains('active')) {
-        e.target.classList.remove('active');
-        [...selected].forEach(v => { if (v.toLowerCase() === key) selected.delete(v); });
-      } else {
-        e.target.classList.add('active');
-        [...selected].forEach(v => { if (v.toLowerCase() === key) selected.delete(v); });
-        selected.add(raw);
-      }
-      refreshHidden();
-    });
-
-    // Add custom tag
-    addBtn.addEventListener('click', () => {
-      const raw = normalize(customText.value);
-      if (!raw) return;
-      const key = keyOf(raw);
-      [...selected].forEach(v => { if (v.toLowerCase() === key) selected.delete(v); });
-      selected.add(raw);
-      refreshHidden();
-
-      const chip = document.createElement('span');
-      chip.className = 'tag selectable active';
-      chip.textContent = raw;
-      preset.appendChild(chip);
-      customText.value = '';
-
-      chip.addEventListener('click', () => {
-        const k = keyOf(chip.textContent);
-        if (chip.classList.contains('active')) {
-          chip.classList.remove('active');
-          [...selected].forEach(v => { if (v.toLowerCase() === k) selected.delete(v); });
-        } else {
-          chip.classList.add('active');
-          [...selected].forEach(v => { if (v.toLowerCase() === k) selected.delete(v); });
-          selected.add(chip.textContent.trim());
-        }
-        refreshHidden();
-      });
-    });
   });
+
+  // --- Form buttons ---
+  document.getElementById('create-event-btn').addEventListener('click', () => form.submit());
+  document.getElementById('cancel-btn').addEventListener('click', () => {
+    window.location.href = "{% url 'events:events' %}";
+  });
+
+  const tagsInput = document.getElementById('id_tags_input'); 
+  const chipsWrap = document.querySelector('.event-tags-section .tags'); 
+
+  function refreshChipsFromTags() {
+    if (!tagsInput || !chipsWrap) return;
+    
+    const parts = (tagsInput.value || '')
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
+    
+    chipsWrap.innerHTML = ''; 
+    
+
+    parts.forEach(t => {
+      const span = document.createElement('span');
+      span.className = 'tag green'; 
+      span.textContent = t;
+      chipsWrap.appendChild(span);
+    });
+  }
+
+  if (tagsInput) {
+    tagsInput.addEventListener('input', refreshChipsFromTags);
+    refreshChipsFromTags(); 
+  }
+
+  const addTagBtn = document.getElementById('btn-add-tag'); 
+  if (addTagBtn && tagsInput) {
+    addTagBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Help separate tags
+      let v = tagsInput.value.trim();
+      if (!v) return; 
+      
+      if (!v.endsWith(',')) {
+        tagsInput.value = v + ', ';
+      }
+      
+      tagsInput.focus(); 
+      tagsInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  }
+});
 </script>
 {% endblock %}
 {% endblock %}

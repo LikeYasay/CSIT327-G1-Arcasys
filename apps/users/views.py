@@ -256,6 +256,17 @@ def login_view(request):
 
     return render(request, "users/login.html")
 
+# Helper function for name validation
+def is_valid_name(name: str) -> bool:
+    """
+    Validates that the name:
+    - Contains at least one alphabetic character
+    - Only allows letters, spaces, hyphens, and apostrophes
+    """
+    if not name:
+        return False
+    pattern = re.compile(r"^(?=.*[A-Za-z])[A-Za-z\s'-]+$")
+    return bool(pattern.match(name))
 
 # -----------------------------
 # Register View - FIXED WITH SENDGRID WEB API
@@ -284,32 +295,22 @@ def register_view(request):
         }
 
         clear_fields = {}
-        field_errors = {}  # Track field-specific errors for inline display
+        field_errors = {}
 
-        # A. Client-side validation: Invalid input format
-        # 1. Check email format FIRST
-        if email and not is_valid_email(email):
-            field_errors['email'] = "Please enter a valid email address with proper domain (e.g., example@gmail.com)."
-            # FORMAT ERROR: Keep all fields filled
-            clear_fields['email'] = False
-            clear_fields['password'] = False
-            clear_fields['confirm_password'] = False
-            return render(request, "users/register.html", {
-                'form_data': form_data,
-                'clear_fields': clear_fields,
-                'field_errors': field_errors
-            })
-
-        # 2. Check if fields are empty (AFTER email format check)
-        if not first_name:
-            field_errors['first_name'] = "Please enter your first name."
+        # --- Validate first and last names ---
+        if not is_valid_name(first_name):
+            field_errors['first_name'] = "Please enter a valid first name."
             clear_fields['first_name'] = True
-        if not last_name:
-            field_errors['last_name'] = "Please enter your last name."
+
+        if not is_valid_name(last_name):
+            field_errors['last_name'] = "Please enter a valid last name."
             clear_fields['last_name'] = True
-        if not email:
-            field_errors['email'] = "Please enter your email address."
-            clear_fields['email'] = True
+
+        # --- Existing email and password validation ---
+        if email and not is_valid_email(email):
+            field_errors['email'] = "Please enter a valid email address."
+            clear_fields['email'] = False
+
         if not password:
             field_errors['password'] = "Please enter your password."
             clear_fields['password'] = True
@@ -318,24 +319,21 @@ def register_view(request):
             clear_fields['confirm_password'] = True
 
         if field_errors:
-            # If any field errors exist, return immediately
             return render(request, "users/register.html", {
                 'form_data': form_data,
                 'clear_fields': clear_fields,
                 'field_errors': field_errors
             })
 
-        # C. Password strength validation (BEFORE checking match)
+        # --- Password strength and confirmation ---
         password_errors = []
         try:
             validate_password(password)
         except DjangoValidationError as e:
             password_errors = list(e.messages)
 
-        # Show password errors sequentially (only the first one)
         if password_errors:
-            field_errors['password'] = password_errors[0]  # Show only the first error
-            # Keep all fields filled for correction
+            field_errors['password'] = password_errors[0]
             clear_fields['password'] = False
             clear_fields['confirm_password'] = False
             return render(request, "users/register.html", {
@@ -344,10 +342,8 @@ def register_view(request):
                 'field_errors': field_errors
             })
 
-        # B. Password confirmation mismatch (AFTER password strength check)
         if password != confirm_password:
             field_errors['confirm_password'] = "Passwords do not match."
-            # Keep all fields filled, don't clear anything
             clear_fields['password'] = False
             clear_fields['confirm_password'] = False
             return render(request, "users/register.html", {
@@ -356,14 +352,13 @@ def register_view(request):
                 'field_errors': field_errors
             })
 
-        # D. Server-side validation: Existing user
+        # --- Server-side validation for existing user ---
         existing_user = User.objects.filter(UserEmail__iexact=email).first()
         if existing_user:
             if existing_user.isUserActive:
                 messages.error(request, "Email already registered. Please login.", extra_tags='server_error')
             else:
                 messages.error(request, "Email has pending application. Wait for approval.", extra_tags='server_error')
-            # Clear email for security, keep names
             clear_fields['email'] = True
             clear_fields['password'] = True
             clear_fields['confirm_password'] = True
@@ -373,22 +368,18 @@ def register_view(request):
                 'field_errors': field_errors
             })
 
+        # --- Create user ---
         try:
-            # Get or create the Staff role
-            staff_role, created = Role.objects.get_or_create(
-                RoleName='Staff'
-            )
-
-            # FIXED: Use the correct parameter names
+            staff_role, _ = Role.objects.get_or_create(RoleName='Staff')
             user = User.objects.create_user(
                 UserEmail=email,
                 UserFullName=f"{first_name} {last_name}".strip(),
-                password=password,  # This is the correct parameter name
+                password=password,
                 RoleID=staff_role,
                 isUserActive=False,
                 isUserStaff=True
             )
-
+            
             # Send registration email using SendGrid Web API (NO THREADING)
             send_registration_email_async(email, first_name)
 

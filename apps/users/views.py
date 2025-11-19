@@ -256,6 +256,7 @@ def login_view(request):
 
     return render(request, "users/login.html")
 
+
 # Helper function for name validation
 def is_valid_name(name: str) -> bool:
     """
@@ -267,6 +268,7 @@ def is_valid_name(name: str) -> bool:
         return False
     pattern = re.compile(r"^(?=.*[A-Za-z])[A-Za-z\s'-]+$")
     return bool(pattern.match(name))
+
 
 # -----------------------------
 # Register View - FIXED WITH SENDGRID WEB API
@@ -379,7 +381,7 @@ def register_view(request):
                 isUserActive=False,
                 isUserStaff=True
             )
-            
+
             # Send registration email using SendGrid Web API (NO THREADING)
             send_registration_email_async(email, first_name)
 
@@ -417,12 +419,13 @@ def logout_view(request):
 # -----------------------------
 class CustomPasswordResetForm(PasswordResetForm):
     def get_users(self, email):
-        """Return matching active users only"""
+        """Return matching active users only (both Admin AND Staff)"""
         active_users = User._default_manager.filter(
             UserEmail__iexact=email,
             isUserActive=True
         )
-        return (u for u in active_users if u.has_usable_password())
+        # Only return users who are either Admin OR Staff
+        return (u for u in active_users if u.has_usable_password() and (u.isUserAdmin or u.isUserStaff))
 
 
 # -----------------------------
@@ -490,9 +493,17 @@ class CustomPasswordResetView(PasswordResetView):
             except User.DoesNotExist:
                 pass
 
-            # Check for active users and use OUR email function
+            # FIXED: Check for ALL active users (both Admin AND Staff)
             try:
-                user = User.objects.get(UserEmail__iexact=email, isUserActive=True, isUserStaff=True)
+                user = User.objects.get(
+                    UserEmail__iexact=email,
+                    isUserActive=True
+                )
+
+                # ADDED: Extra validation to ensure user is either Admin or Staff
+                if not (user.isUserAdmin or user.isUserStaff):
+                    logger.warning(f"User {email} is not Admin or Staff - skipping password reset")
+                    return self.render_success_response()  # Still show success for security
 
                 # Generate the token and UID like Django would
                 from django.contrib.auth.tokens import default_token_generator
@@ -542,7 +553,8 @@ Marketing Archive Team"""
                 )
 
                 if email_sent:
-                    logger.info(f"Password reset email sent successfully to {user.UserEmail}")
+                    logger.info(
+                        f"Password reset email sent successfully to {user.UserEmail} (Admin: {user.isUserAdmin}, Staff: {user.isUserStaff})")
                     return self.render_success_response()
                 else:
                     logger.error(f"Failed to send password reset email to {user.UserEmail}")
@@ -551,7 +563,7 @@ Marketing Archive Team"""
 
             except User.DoesNotExist:
                 # No user found - but show success for security
-                logger.warning(f"No user found for password reset: {email}")
+                logger.warning(f"No active user found for password reset: {email}")
                 return self.render_success_response()
 
         except Exception as e:

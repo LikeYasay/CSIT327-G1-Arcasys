@@ -173,9 +173,18 @@ body {
   color: #fff;
 }
 
-.btn:hover {
-  opacity: 0.9;
+.btn.apply:hover {
+  background: #0069d9; /* darker blue */
 }
+
+.btn.clear:hover {
+  background: #e0e0e0; /* darker gray */
+}
+
+.btn.export:hover {
+  background: #218838; /* darker green */
+}
+
 
 /* --- RESULTS SECTION --- */
 .results-wrapper {
@@ -449,9 +458,14 @@ body {
   color: #fff;
 }
 
-.pagination .btn:hover {
-  opacity: 0.9;
+.pagination .prev:hover {
+  background: #cfcfcf; /* darker gray */
 }
+
+.pagination .next:hover {
+  background: #6f1c22; /* darker maroon */
+}
+
 
 /* Alerts */
 .alert-error {

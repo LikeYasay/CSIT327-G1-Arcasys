@@ -149,7 +149,14 @@ Events | Marketing Archive
             <a href="#" class="action-btn export">Export</a>
             <a href="{% url 'events:edit_event' EventID=event.EventID %}" class="action-btn edit">Edit</a>
             {% if request.user.isUserAdmin %}
-            <a href="#" class="action-btn delete">Delete</a>
+            <a
+              href="#"
+              class="action-btn delete"
+              data-event-id="{{ event.EventID }}"
+              data-event-title="{{ event.EventTitle }}"
+            >
+              Delete
+            </a>
             {% endif %}
           </div>
         </div>
@@ -207,9 +214,9 @@ Events | Marketing Archive
     </div>
   </div>
   
-    {% if request.user.isUserAdmin %}
-  <div id="deptModalOverlay" class="modal-overlay hidden">
+{% if request.user.isUserAdmin %}
 
+  <div id="deptModalOverlay" class="modal-overlay hidden">
     <div class="dept-modal">
       <h2>Manage Offices / Departments</h2>
 
@@ -247,7 +254,42 @@ Events | Marketing Archive
       <button class="close-modal" id="closeDeptModal">Close</button>
     </div>
   </div>
-  {% endif %}
+
+
+  <div id="deleteEventModal" class="modal-overlay hidden">
+  <div class="delete-modal">
+
+    <button class="close-x" id="closeDeleteModal">&times;</button>
+
+    <div class="delete-icon">
+      <img src="{% static 'events/images/trash.png' %}" alt="Delete Icon">
+    </div>
+
+    <h2>Delete Event?</h2>
+
+    <p>
+      Are you sure you want to delete this event?<br>
+      This action cannot be undone.
+    </p>
+
+    <div class="delete-actions">
+      <button type="button" class="cancel-btn" id="cancelDeleteBtn">
+        Cancel
+      </button>
+
+      <form method="post" id="deleteEventForm">
+        {% csrf_token %}
+        <button type="submit" class="confirm-delete-btn">
+          Delete Event
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+{% endif %}
+
 
 </section>
 
@@ -369,6 +411,29 @@ Events | Marketing Archive
       deptModal.classList.add("hidden");
     });
   }
+
+    // DELETE EVENT MODAL
+  const deleteModal = document.getElementById("deleteEventModal");
+  const deleteForm = document.getElementById("deleteEventForm");
+
+  document.querySelectorAll(".action-btn.delete").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      const eventId = btn.dataset.eventId;
+
+      deleteForm.action = `/events/delete/${eventId}/`; 
+      deleteModal.classList.remove("hidden");
+    });
+  });
+
+  document.getElementById("cancelDeleteBtn")?.addEventListener("click", () => {
+    deleteModal.classList.add("hidden");
+  });
+
+  document.getElementById("closeDeleteModal")?.addEventListener("click", () => {
+    deleteModal.classList.add("hidden");
+  });
 
 </script>
 {% endblock %}

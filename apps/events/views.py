@@ -1120,3 +1120,14 @@ def check_restore_status(request, restore_op_id):
             'status': 'failed',
             'message': 'Restore operation not found'
         })
+
+def add_department(request):
+    if request.user.isUserAdmin and request.method == "POST":
+        name = request.POST.get("department_name")
+        Department.objects.create(DepartmentName=name)
+    return redirect("events:events")
+
+def delete_department(request, dept_id):
+    if request.user.isUserAdmin and request.method == "POST":
+        Department.objects.filter(DepartmentID=dept_id).delete()
+    return redirect("events:events")

@@ -493,3 +493,113 @@ body {
   opacity: 1;
   cursor: pointer;
 }
+
+/* Department Manager */
+.department-select-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dept-manage-btn {
+  height: 38px;              /* SAME as filters */
+  padding: 0 16px;           /* horizontal only */
+  border-radius: 8px;
+  background: #8A252C;
+  color: white;
+  border: none;
+  font-size: 14px;           /* match filter text */
+  font-weight: 600;
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dept-manage-btn:hover {
+  background: #6f1c22;
+}
+
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.hidden {
+  display: none;
+}
+
+.dept-modal {
+  background: white;
+  width: 420px;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.dept-modal h2 {
+  margin-bottom: 15px;
+  color: #8A252C;
+}
+
+.dept-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 15px;
+}
+
+.dept-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.delete-dept-btn {
+  background: none;
+  border: none;
+  color: #EA4335;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.add-dept-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.add-dept-form input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.add-dept-form button {
+  background: #FFCF01;
+  border: none;
+  padding: 8px 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.close-modal {
+  margin-top: 15px;
+  width: 100%;
+  background: #f0f0f0;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}

@@ -36,16 +36,28 @@ Events | Marketing Archive
   <form method="get" action="{% url 'events:events' %}" id="filterForm">
     <div class="filters">
       <div class="filter">
-        <label for="department">Office/Department</label>
-        <select id="department" name="department">
-          <option value="" disabled selected>Office / Dept.</option>
-          {% for dept in departments %}
-          <option value="{{ dept.DepartmentID }}"
-            {% if request.GET.department == dept.DepartmentID|stringformat:"s" %}selected{% endif %}>
-            {{ dept.DepartmentName }}
-          </option>
-          {% endfor %}
-        </select>
+  <label for="department">Office/Department</label>
+
+        <div class="department-select-wrapper">
+          <select id="department" name="department">
+            <option value="" disabled selected>Office / Dept.</option>
+            {% for dept in departments %}
+            <option value="{{ dept.DepartmentID }}">
+              {{ dept.DepartmentName }}
+            </option>
+            {% endfor %}
+          </select>
+
+          {% if request.user.isUserAdmin %}
+          <button
+            type="button"
+            class="dept-manage-btn"
+            id="openDeptModal"
+          >
+            Manage
+          </button>
+          {% endif %}
+        </div>
       </div>
 
       <div class="filter">
@@ -194,6 +206,49 @@ Events | Marketing Archive
       {% endif %}
     </div>
   </div>
+  
+    {% if request.user.isUserAdmin %}
+  <div id="deptModalOverlay" class="modal-overlay hidden">
+
+    <div class="dept-modal">
+      <h2>Manage Offices / Departments</h2>
+
+      <ul class="dept-list">
+        {% for dept in departments %}
+        <li>
+          <span>{{ dept.DepartmentName }}</span>
+
+          <form
+            method="post"
+            action="{% url 'events:delete_department' dept.DepartmentID %}"
+          >
+            {% csrf_token %}
+            <button class="delete-dept-btn">Delete</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <form
+        method="post"
+        action="{% url 'events:add_department' %}"
+        class="add-dept-form"
+      >
+        {% csrf_token %}
+        <input
+          type="text"
+          name="department_name"
+          placeholder="Enter new office/department"
+          required
+        />
+        <button type="submit">Add Department</button>
+      </form>
+
+      <button class="close-modal" id="closeDeptModal">Close</button>
+    </div>
+  </div>
+  {% endif %}
+
 </section>
 
 <script>
@@ -298,5 +353,22 @@ Events | Marketing Archive
       }
     });
   });
+
+  const deptModal = document.getElementById("deptModalOverlay");
+  const openDeptBtn = document.getElementById("openDeptModal");
+  const closeDeptBtn = document.getElementById("closeDeptModal");
+
+  if (openDeptBtn) {
+    openDeptBtn.addEventListener("click", () => {
+      deptModal.classList.remove("hidden");
+    });
+  }
+
+  if (closeDeptBtn) {
+    closeDeptBtn.addEventListener("click", () => {
+      deptModal.classList.add("hidden");
+    });
+  }
+
 </script>
 {% endblock %}

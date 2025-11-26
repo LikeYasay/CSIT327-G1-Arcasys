@@ -38,7 +38,7 @@ Events | Marketing Archive
       <div class="filter">
         <label for="department">Office/Department</label>
         <select id="department" name="department">
-          <option value="" disabled selected>Select Office/Department</option>
+          <option value="" disabled selected>Office / Dept.</option>
           {% for dept in departments %}
           <option value="{{ dept.DepartmentID }}"
             {% if request.GET.department == dept.DepartmentID|stringformat:"s" %}selected{% endif %}>

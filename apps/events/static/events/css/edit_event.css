@@ -193,6 +193,10 @@ body {
 }
 .edit-event-form .btn.secondary:hover { background: #e0e0e0; }
 
+.edit-event-form button.btn {
+  font-size: 16px;
+}
+
 /* Social links */
 .social-links .form-row {
   display: flex;

@@ -144,21 +144,20 @@ This is an automated message from the Arcasys System."""
 # Events View - FOR ALL USERS
 # -----------------------------
 def events_view(request):
-    # Handle search functionality
+    # --- 1. HANDLE FILTERS ---
     search_query = request.GET.get('q', '').strip()
     department_filter = request.GET.get('department', '')
     platform_filter = request.GET.get('platform', '')
     from_date = request.GET.get('from_date', '')
     to_date = request.GET.get('to_date', '')
 
-    # Start with all events
+    # Start with all events sorted by date
     events = Event.objects.all().order_by('-EventDate')
 
-    # EMPTY SEARCH VALIDATION
+    # Search Logic
     if 'q' in request.GET and not search_query:
         messages.error(request, "Please enter a search term to find events.")
     elif search_query:
-        # If there's a valid search query, filter events
         events = events.filter(
             Q(EventTitle__icontains=search_query) |
             Q(EventDescription__icontains=search_query) |
@@ -166,15 +165,15 @@ def events_view(request):
             Q(eventtag__TagID__TagName__icontains=search_query)
         ).distinct()
 
-    # Apply department filter
+    # Department Filter
     if department_filter:
         events = events.filter(eventdepartment__DepartmentID=department_filter)
 
-    # Apply platform filter
+    # Platform Filter
     if platform_filter:
         events = events.filter(eventlink__EventLinkName__icontains=platform_filter)
 
-    # Apply date range filter
+    # Date Range Filters
     if from_date:
         try:
             from_date_obj = datetime.strptime(from_date, '%Y-%m-%d').date()
@@ -189,15 +188,56 @@ def events_view(request):
         except ValueError:
             pass
 
-    # Pagination
+    # --- 2. EXPORT CSV ---
+    if request.GET.get('export') == '1':
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        
+        # Check if single event or bulk export
+        single_event_id = request.GET.get('event_id')
+        
+        if single_event_id:
+            # OPTION A: Single Event
+            events_to_export = Event.objects.filter(pk=single_event_id)
+            filename = f"Arcasys_Event_{timestamp}.csv"
+                
+        else:
+            # OPTION B: Bulk Export
+            events_to_export = events
+            filename = f"Arcasys_Events_{timestamp}.csv"
+
+        # Generate CSV Response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+        writer.writerow(['Event Title', 'Date', 'Department', 'Description', 'Platform(s)', 'Tag(s)', 'Link(s)'])
+
+        for event in events_to_export:
+            dept_obj = event.eventdepartment_set.first()
+            dept_name = dept_obj.DepartmentID.DepartmentName if dept_obj else "N/A"
+            tags = ", ".join([t.TagID.TagName for t in event.eventtag_set.all()])
+            links = ", ".join([f"{l.EventLinkName}: {l.EventLinkURL}" for l in event.eventlink_set.all()])
+            platforms = ", ".join(list(set([l.EventLinkName for l in event.eventlink_set.all()])))
+
+            writer.writerow([
+                event.EventTitle,
+                event.EventDate.strftime('%Y-%m-%d'),
+                dept_name,
+                event.EventDescription,
+                platforms,
+                tags,
+                links,
+            ])
+        
+        return response
+
+    # --- 3. PAGINATION ---
     paginator = Paginator(events, 10)
     page_number = request.GET.get('page')
     events_page = paginator.get_page(page_number)
 
-    # Get unique departments and platforms for filters
+    # Get extra context data
     departments = Department.objects.all()
-    
-    # Get recent events for sidebar (last 10 created)
     recent_events = Event.objects.all().order_by('-EventCreatedAt')[:10]
 
     context = {

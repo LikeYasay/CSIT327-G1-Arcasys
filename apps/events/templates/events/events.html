@@ -138,8 +138,15 @@ Events | Marketing Archive
             {% endfor %}
           </div>
           <div class="admin-actions-inline">
-            <a href="#" class="action-btn export">Export</a>
+            <a 
+              href="{% url 'events:events' %}?export=1&event_id={{ event.EventID }}" 
+              class="action-btn export"
+            >
+              Export
+            </a>
+            
             <a href="{% url 'events:edit_event' EventID=event.EventID %}" class="action-btn edit">Edit</a>
+            
             {% if request.user.isUserAdmin %}
             <a href="#" class="action-btn delete" data-event-id="{{ event.EventID }}"
               data-event-title="{{ event.EventTitle }}">
@@ -249,7 +256,9 @@ Events | Marketing Archive
 
 <script>
   function exportToCSV() {
-    alert('Export to CSV functionality would be implemented here');
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set('export', '1');
+    window.location.href = `${window.location.pathname}?${searchParams.toString()}`;
   }
 
   document.addEventListener('DOMContentLoaded', function () {

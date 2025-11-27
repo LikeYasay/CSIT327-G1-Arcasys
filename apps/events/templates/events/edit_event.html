@@ -107,7 +107,14 @@
           <div class="social-header">
             <img src="{% static 'events/images/facebook.png' %}" alt="Facebook" class="social-icon">
             <span class="social-title">Facebook Link</span>
-            <button type="button" class="add-more">+ Add more</button>
+                    <button
+                        type="button"
+                        class="add-more"
+                        data-platform="facebook"
+                        data-label="Facebook"
+                        >
+                        + Add more
+                    </button>
           </div>
           <input type="text" id="facebook" name="facebook" value="{{ form.facebook.value|default_if_none:'' }}" />
           {% if form.facebook.errors %}<span class="error">{{ form.facebook.errors.0 }}</span>{% endif %}
@@ -117,7 +124,14 @@
           <div class="social-header">
             <img src="{% static 'events/images/tiktok.png' %}" alt="TikTok" class="social-icon">
             <span class="social-title">TikTok Link</span>
-            <button type="button" class="add-more">+ Add more</button>
+                    <button
+                        type="button"
+                        class="add-more"
+                        data-platform="tiktok"
+                        data-label="TikTok"
+                        >
+                        + Add more
+                    </button>
           </div>
           <input type="text" id="tiktok" name="tiktok" value="{{ form.tiktok.value|default_if_none:'' }}" />
           {% if form.tiktok.errors %}<span class="error">{{ form.tiktok.errors.0 }}</span>{% endif %}
@@ -129,7 +143,14 @@
           <div class="social-header">
             <img src="{% static 'events/images/youtube.png' %}" alt="YouTube" class="social-icon">
             <span class="social-title">YouTube Link</span>
-            <button type="button" class="add-more">+ Add more</button>
+                    <button
+                        type="button"
+                        class="add-more"
+                        data-platform="youtube"
+                        data-label="YouTube"
+                        >
+                        + Add more
+                    </button>
           </div>
           <input type="text" id="youtube" name="youtube" value="{{ form.youtube.value|default_if_none:'' }}" />
           {% if form.youtube.errors %}<span class="error">{{ form.youtube.errors.0 }}</span>{% endif %}
@@ -139,7 +160,14 @@
           <div class="social-header">
             <img src="{% static 'events/images/link.png' %}" alt="Website" class="social-icon">
             <span class="social-title">Website Link</span>
-            <button type="button" class="add-more">+ Add more</button>
+                    <button
+                        type="button"
+                        class="add-more"
+                        data-platform="website"
+                        data-label="Website"
+                        >
+                        + Add more
+                    </button>
           </div>
           <input type="text" id="website" name="website" value="{{ form.website.value|default_if_none:'' }}" />
           {% if form.website.errors %}<span class="error">{{ form.website.errors.0 }}</span>{% endif %}
@@ -164,6 +192,29 @@
       <button type="button" class="btn secondary" id="stayBtn">Keep Editing</button>
       <a id="discardBtn" class="btn primary" href="{% url 'events:events' %}">Discard</a>
     </div>
+  </div>
+</div>
+
+<!-- ✅ ADD LINKS MODAL (PLACE HERE) -->
+<div id="addLinksModal" class="modal-overlay hidden">
+  <div class="add-links-modal">
+
+    <button class="close-x" id="closeAddLinksModal">&times;</button>
+
+    <h2 id="addLinksTitle">Add Links</h2>
+    <p class="modal-sub">You can add multiple links for this platform.</p>
+
+    <div id="linksContainer"></div>
+
+    <button type="button" class="add-link-row" id="addLinkRowBtn">
+      + Add another link
+    </button>
+
+    <div class="modal-actions">
+      <button type="button" class="cancel-btn" id="cancelAddLinks">Cancel</button>
+      <button type="button" class="create-event-btn" id="saveLinksBtn">Save Links</button>
+    </div>
+
   </div>
 </div>
 
@@ -277,6 +328,51 @@
       });
     }
   })();
+
+  document.addEventListener("DOMContentLoaded", () => {
+
+  const modal = document.getElementById("addLinksModal");
+  const title = document.getElementById("addLinksTitle");
+  const linksContainer = document.getElementById("linksContainer");
+
+  let currentPlatform = null;
+
+  // OPEN MODAL
+  document.querySelectorAll(".add-more").forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentPlatform = btn.dataset.platform;
+      title.textContent = `Add ${btn.dataset.label} Links`;
+      linksContainer.innerHTML = ""; // reset
+      addLinkRow();
+      modal.classList.remove("hidden");
+    });
+  });
+
+  // ADD LINK ROW
+  function addLinkRow() {
+    const row = document.createElement("div");
+    row.className = "link-row";
+    row.innerHTML = `
+      <input
+        type="url"
+        name="${currentPlatform}_links[]"
+        placeholder="Paste link here"
+      />
+      <button type="button" class="remove-link">&times;</button>
+    `;
+    row.querySelector(".remove-link").onclick = () => row.remove();
+    linksContainer.appendChild(row);
+  }
+
+  document.getElementById("addLinkRowBtn").onclick = addLinkRow;
+
+  // CLOSE MODAL
+  document.getElementById("closeAddLinksModal").onclick =
+  document.getElementById("cancelAddLinks").onclick =
+  document.getElementById("saveLinksBtn").onclick = () =>
+    modal.classList.add("hidden");
+});
+
 </script>
 
 {% endblock content %}

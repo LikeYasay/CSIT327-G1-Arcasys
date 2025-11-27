@@ -364,3 +364,144 @@ input[type="time"]::-webkit-inner-spin-button {
   gap: 10px;
   margin-top: 16px;
 }
+
+/* ================= ADD LINKS MODAL (FROM ADD EVENT) ================= */
+
+.add-links-modal {
+  background: #fff;
+  width: 440px;
+  padding: 28px;
+  border-radius: 18px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,.25);
+}
+
+.add-links-modal h2 {
+  margin-bottom: 6px;
+}
+
+.modal-sub {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+#linksContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.link-row {
+  display: flex;
+  gap: 8px;
+}
+
+.link-row input {
+  flex: 1;
+}
+
+.remove-link {
+  background: none;
+  border: none;
+  color: #EA4335;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.add-link-row {
+  background: #f1f1f1;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  width: 100%;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.cancel-btn {
+  background: #f0f0f0;
+  color: #333;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.create-event-btn {
+  background: #FFCF01;
+  color: #000;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s ease, transform 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.create-event-btn:hover {
+  background: #8A252C;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.close-x {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  font-size: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ✅ Match Add Event modal input design */
+.add-links-modal input[type="url"] {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 10px;
+  border: 1px solid #DDDDDD;
+  background-color: #F4F6F8;
+  font-size: 14px;
+  color: #333;
+  box-sizing: border-box;
+}
+
+/* Remove ugly focus styles */
+.add-links-modal input[type="url"]:focus {
+  outline: none;
+  border: 1px solid #000;
+  box-shadow: none;
+}
+

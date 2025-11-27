@@ -144,9 +144,6 @@ This is an automated message from the Arcasys System."""
 # Events View - FOR ALL USERS
 # -----------------------------
 def events_view(request):
-    from django.db.models import Q
-    from datetime import datetime
-
     # Handle search functionality
     search_query = request.GET.get('q', '').strip()
     department_filter = request.GET.get('department', '')
@@ -199,7 +196,7 @@ def events_view(request):
 
     # Get unique departments and platforms for filters
     departments = Department.objects.all()
-
+    
     # Get recent events for sidebar (last 10 created)
     recent_events = Event.objects.all().order_by('-EventCreatedAt')[:10]
 
@@ -213,6 +210,20 @@ def events_view(request):
     }
     return render(request, "events/events.html", context)
 
+def delete_event(request, EventID):
+    if not request.user.is_authenticated or not request.user.isUserAdmin:
+        messages.error(request, "You do not have permission to delete events.")
+        return redirect("events:events")
+
+    event = get_object_or_404(Event, pk=EventID)
+
+    if request.method == "POST":
+        event.delete()
+        messages.success(request, "Event deleted successfully.")
+        return redirect("events:events")
+
+    messages.error(request, "Invalid request.")
+    return redirect("events:events")
 
 def events_search_ajax(request):
     query = request.GET.get('q', '').strip()

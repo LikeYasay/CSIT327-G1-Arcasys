@@ -227,6 +227,22 @@ Events | Marketing Archive
     </div>
   </div>
 
+   <!-- ✅ Department Add/Delete Status Modal -->
+  <div id="deptStatusModal" class="modal-overlay hidden">
+    <div class="status-modal">
+      <button class="close-x" id="closeDeptStatus">&times;</button>
+
+      <div id="deptStatusIcon" class="modal-icon success">
+        ✓
+      </div>
+
+      <h2 id="deptStatusTitle">Department Updated</h2>
+      <p id="deptStatusMessage">
+        The department list has been updated successfully.
+      </p>
+    </div>
+  </div>
+
   <div id="deleteEventModal" class="modal-overlay hidden">
     <div class="delete-modal">
       <button class="close-x" id="closeDeleteModal">&times;</button>
@@ -377,6 +393,109 @@ Events | Marketing Archive
   if (closeDeptBtn) {
     closeDeptBtn.addEventListener("click", () => {
       deptModal.classList.add("hidden");
+    });
+  }
+  
+  /* --- Department Status Modal + AJAX Add/Delete --- */
+  const deptStatusModal   = document.getElementById("deptStatusModal");
+  const deptStatusIcon    = document.getElementById("deptStatusIcon");
+  const deptStatusTitle   = document.getElementById("deptStatusTitle");
+  const deptStatusMessage = document.getElementById("deptStatusMessage");
+  const closeDeptStatus   = document.getElementById("closeDeptStatus");
+  const deptStatusOk      = document.getElementById("deptStatusOk");
+
+  function showDeptStatus(type, message) {
+    if (!deptStatusModal) return;
+
+    // icon + color
+    if (type === "success") {
+      deptStatusIcon.className = "modal-icon success";
+      deptStatusIcon.textContent = "✓";
+      deptStatusTitle.textContent = "Department Updated";
+    } else {
+      deptStatusIcon.className = "modal-icon error";
+      deptStatusIcon.textContent = "✕";
+      deptStatusTitle.textContent = "Action Failed";
+    }
+
+    deptStatusMessage.textContent = message;
+    deptStatusModal.classList.remove("hidden");
+  }
+
+  function closeDeptStatusModal() {
+    deptStatusModal.classList.add("hidden");
+    // reload so the department list + dropdown are up to date
+    window.location.reload();
+  }
+
+  closeDeptStatus?.addEventListener("click", closeDeptStatusModal);
+  deptStatusOk?.addEventListener("click", closeDeptStatusModal);
+
+  // ✅ Intercept DELETE department forms
+  document.querySelectorAll(".dept-list form").forEach((form) => {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const actionUrl = this.action;
+      const deptName =
+        this.closest("li")?.querySelector("span")?.textContent.trim() || "Department";
+
+      fetch(actionUrl, {
+        method: "POST",
+        body: formData,
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then((res) => {
+          if (res.ok) {
+            showDeptStatus("success", `"${deptName}" has been deleted.`);
+          } else {
+            showDeptStatus(
+              "error",
+              "Could not delete the department. Please try again."
+            );
+          }
+        })
+        .catch(() => {
+          showDeptStatus(
+            "error",
+            "Network error occurred. Please try again."
+          );
+        });
+    });
+  });
+
+  // ✅ Intercept ADD department form
+  const addDeptForm = document.querySelector(".add-dept-form");
+  if (addDeptForm) {
+    addDeptForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const actionUrl = this.action;
+      const deptName = (formData.get("department_name") || "Department").toString();
+
+      fetch(actionUrl, {
+        method: "POST",
+        body: formData,
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then((res) => {
+          if (res.ok) {
+            showDeptStatus("success", `"${deptName}" has been added.`);
+          } else {
+            showDeptStatus(
+              "error",
+              "Could not add the department. Please check the name and try again."
+            );
+          }
+        })
+        .catch(() => {
+          showDeptStatus(
+            "error",
+            "Network error occurred. Please try again."
+          );
+        });
     });
   }
 

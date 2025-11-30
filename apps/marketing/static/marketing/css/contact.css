@@ -327,7 +327,6 @@ input:focus, textarea:focus {
     margin-top: 0.5rem;
     display: block;
     font-weight: 500;
-    padding-left: 5px;
 }
 
 .form-group input.error,
@@ -341,7 +340,8 @@ input:focus, textarea:focus {
     border-color: #dc3545;
 }
 
-.form-group input:valid:focus,
-.form-group textarea:valid:focus {
-    border-color: #198754;
+.alert-info {
+    color: #055160;
+    background-color: #cff4fc;
+    border-color: #b6effb;
 }

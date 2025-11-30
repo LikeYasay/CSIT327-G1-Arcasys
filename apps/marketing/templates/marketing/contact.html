@@ -1,117 +1,85 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block title %}Contact Us | Marketing Archive{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'marketing/css/contact.css' %}" />
-{% endblock %}
-
-{% block content %}
-<div class="contact-page">
-    <div class="page-header">
-        <h1>Get In Touch</h1>
-        <p>Connect with the CIT-U Marketing Archive team. We're here to support your event management journey and answer any questions you may have.</p>
+<form class="contact-form" method="post" action="{% url 'marketing:contact' %}" id="contactForm">
+    {% csrf_token %}
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
     </div>
-
-    <div class="contact-methods">
-        <div class="contact-card">
-            <div class="contact-icon">
-                <img src="{% static 'marketing/images/location-icon.png' %}" alt="Location" />
-            </div>
-            <h3>Visit Our Campus</h3>
-            <p>Come visit us at our main campus location for in-person assistance and support.</p>
-            <div class="contact-details">
-                <strong>CIT - University</strong><br>
-                N. Bacalso Ave, Cebu City<br>
-                Cebu, Philippines 6000
-            </div>
+    {% endif %}
+    
+    <div class="form-row">
+        <div class="form-group">
+            <label for="full_name">Full Name *</label>
+            <input type="text" id="full_name" name="full_name" 
+                   value="{% if form_data.full_name %}{{ form_data.full_name }}{% endif %}" 
+                   placeholder="Enter your full name" 
+                   class="{% if field_errors.full_name %}error{% endif %}"
+                   required>
+            {% if field_errors.full_name %}
+            <span class="field-error">{{ field_errors.full_name }}</span>
+            {% endif %}
         </div>
-
-        <div class="contact-card">
-            <div class="contact-icon">
-                <img src="{% static 'marketing/images/phone-icon.png' %}" alt="Phone" />
-            </div>
-            <h3>Call Us</h3>
-            <p>Reach out to us directly for immediate assistance with your inquiries.</p>
-            <div class="contact-details">
-                <strong>Contact Services:</strong><br>
-                <a href="tel:+63322617701">(032) 261-7701</a>
-            </div>
-        </div>
-
-        <div class="contact-card">
-            <div class="contact-icon">
-                <img src="{% static 'marketing/images/email-icon.png' %}" alt="Email" />
-            </div>
-            <h3>Email Us</h3>
-            <p>Send us an email and we'll get back to you within 24 hours.</p>
-            <div class="contact-details">
-                <strong>Contact Developer:</strong><br>
-                <a href="mailto:arcasys.marketing.archive@gmail.com">arcasys.marketing.archive@gmail.com</a>
-            </div>
+        <div class="form-group">
+            <label for="email">Email Address *</label>
+            <input type="email" id="email" name="email" 
+                   value="{% if form_data.email %}{{ form_data.email }}{% endif %}"
+                   placeholder="Enter your email address" 
+                   class="{% if field_errors.email %}error{% endif %}"
+                   required>
+            {% if field_errors.email %}
+            <span class="field-error">{{ field_errors.email }}</span>
+            {% endif %}
         </div>
     </div>
-
-    <div class="contact-bottom">
-        <div class="contact-form-section">
-            <h2>Send us a Message</h2>
-            <form class="contact-form" id="contactForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="full_name">Full Name</label>
-                        <input type="text" id="full_name" name="full_name" placeholder="Enter your full name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" placeholder="Enter your email address" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="department">Department</label>
-                    <input type="text" id="department" name="department" placeholder="Enter your department">
-                </div>
-                <div class="form-group">
-                    <label for="subject">Subject</label>
-                    <input type="text" id="subject" name="subject" placeholder="Enter message subject" required>
-                </div>
-                <div class="form-group">
-                    <label for="message">Message</label>
-                    <textarea id="message" name="message" rows="6" placeholder="Enter your message" required></textarea>
-                </div>
-                <div class="form-buttons">
-                    <button type="submit" class="btn primary">Send Message</button>
-                    <button type="button" class="btn secondary">Cancel</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="office-hours-section">
-            <h2>Office Hours</h2>
-            <div class="office-hours">
-                <div class="hours-row">
-                    <span class="day">Monday - Friday</span>
-                    <span class="time">8:00 AM - 5:00 PM</span>
-                </div>
-                <div class="hours-row">
-                    <span class="day">Saturday</span>
-                    <span class="time">8:00 AM - 12:00 PM</span>
-                </div>
-                <div class="hours-row">
-                    <span class="day">Sunday</span>
-                    <span class="time">Closed</span>
-                </div>
-                <div class="hours-row">
-                    <span class="day">Holidays</span>
-                    <span class="time">Closed</span>
-                </div>
-            </div>
-
-            <div class="emergency-contact">
-                <h3>Emergency Contact</h3>
-                <p>For urgent matters outside office hours, please contact our emergency hotline at <a href="tel:+63322617777">(032) 261-7777</a> or email <a href="mailto:arcasys.marketing.archive@gmail.com">arcasys.marketing.archive@gmail.com</a></p>
-            </div>
-        </div>
+    
+    <div class="form-group">
+        <label for="department">Department</label>
+        <input type="text" id="department" name="department" 
+               value="{% if form_data.department %}{{ form_data.department }}{% endif %}"
+               placeholder="Enter your department">
     </div>
-</div>
-{% endblock %}
+    
+    <div class="form-group">
+        <label for="subject">Subject *</label>
+        <input type="text" id="subject" name="subject" 
+               value="{% if form_data.subject %}{{ form_data.subject }}{% endif %}"
+               placeholder="Enter message subject" 
+               class="{% if field_errors.subject %}error{% endif %}"
+               required>
+        {% if field_errors.subject %}
+        <span class="field-error">{{ field_errors.subject }}</span>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        <label for="message">Message *</label>
+        <textarea id="message" name="message" rows="6" 
+                  placeholder="Enter your message" 
+                  class="{% if field_errors.message %}error{% endif %}"
+                  required>{% if form_data.message %}{{ form_data.message }}{% endif %}</textarea>
+        {% if field_errors.message %}
+        <span class="field-error">{{ field_errors.message }}</span>
+        {% endif %}
+    </div>
+    
+    <div class="form-buttons">
+        <button type="submit" class="btn primary">Send Message</button>
+        <button type="button" class="btn secondary" onclick="clearForm()">Clear Form</button>
+    </div>
+</form>
+
+<script>
+function clearForm() {
+    document.getElementById('contactForm').reset();
+    // Clear any error styles
+    const errorFields = document.querySelectorAll('.error');
+    errorFields.forEach(field => field.classList.remove('error'));
+    
+    const errorMessages = document.querySelectorAll('.field-error');
+    errorMessages.forEach(msg => msg.remove());
+}
+</script>

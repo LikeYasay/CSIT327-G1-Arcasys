@@ -290,7 +290,37 @@ input:focus, textarea:focus {
   outline: none;           
 }
 
-/* Error Message Styles */
+.messages {
+    margin-bottom: 25px;
+}
+
+.alert {
+    padding: 15px 20px;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.alert-success {
+    color: #0f5132;
+    background-color: #d1e7dd;
+    border-color: #badbcc;
+}
+
+.alert-error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-info {
+    color: #055160;
+    background-color: #cff4fc;
+    border-color: #b6effb;
+}
+
 .field-error {
     color: #dc3545;
     font-size: 0.875rem;
@@ -300,14 +330,12 @@ input:focus, textarea:focus {
     padding-left: 5px;
 }
 
-/* Style form fields with errors */
 .form-group input.error,
 .form-group textarea.error {
     border-color: #dc3545;
     background-color: #fff5f5;
 }
 
-/* Form validation states */
 .form-group input:invalid:focus,
 .form-group textarea:invalid:focus {
     border-color: #dc3545;
